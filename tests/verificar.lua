@@ -300,6 +300,7 @@ local function Validate()
  base.KnuUIAlertsPlaced = true
  base.KnuUIBNETPlaced = true
  base.KnuUIBlizzardPlaced = true
+ base.KnuUITomTomPlaced = true
  base.KnuUISkinTracker = true
  base.datatexts.panels.KnuUI_Data = { enable = true, battleground = false }
  for i = 1, 8 do base.datatexts.panels.KnuUI_Data[i] = '' end

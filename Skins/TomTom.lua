@@ -34,7 +34,25 @@ function K:SkinTomTom()
 end
 
 local hooked
+
+-- Flecha de TomTom al lado de la guía de WoW-Pro (x 8-258), una vez por perfil. Arriba al centro
+-- chocaba con las barras de duración, que en Forever ubica el Modo edición de Blizzard y no se
+-- pueden mover desde KnuUI. TomTom guarda la posición relativa a UIParent
+-- (modules/crazy_arrow/crazy_arrow.lua:211-229); se convierte desde píxeles de ElvUIParent.
+local function PlaceArrow()
+	local tomtom, arrow = _G.TomTom, _G.TomTomCrazyArrow
+	if E.db.KnuUITomTomPlaced or not tomtom or not arrow or not tomtom.profile or not tomtom.profile.arrow then return end
+	if InCombatLockdown() then return end
+	E.db.KnuUITomTomPlaced = true
+	local scale = E.UIParent:GetEffectiveScale() / UIParent:GetEffectiveScale()
+	local x, y = math.floor(300 * scale + 0.5), math.floor(-16 * scale + 0.5)
+	tomtom.profile.arrow.position = { 'TOPLEFT', nil, 'TOPLEFT', x, y }
+	arrow:ClearAllPoints()
+	arrow:SetPoint('TOPLEFT', UIParent, 'TOPLEFT', x, y)
+end
+
 function K:SetupTomTomSkin()
+	C_Timer.After(2, function() pcall(PlaceArrow) end)
 	-- TomTom vuelve a poner sus colores y su letra cada vez que corre ShowHideCoordBlock
 	-- (modules/coord_block.lua:147-150,167); la skin se aplica justo después.
 	local tomtom = _G.TomTom

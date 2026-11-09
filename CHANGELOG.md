@@ -2,6 +2,9 @@
 
 ## 3.3.2 (2026-11-08)
 
+- TomTom arrow moved next to the WoW-Pro guide (once per profile): at the top centre it collided with
+  Blizzard's duration bars, which Edit Mode places on Forever.
+- Quest tracker +/- button moved 10 px inside its background.
 - Breath / fatigue bars with the KnuUI look (Melli texture, colour per type, theme border). Their
   position on Forever comes from Blizzard's Edit Mode (Duration Bars).
 - Placement for 13 Blizzard elements that ElvUI can move on Forever (zone state, below-minimap

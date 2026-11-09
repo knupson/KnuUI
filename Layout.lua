@@ -25,7 +25,7 @@ K.blizzardMovers = {
 	LossControlMover = 'CENTER,ElvUIParent,CENTER,0,60', -- pérdida de control
 	-- Izquierda, al lado de WoW-Pro (x 8-258).
 	AlertFrameMover = 'TOPLEFT,ElvUIParent,TOPLEFT,270,-150', -- alertas, crecen hacia abajo
-	GMMover = 'TOPLEFT,ElvUIParent,TOPLEFT,270,-8',
+	GMMover = 'TOPLEFT,ElvUIParent,TOPLEFT,8,-310', -- debajo de la guía; arriba va la flecha de TomTom
 	LootFrameMover = 'TOPLEFT,ElvUIParent,TOPLEFT,270,-400',
 	-- Encima del chat izquierdo (y 4-184, caja de escribir encima).
 	BNETMover = 'BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,4,212',
