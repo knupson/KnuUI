@@ -71,9 +71,21 @@ local function Style(instance)
   Call(instance, 'AttributeMenu', true, nil, nil, 'Expressway', 12, { t.text.r, t.text.g, t.text.b, 1 }, 1, true)
   configured[instance] = t
  end
- -- Ventanas angostas (lado a lado, unos 200 px): las columnas de la derecha pisaban el nombre.
- -- Sólo total y por segundo, sin porcentaje (window_main.lua:4012; textR_show_data[3]).
- -- InstanceReset adentro: se llama únicamente cuando hace falta, nunca en cada refresco.
+ -- Ventanas angostas (lado a lado, hasta 198 px): en Forever Details usa columnas fijas cada
+ -- alignment_space px (Libs/DF/fw.lua:260-265; functions/rowtexts.lua:401-405; 60 por defecto,
+ -- profiles.lua:835) y no puede recortar el nombre porque el ancho del texto es secreto
+ -- (rowtexts.lua GetValueColumnsExtent). Se usa el texto simple de Details: "total (por segundo)"
+ -- en un solo texto pegado al borde, sin porcentaje. Se escribe sólo si hace falta.
+ local simple = _G.Details and _G.Details.righttext_simple_formatting
+ if type(simple) == 'table' and (simple.enabled ~= true or simple.use_alignment ~= false) then
+  simple.enabled, simple.use_alignment = true, false
+  -- functions/util.lua:86-101: el modo simple sólo escribe lineText4; las columnas 2 y 3 del
+  -- modo alineado quedarían con el número viejo, así que se vacían una vez acá.
+  for _, bar in ipairs(instance.barras or {}) do
+   for _, key in ipairs({ 'lineText2', 'lineText3', 'lineText12', 'lineText13' }) do Call(bar[key], 'SetText', '') end
+  end
+  Call(instance, 'InstanceRefreshRows')
+ end
  if row and type(row.textR_show_data) == 'table' and row.textR_show_data[3] ~= false then
   Call(instance, 'SetBarRightTextSettings', true, true, false)
  end
