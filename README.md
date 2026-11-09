@@ -27,6 +27,7 @@ to keep your old values. Nothing is applied during combat.
 |---|---|
 | `/knu` (alias `/fui`) | Open the installer. |
 | `/knu aplicar` | Ask for confirmation, apply everything and reload. |
+| `/knu cine` | Toggle cinema mode (also bindable in Key Bindings → AddOns → KnuUI). |
 | `/knudock` | Show the Details! dock status. Also `/knudock on`, `/knudock off`, `/knudock split <0.2-0.8>`. |
 
 You can also open the installer, re-apply the layout or the theme, switch the camera preset and
@@ -35,23 +36,22 @@ its own settings; the last page reloads the interface.
 
 ## Features
 
-- Skins de addons integradas: Auctionator, BugSack, Leatrix Plus (opciones), Pawn,
-  WhatsTraining, ThreatClassic2, GearQuestForever (log), Questie (Journey y opciones),
-  DBM (textura/fuente vía DBT) y GTFO (opciones). Fondos/bordes del tema, Expressway y Melli.
-- Activación en la página **Addons** del asistente o **ElvUI → KnuUI → Skins de addons**;
-  requiere recarga. Se habilitan por defecto. Para excluir un addon, guardá
-  `E.db.KnuUIAddonSkinsOff["NombreDelAddon"] = true` en el perfil de ElvUI y recargá.
-- Carga tardía, errores aislados por integración y cambios diferidos hasta salir de combate.
-  El desplegable del lanzador aparece con un fade ease-out de 150 ms y se cierra al instante.
-- GatherMate2 queda fuera: su configuración usa AceConfig. Syndicator tiene un panel local
-  sin un acceso al frame verificado; no se modifica ni se aplica una skin global a Settings/AceGUI.
 - Compact bottom-centred ElvUI layout for WoW Forever with a guided installer (`/knu`).
+- Role profiles: **Tank** (threat borders on frames, threat icon on nameplates), **MDPS** (the base
+  layout), **RDPS** (bigger cast bar and target debuffs) and **Healer** (party and raid in the centre,
+  incoming heals and HoT indicators). Each character remembers its role.
+- Optional column mode: vertical health/mana columns next to the main bars and a larger target block.
 - Amber "Knunet" theme and an optional neon theme; custom logo, icons and AFK screen.
-- Optional "tank" mode: vertical health/mana columns next to the main bars, larger target block.
 - Quartz-style cast bar, OmniCC-style cooldown text, community-style nameplates (ElvUI only).
+- Combat glow on the screen edges, experience-per-hour and time-to-level in the experience bar tooltip,
+  and a cinema mode that hides the interface and orbits the camera (`/knu cine` or a key binding).
 - Single launcher button that collects minimap buttons (LibDBIcon and GearQuest).
-- Integrated chat/Details panels, Details docking (replaces ForeverDock), skins for WoW-Pro,
-  the quest tracker, TomTom and Baganator's title.
+- Integrated chat/Details panels, Details docking, skins for WoW-Pro, the quest tracker, TomTom and
+  Baganator's title.
+- Addon skins: Auctionator, BugSack, Leatrix Plus (options), Pawn, WhatsTraining, ThreatClassic2,
+  GearQuestForever (log), Questie (Journey and options), GTFO (options) and, if you enable it, DBM bars.
+  Turn them all off from the installer's Addons page or **ElvUI → KnuUI**, or exclude one addon with
+  `E.db.KnuUIAddonSkinsOff["AddonName"] = true`. Changes wait until you leave combat.
 - DynamicCam presets from the addon's own bundle (cinematic / immersive / classic).
 - Positions are anchored to the screen centre so the layout stays centred on any width
   (tuned for 1920×1080).

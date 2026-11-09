@@ -3,6 +3,9 @@ package-as: KnuUI
 ignore:
   - tests
   - tools
+  - docs
+  - .github
+  - dist
   - PENDIENTES.md
   - "*.py"
   - media/preview
