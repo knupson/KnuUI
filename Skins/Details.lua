@@ -71,6 +71,12 @@ local function Style(instance)
   Call(instance, 'AttributeMenu', true, nil, nil, 'Expressway', 12, { t.text.r, t.text.g, t.text.b, 1 }, 1, true)
   configured[instance] = t
  end
+ -- Ventanas angostas (lado a lado, unos 200 px): las columnas de la derecha pisaban el nombre.
+ -- Sólo total y por segundo, sin porcentaje (window_main.lua:4012; textR_show_data[3]).
+ -- InstanceReset adentro: se llama únicamente cuando hace falta, nunca en cada refresco.
+ if row and type(row.textR_show_data) == 'table' and row.textR_show_data[3] ~= false then
+  Call(instance, 'SetBarRightTextSettings', true, true, false)
+ end
  -- window_main.lua:4740-4790,6719-6737: texturas antiguas del marco, sin tocar botones.
  local base = instance.baseframe
  for _, field in ipairs({ 'ball', 'ball_r', 'emenda', 'top_bg' }) do Call(base.cabecalho and base.cabecalho[field], 'SetAlpha', 0) end
