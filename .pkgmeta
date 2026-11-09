@@ -1,0 +1,12 @@
+package-as: KnuUI
+
+ignore:
+  - tests
+  - tools
+  - PENDIENTES.md
+  - "*.py"
+  - media/preview
+
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown

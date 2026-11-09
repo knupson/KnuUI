@@ -1,0 +1,5 @@
+<Bindings>
+	<Binding name="KNUUI_CINEMA" header="KNUUI" category="ADDONS">
+		KnuUI_ToggleCinema()
+	</Binding>
+</Bindings>

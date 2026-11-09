@@ -1,0 +1,48 @@
+## Interface: 16001
+## Title: |cffecd9bdKNU|r|cffffa82eUI|r
+## Notes: Compact amber layout and theme for ElvUI on WoW Forever. Open the installer with /knu.
+## Notes-esES: Diseño compacto y tema ámbar para ElvUI en WoW Forever. Abrí el asistente con /knu.
+## Notes-esMX: Diseño compacto y tema ámbar para ElvUI en WoW Forever. Abrí el asistente con /knu.
+## IconTexture: Interface\AddOns\KnuUI\media\icono
+## Author: Alejandro Benzoni (KnuPwns)
+## Version: 3.3.0
+## X-License: MIT
+## X-Website: https://knunet.com
+## X-Category: Interface Enhancements
+## Dependencies: ElvUI
+## OptionalDeps: Details, Baganator, DBM-Core, DBM-StatusBarTimers, Questie, WoWPro, TomTom, DynamicCam, GearQuestForever, Auctionator, BugSack, Leatrix_Plus, Pawn, WhatsTraining, ThreatClassic2, GTFO
+
+Locales/Locales.lua
+Core.lua
+Layout.lua
+Theme.lua
+Nameplates.lua
+Tanks.lua
+Roles.lua
+Extras.lua
+Compat.lua
+Camera.lua
+Afk.lua
+Dock.lua
+Skins/Engine.lua
+Skins/AddOns/Auctionator.lua
+Skins/AddOns/BugSack.lua
+Skins/AddOns/Leatrix_Plus.lua
+Skins/AddOns/Pawn.lua
+Skins/AddOns/WhatsTraining.lua
+Skins/AddOns/ThreatClassic2.lua
+Skins/AddOns/GearQuestForever.lua
+Skins/AddOns/Questie.lua
+Skins/AddOns/DBM-Core.lua
+Skins/AddOns/GTFO.lua
+Skins/Details.lua
+Skins/Panels.lua
+Buttons.lua
+MinimapButtons.lua
+Decor.lua
+Skins/WoWPro.lua
+Skins/WoWProES.lua
+Skins/TomTom.lua
+Skins/Baganator.lua
+Skins/Objectives.lua
+Installer.lua
