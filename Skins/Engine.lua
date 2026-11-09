@@ -100,7 +100,8 @@ function K:SkinChildren(frame)
 end
 
 local bound = setmetatable({}, { __mode = 'k' })
-function K:StyleAddonFrame(addon, frame, callback)
+-- outerOnly: sólo el marco exterior; para addons con diseño propio adentro (pergamino, textos oscuros).
+function K:StyleAddonFrame(addon, frame, callback, outerOnly)
 	if not frame then return end
 	local function Apply()
 		K:RunAddonSkin(addon, frame, function()
@@ -112,16 +113,16 @@ function K:StyleAddonFrame(addon, frame, callback)
 				end)
 			end
 			K:SkinFrame(frame)
-			K:SkinChildren(frame)
+			if not outerOnly then K:SkinChildren(frame) end
 			if callback then callback(frame) end
 		end)
 	end
 	Apply()
 end
 
-function K:WatchAddonFrame(addon, name, callback)
-	watched[name] = { addon, callback }
-	self:StyleAddonFrame(addon, _G[name], callback)
+function K:WatchAddonFrame(addon, name, callback, outerOnly)
+	watched[name] = { addon, callback, outerOnly }
+	self:StyleAddonFrame(addon, _G[name], callback, outerOnly)
 end
 
 function K:HookAddonSkin(addon, object, method, callback)
@@ -146,13 +147,13 @@ function K:SetupAddonSkins()
 		local queue = pending
 		pending = {}
 		for key, work in pairs(queue) do K:RunAddonSkin(work[1], key, work[2]) end
-		for name, work in pairs(watched) do K:StyleAddonFrame(work[1], _G[name], work[2]) end
+		for name, work in pairs(watched) do K:StyleAddonFrame(work[1], _G[name], work[2], work[3]) end
 	end)
 	-- Sólo observa nombres registrados; el retraso deja terminar la creación y sus hijos.
 	-- Creaciones verificadas en cada Skins/AddOns/*.lua. No se modifica CreateFrame.
 	hooksecurefunc('CreateFrame', function(_, name)
 		local work = name and watched[name]
-		if work then C_Timer.After(0, function() K:StyleAddonFrame(work[1], _G[name], work[2]) end) end
+		if work then C_Timer.After(0, function() K:StyleAddonFrame(work[1], _G[name], work[2], work[3]) end) end
 	end)
 	for name in pairs(registry) do Run(name) end
 end
