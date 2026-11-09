@@ -657,6 +657,17 @@ DockWindowsUnsafe = function()
 	end
 	local win2 = GetActiveInstance(Details, 2)
 
+	-- La barra de pestañas del panel derecho (Layout/Layout.lua: RightChatTab) queda vacía con
+	-- Details acoplado: se oculta y GetPanelGeometry deja que Details use ese alto.
+	local rightTab = _G.RightChatTab
+	if rightTab then
+		if not rightTab.KnuDockHook then
+			rightTab.KnuDockHook = true
+			rightTab:HookScript('OnShow', function(self) if InitDB().enabled then self:Hide() end end)
+		end
+		rightTab:Hide()
+	end
+
 	isUpdating = true
 
 	local sideInset, topInset, _, availW, availH = GetPanelGeometry(E, panel)
@@ -719,6 +730,7 @@ end
 
 local function UndockAll()
 	if separator then separator:Hide() end
+	if _G.RightChatTab then _G.RightChatTab:Show() end -- vuelve la barra de pestañas del panel
 	if vseparator then vseparator:Hide() end
 	local Details = GetDetails()
 	if not Details or type(Details.GetInstance) ~= "function" then

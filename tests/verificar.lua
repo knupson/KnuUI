@@ -509,10 +509,12 @@ for _, instance in ipairs(instances) do
  assert(instance._ElvUIEmbed and instance.bg_alpha == 0 and not instance.fullborder_shown and not instance.rowareaborder_shown)
  assert(instance.classBars and instance.outline and instance.textSize == 12)
  assert(instance.row_info.texture_custom == '' and instance.baseframe.width == 196)
- assert(instance.baseframe.point[5] <= -45 and instance.baseframe.height >= 20)
+ -- RightChatTab oculto con Details acoplado: Details ocupa ese alto (sigue debajo del borde).
+ assert(instance.baseframe.point[5] < 0 and instance.baseframe.height >= 20)
  assert(instance.baseframe.cabecalho.top_bg.alpha == 0 and instance.statusAlpha == 0)
 end
 assert(skinCalls == 2) -- Los refrescos no reinician las barras continuamente.
+assert(not RightChatTab.shown) -- barra de pestañas vacía oculta mientras Details está acoplado
 local divider = assert(RightChatPanel.textures[1])
 assert(divider.shown and divider.width == 1 and divider.color[1] == RightChatTab.KnuLine.color[1])
 instances[2].ativa = false; module:RefreshDock()

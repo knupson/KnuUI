@@ -72,7 +72,8 @@ local function Style()
 			bg:ClearAllPoints()
 			bg:SetPoint('TOPLEFT', frame, 'TOPLEFT', -34, 6)
 			local mini = frame.Header and frame.Header.MinimizeButton
-			if mini then bg:SetPoint('RIGHT', mini, 'RIGHT', 6, 0) else bg:SetPoint('RIGHT', E.UIParent, 'RIGHT', -8, 0) end
+			-- Borde derecho a 8 px de la pantalla, como el minimapa (Layout.lua: MinimapMover TOPRIGHT -8).
+			bg:SetPoint('RIGHT', E.UIParent, 'RIGHT', -8, 0)
 			bg:SetHeight(math.max(top - bottom + 12, 24))
 		end
 		Fit()

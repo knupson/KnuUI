@@ -18,8 +18,26 @@ local function Settings()
  })
 end
 
+local function FixChatTabs()
+ -- Todas las pestañas con el mismo alto de texto: sin salto de línea y centradas igual que las
+ -- deja ElvUI (Modules/Chat/Chat.lua:1034-1038). Un nombre largo se corta con "..." en una línea.
+ for i = 1, (_G.NUM_CHAT_WINDOWS or 10) do
+  local tab = _G['ChatFrame'..i..'Tab']
+  local text = tab and tab.Text
+  if text then
+   if text.SetWordWrap then text:SetWordWrap(false) end
+   if text.SetNonSpaceWrap then text:SetNonSpaceWrap(false) end
+   if text.SetMaxLines then text:SetMaxLines(1) end
+   text:SetJustifyV('MIDDLE')
+   text:ClearAllPoints()
+   text:SetPoint('CENTER', tab, 'CENTER', 0, -1)
+  end
+ end
+end
+
 local function Style()
  Settings()
+ FixChatTabs()
  local t = K:GetTheme()
  -- Layout/Layout.lua:214-234,273-298,337-415: panel.backdrop y paneles de pestañas.
  for _, side in ipairs({ 'Left', 'Right' }) do
