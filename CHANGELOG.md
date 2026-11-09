@@ -2,6 +2,8 @@
 
 ## 3.3.2 (2026-11-08)
 
+- TomTom arrow: theme panel behind its texts and arrow colours from the theme palette (set once per
+  profile in TomTom's own settings).
 - TomTom arrow moved next to the WoW-Pro guide (once per profile): at the top centre it collided with
   Blizzard's duration bars, which Edit Mode places on Forever.
 - Quest tracker +/- buttons moved 10 px inside its background.

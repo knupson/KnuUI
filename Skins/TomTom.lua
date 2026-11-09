@@ -12,6 +12,55 @@ local function Font(text, size, color)
 	if color then text:SetTextColor(color.r, color.g, color.b) end
 end
 
+-- Recuadro del tema detrás de los textos de la flecha (título, distancia, tiempo), que TomTom
+-- apila debajo de la flecha (crazy_arrow.lua:43-45). Se ajusta al texto más ancho cada vez que
+-- TomTom cambia el título o la distancia.
+local function FitPanel(arrow)
+	local panel = arrow.KnuPanel
+	if not panel then return end
+	local width, height = 0, 6
+	for _, text in ipairs({ arrow.title, arrow.status, arrow.tta }) do
+		if text and text:IsShown() and (text:GetText() or '') ~= '' then
+			width = math.max(width, text:GetStringWidth() or 0)
+			height = height + (text:GetStringHeight() or 0)
+		end
+	end
+	panel:SetShown(width > 0)
+	panel:SetSize(math.max(width + 16, 60), height + 4)
+end
+
+local function Panel(arrow, t)
+	if not arrow.title then return end
+	if not arrow.KnuPanel then
+		local panel = CreateFrame('Frame', nil, arrow)
+		panel:SetPoint('TOP', arrow.title, 'TOP', 0, 4)
+		panel:SetFrameLevel(math.max(arrow:GetFrameLevel() - 1, 0))
+		panel:EnableMouse(false)
+		panel:SetTemplate('Transparent')
+		arrow.KnuPanel = panel
+		for _, text in ipairs({ arrow.title, arrow.status, arrow.tta }) do
+			if text then hooksecurefunc(text, 'SetText', function() FitPanel(arrow) end) end
+		end
+	end
+	arrow.KnuPanel:SetBackdropColor(t.backdropFade.r, t.backdropFade.g, t.backdropFade.b, 0.85)
+	arrow.KnuPanel:SetBackdropBorderColor(t.accentDim.r, t.accentDim.g, t.accentDim.b)
+	FitPanel(arrow)
+end
+
+-- Colores de la flecha con la paleta del tema, una vez por perfil: después manda lo que el usuario
+-- elija en TomTom. TomTom los lee de profile.arrow (core/settings.lua:61-64; theme_classic.lua:102-113).
+local function ArrowColors(t)
+	local tomtom = _G.TomTom
+	local profile = tomtom and ((tomtom.db and tomtom.db.profile) or tomtom.profile)
+	local arrowDB = profile and profile.arrow
+	if E.db.KnuUITomTomColors or type(arrowDB) ~= 'table' then return end
+	E.db.KnuUITomTomColors = true
+	arrowDB.goodcolor = { t.accentHi.r, t.accentHi.g, t.accentHi.b } -- bien encaminado
+	arrowDB.exactcolor = { t.accentHi.r, t.accentHi.g, t.accentHi.b }
+	arrowDB.middlecolor = { t.accent.r, t.accent.g, t.accent.b }
+	arrowDB.badcolor = { t.castNoInterrupt.r, t.castNoInterrupt.g, t.castNoInterrupt.b } -- al revés
+end
+
 local function Style()
 	if not K:IsLoaded('TomTom') then return end
 	local t = K:GetTheme()
@@ -20,6 +69,8 @@ local function Style()
 		Font(arrow.title, 13, t.text)
 		Font(arrow.status, 12, t.accent)
 		Font(arrow.tta, 11, t.muted)
+		if not InCombatLockdown() then Panel(arrow, t) end
+		ArrowColors(t)
 	end
 	local block = _G.TomTomBlock
 	if block then
