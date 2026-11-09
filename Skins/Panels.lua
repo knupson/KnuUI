@@ -58,9 +58,15 @@ local function FixChatTabs()
  if not tabsHooked then
   tabsHooked = true
   hooksecurefunc(ch, 'StyleChat', function() FixChatTabs() end)
-  if type(_G.FCFDock_UpdateTabs) == 'function' then
-   hooksecurefunc('FCFDock_UpdateTabs', function() FixChatTabs() end)
+  -- Medido en el juego (2026-11-09, /run con GetCenter): la pestaña 4 quedaba 0,711 px más abajo y
+  -- el texto seguía igual, porque al entrar las pestañas todavía estaban parejas. El contenedor de
+  -- pestañas dinámicas se ubica después (FCFDock_ScrollToSelectedTab; ElvUI Chat.lua:3103-3109):
+  -- se recalcula ahí y también 1 y 3 s después de entrar.
+  for _, fn in ipairs({ 'FCFDock_UpdateTabs', 'FCFDock_ScrollToSelectedTab' }) do
+   if type(_G[fn]) == 'function' then hooksecurefunc(fn, function() C_Timer.After(0, FixChatTabs) end) end
   end
+  C_Timer.After(1, FixChatTabs)
+  C_Timer.After(3, FixChatTabs)
  end
 end
 
