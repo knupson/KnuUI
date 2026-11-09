@@ -1,5 +1,12 @@
 # KnuUI changelog
 
+## 3.3.4 (2026-11-09)
+
+- Fixed Lua taint errors from the quest tracker (`GetAuraDataByIndex(): Auras cannot be accessed
+  when secret while tainted by 'KnuUI'`, also inside Edit Mode, and the Edit Mode error when
+  dragging the tracker). KnuUI no longer collapses the tracker from code; while WoW-Pro is loaded
+  it is only made transparent and click-through. Collapse it with its own button if you want.
+
 ## 3.3.3 (2026-11-09)
 
 - TomTom arrow: theme panel behind its texts and arrow colours from the theme palette (set once per

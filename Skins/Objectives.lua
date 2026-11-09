@@ -44,27 +44,16 @@ local function Style()
 
 	-- Con WoW-Pro cargado se oculta por defecto (pedido del user): en Forever Blizzard lo estira hasta
 	-- abajo de la pantalla en su posición por defecto (Blizzard_ObjectiveTrackerContainer.lua:189-210)
-	-- y tapaba a Details. Además de transparente queda colapsado, así las misiones invisibles no
-	-- capturan clics; si Blizzard lo expande (misión nueva), se vuelve a colapsar fuera de combate.
+	-- y tapaba a Details. Queda transparente y sin mouse. NUNCA se llama a SetCollapsed ni al botón
+	-- desde acá: SetCollapsed escribe self.isCollapsed y corre Update() (Blizzard_ObjectiveTrackerContainer.lua:177-183);
+	-- hecho desde un addon contamina el rastreador y ShouldShowMawBuffs falla al leer auras secretas
+	-- (Blizzard_MawBuffs.lua:4), también dentro del Modo edición.
 	if E.db.KnuUIHideTracker == nil then E.db.KnuUIHideTracker = true end
 	if E.db.KnuUIHideTracker and K:IsLoaded('WoWPro') then
 		frame:SetAlpha(0)
 		frame:EnableMouse(false)
 		local mini = frame.Header and frame.Header.MinimizeButton
 		if mini then mini:EnableMouse(false) end
-		if not InCombatLockdown() and not frame.isCollapsed and type(frame.SetCollapsed) == 'function' then
-			pcall(frame.SetCollapsed, frame, true)
-		end
-		if not frame.KnuHideHook and type(frame.SetCollapsed) == 'function' then
-			frame.KnuHideHook = true
-			local busy
-			hooksecurefunc(frame, 'SetCollapsed', function(self, collapsed)
-				if busy or collapsed or InCombatLockdown() then return end
-				if E.db.KnuUIHideTracker and K:IsLoaded('WoWPro') then
-					busy = true; pcall(self.SetCollapsed, self, true); busy = false
-				end
-			end)
-		end
 		return
 	end
 	frame:SetAlpha(1)
@@ -135,15 +124,8 @@ local function Style()
 		local tracker = _G[name]
 		if tracker then ShiftButton(tracker.Header) end
 	end
-	-- Contraído por defecto (pedido del user): una vez por sesión, con el mismo botón que usa
-	-- el jugador (ElvUI lo skinea en Skins/ObjectiveTracker.lua:24-51,115-117).
-	if not K.trackerCollapsedOnce and not InCombatLockdown() then
-		K.trackerCollapsedOnce = true
-		local button = frame.Header and frame.Header.MinimizeButton
-		if E.db.KnuUITrackerCollapsed ~= false and not frame.isCollapsed and button and button.Click then
-			pcall(button.Click, button)
-		end
-	end
+	-- Antes se contraía solo con button:Click(); se sacó porque el clic hecho por código corre
+	-- SetCollapsed contaminado (ver arriba). Contraerlo queda en manos del jugador.
 	for _, name in ipairs(TRACKERS) do
 		local tracker = _G[name]
 		if tracker then
