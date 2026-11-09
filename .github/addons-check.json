@@ -16,6 +16,6 @@
     { "name": "GTFO", "source": "curseforge", "id": 20697, "tested": "6.12.3" },
     { "name": "Auctionator", "source": "curseforge", "id": 6124, "tested": "343" },
     { "name": "Pawn", "source": "curseforge", "id": 4646, "tested": "2.14.1" },
-    { "name": "Baganator", "source": "curseforge", "slug": "baganator", "tested": "846" }
+    { "name": "Baganator", "source": "curseforge", "id": 914482, "tested": "846" }
   ]
 }
