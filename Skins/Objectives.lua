@@ -96,14 +96,22 @@ local function Style()
 	-- El botón +/- quedaba sobre el borde del fondo (medido: botón x 1900-1912, fondo hasta 1912).
 	-- En Forever el rastreador lo ubica el Modo edición y KnuUI no lo mueve; se corre sólo el botón
 	-- 10 px hacia adentro, una vez y fuera de combate (ElvUI sólo le cambia el tamaño: ObjectiveTracker.lua:40).
-	local mini = frame.Header and frame.Header.MinimizeButton
-	if mini and not mini.KnuShifted and not InCombatLockdown() then
-		local point, rel, relPoint, x, y = mini:GetPoint(1)
-		if point then
-			mini.KnuShifted = true
-			mini:ClearAllPoints()
-			mini:SetPoint(point, rel, relPoint, (x or 0) - 10, y or 0)
+	-- Lo mismo para el botón de cada sección (Misiones, Logros...): quedaba en x 1908, sobre el borde.
+	local function ShiftButton(header)
+		local mini = header and header.MinimizeButton
+		if mini and not mini.KnuShifted and not InCombatLockdown() then
+			local point, rel, relPoint, x, y = mini:GetPoint(1)
+			if point then
+				mini.KnuShifted = true
+				mini:ClearAllPoints()
+				mini:SetPoint(point, rel, relPoint, (x or 0) - 10, y or 0)
+			end
 		end
+	end
+	ShiftButton(frame.Header)
+	for _, name in ipairs(TRACKERS) do
+		local tracker = _G[name]
+		if tracker then ShiftButton(tracker.Header) end
 	end
 	-- Contraído por defecto (pedido del user): una vez por sesión, con el mismo botón que usa
 	-- el jugador (ElvUI lo skinea en Skins/ObjectiveTracker.lua:24-51,115-117).
