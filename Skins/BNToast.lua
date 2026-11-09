@@ -5,7 +5,6 @@ local S = E:GetModule('Skins')
 -- Aviso de amigos de Battle.net con el tema de KnuUI. ElvUI le pone SetTemplate('Transparent')
 -- (Skins/Battlenet.lua:14-22) y un mover propio, BNETMover (Modules/Blizzard/Blizzard.lua:168-173).
 -- Acá sólo van colores, letra y botón de cerrar; los textos se recorren sin depender de sus nombres.
-local POSITION = 'BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,4,212'
 
 local function Style()
 	local toast = _G.BNToastFrame
@@ -43,14 +42,7 @@ function K:SkinBNToast() pcall(Style) end
 function K:SetupBNToast()
 	local toast = _G.BNToastFrame
 	if not toast then return end
-	-- Una vez por perfil, aunque ya haya una posición guardada (perfiles viejos traen la de S&L,
-	-- TOPRIGHT,UIParent,-249,-175); después se respeta lo que mueva el usuario (Movers.lua:58).
-	E.db.movers = E.db.movers or {}
-	if not E.db.KnuUIBNETPlaced then
-		E.db.KnuUIBNETPlaced = true
-		E.db.movers.BNETMover = POSITION
-		if E.SetMoverPoints then pcall(E.SetMoverPoints, E, 'BNETMover') end
-	end
+	-- La posición la aplica la distribución de elementos de Blizzard (Layout.lua, K.blizzardMovers).
 	-- Blizzard rearma los textos en cada aviso: el estilo se reaplica al mostrarse.
 	toast:HookScript('OnShow', function() K:SkinBNToast() end)
 	K:SkinBNToast()

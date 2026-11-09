@@ -11,6 +11,35 @@ local Set = K.Set
 -- Modules/UnitFrames/Elements/CastBar.lua:185; Modules/Auras/Auras.lua:795,827;
 -- Modules/DataBars/Experience.lua:314; Modules/DataTexts/DataTexts.lua:341.
 -- Coordenadas absolutas sobre ElvUIParent; origen abajo a la izquierda.
+-- Elementos de Blizzard (boceto aprobado el 2026-11-09, 1920×1080). Nombres de mover tomados del
+-- perfil real del usuario (existen en Forever). La barra de aire y el rastreador los ubica el Modo
+-- edición de Blizzard y no figuran acá.
+K.blizzardMovers = {
+	-- Columna central, debajo de la flecha de TomTom (y 30-115).
+	TopCenterContainerMover = 'TOP,ElvUIParent,TOP,0,-122', -- estado de zona / campo de batalla
+	UIErrorsFrameMover = 'TOP,ElvUIParent,TOP,0,-212', -- errores en rojo
+	BossBannerMover = 'TOP,ElvUIParent,TOP,0,-270', -- carteles grandes, transitorios
+	LevelUpBossBannerMover = 'TOP,ElvUIParent,TOP,0,-270',
+	EventToastMover = 'TOP,ElvUIParent,TOP,0,-270',
+	PowerBarContainerMover = 'TOP,ElvUIParent,TOP,0,-350', -- poder alternativo
+	LossControlMover = 'CENTER,ElvUIParent,CENTER,0,60', -- pérdida de control
+	-- Izquierda, al lado de WoW-Pro (x 8-258).
+	AlertFrameMover = 'TOPLEFT,ElvUIParent,TOPLEFT,270,-150', -- alertas, crecen hacia abajo
+	GMMover = 'TOPLEFT,ElvUIParent,TOPLEFT,270,-8',
+	LootFrameMover = 'TOPLEFT,ElvUIParent,TOPLEFT,270,-400',
+	-- Encima del chat izquierdo (y 4-184, caja de escribir encima).
+	BNETMover = 'BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,4,212',
+	TalkingHeadFrameMover = 'BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,4,284',
+	-- Botones especiales encima del jugador y del objetivo: fuera del grupo del Healer (x 747-1173).
+	BossButton = 'BOTTOM,ElvUIParent,BOTTOM,-352,280',
+	ZoneAbility = 'BOTTOM,ElvUIParent,BOTTOM,352,280',
+	-- Debajo de los beneficios, junto al minimapa.
+	BelowMinimapContainerMover = 'TOPRIGHT,ElvUIParent,TOPRIGHT,-200,-196',
+	DurabilityFrameMover = 'TOPRIGHT,ElvUIParent,TOPRIGHT,-204,-246',
+	VehicleSeatMover = 'TOPRIGHT,ElvUIParent,TOPRIGHT,-340,-246',
+	QueueStatusMover = 'TOPRIGHT,ElvUIParent,TOPRIGHT,-40,-236',
+}
+
 local movers = {
 	LeftChatMover = 'BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,4,4',
 	RightChatMover = 'BOTTOMRIGHT,ElvUIParent,BOTTOMRIGHT,-4,4',
@@ -39,12 +68,6 @@ local movers = {
 	ElvUF_Raid2Mover = 'TOPLEFT,ElvUIParent,LEFT,8,110',
 	ElvUF_Raid3Mover = 'TOPLEFT,ElvUIParent,LEFT,8,110',
 	MinimapMover = 'TOPRIGHT,ElvUIParent,TOPRIGHT,-8,-8',
-	-- Aviso de amigos de Battle.net (Modules/Blizzard/Blizzard.lua:168-173): arriba del chat
-	-- izquierdo (y 4-184) dejando lugar a la caja de escribir, en vez de debajo del minimapa.
-	BNETMover = 'BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,4,212',
-	-- Alertas de Blizzard (logros, recetas, botín): arriba al centro, debajo de la flecha de TomTom
-	-- (y 30-115 en 1920×1080). ElvUI: Modules/Blizzard/AlertFrame.lua:105, mover AlertFrameMover.
-	AlertFrameMover = 'TOP,ElvUIParent,TOP,0,-140',
 	BuffsMover = 'TOPRIGHT,ElvUIParent,TOPRIGHT,-200,-8',
 	DebuffsMover = 'TOPRIGHT,ElvUIParent,TOPRIGHT,-200,-148', -- debajo de 3 filas de buffs de 36
 }
@@ -256,6 +279,7 @@ function K:ApplyLayout()
 			E.db.movers[name] = position
 		end
 	end
+	for name, position in pairs(K.blizzardMovers) do E.db.movers[name] = position end
 	self:ApplyRoleOverlay() -- Roles.lua: Tank, MDPS, RDPS o Healer
 	self:CleanupLegacy()
 	return true

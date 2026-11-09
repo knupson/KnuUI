@@ -4,8 +4,9 @@
 
 - Breath / fatigue bars with the KnuUI look (Melli texture, colour per type, theme border). Their
   position on Forever comes from Blizzard's Edit Mode (Duration Bars).
-- Blizzard alerts (achievements, recipes, loot) at the top centre below the TomTom arrow, with
-  ElvUI's alert skin turned on.
+- Placement for 18 Blizzard elements (zone state, errors, banners, alternate power, loss of control,
+  alerts, loot, GM ticket, NPC dialogue, friend toast, boss/zone buttons, durability, vehicle, queue
+  status): nothing piles up at the top centre any more. ElvUI's alert skin is turned on.
 - Chat tabs: the first added window (e.g. a loot tab) sat 0.7 px lower; its label is now aligned
   with General (measured in game).
 - Battle.net friend notifications with the KnuUI theme, moved above the left chat.

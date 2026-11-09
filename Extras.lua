@@ -153,11 +153,17 @@ _G.BINDING_NAME_KNUUI_CINEMA = L["Cinema mode (hide the interface and orbit the 
 
 -- Alertas: posición de KnuUI una vez por perfil y skin de ElvUI prendida (requiere recargar).
 local function SetupAlerts()
+	-- Distribución de elementos de Blizzard (Layout.lua, K.blizzardMovers), una vez por perfil.
+	if not E.db.KnuUIBlizzardPlaced then
+		E.db.KnuUIBlizzardPlaced = true
+		E.db.movers = E.db.movers or {}
+		for name, position in pairs(K.blizzardMovers or {}) do
+			E.db.movers[name] = position
+			if E.SetMoverPoints then pcall(E.SetMoverPoints, E, name) end
+		end
+	end
 	if E.db.KnuUIAlertsPlaced then return end
 	E.db.KnuUIAlertsPlaced = true
-	E.db.movers = E.db.movers or {}
-	E.db.movers.AlertFrameMover = 'TOP,ElvUIParent,TOP,0,-140'
-	if E.SetMoverPoints then pcall(E.SetMoverPoints, E, 'AlertFrameMover') end
 	local skins = E.private.skins and E.private.skins.blizzard
 	if skins and skins.alertframes == false then
 		skins.alertframes = true

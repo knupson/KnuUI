@@ -299,6 +299,7 @@ local function Validate()
  base.KnuUICombatGlow = true
  base.KnuUIAlertsPlaced = true
  base.KnuUIBNETPlaced = true
+ base.KnuUIBlizzardPlaced = true
  base.KnuUISkinTracker = true
  base.datatexts.panels.KnuUI_Data = { enable = true, battleground = false }
  for i = 1, 8 do base.datatexts.panels.KnuUI_Data[i] = '' end
@@ -719,14 +720,26 @@ for key, theme in pairs(module.themes) do
 end
 assert(module:ApplyTheme(nil, 'knunet'))
 
--- Aviso de Battle.net: posición sobre el chat izquierdo y borde del tema.
+-- Aviso de Battle.net: skin con el tema.
 BNToastFrame = CreateFrame('Frame', 'BNToastFrame')
-E.db.movers.BNETMover = 'TOPRIGHT,UIParent,TOPRIGHT,-249,-175' -- posición vieja de S&L
-E.db.KnuUIBNETPlaced = nil
 combat = false
 module:SetupBNToast()
-assert(E.db.movers.BNETMover == 'BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,4,212')
 assert(BNToastFrame.KnuLine)
+
+-- Distribución de elementos de Blizzard: la aplica el diseño y, una vez por perfil, la pisa
+-- aunque el perfil traiga posiciones de otros addons (anclas a UIParent de S&L).
+E.Forever = true
+assert(module:ApplyLayout())
+for name, position in pairs(module.blizzardMovers) do
+ assert(E.db.movers[name] == position, name)
+ assert(position:find('ElvUIParent', 1, true), name..' sin ElvUIParent')
+end
+assert(module.blizzardMovers.BNETMover == 'BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,4,212')
+E.db.movers.LootFrameMover = 'TOPRIGHT,UIParent,TOPRIGHT,-531,-449' -- posición vieja
+E.db.KnuUIBlizzardPlaced = nil
+module.mirrorHooked = nil
+assert(pcall(module.SetupExtras, module))
+assert(E.db.movers.LootFrameMover == module.blizzardMovers.LootFrameMover and E.db.KnuUIBlizzardPlaced)
 
 -- Roles: cada uno sólo usa claves que existen en los defaults de ElvUI y se deshace al cambiar.
 E.Forever, combat = true, false
