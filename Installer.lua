@@ -187,46 +187,114 @@ end
 
 local function Options()
 	-- _ref/ElvUI_Libraries/Game/Shared/LibElvUIPlugin-1.0/LibElvUIPlugin-1.0.lua:107.
+	-- Menú en pestañas (AceConfig childGroups = 'tab'): cada pestaña explica qué hace, las opciones
+	-- ocupan el ancho completo para que ningún texto se corte y las dependientes se apagan solas.
+	local function Reload() E:Print(L["KnuUI: settings saved. Reload from the Done page to see them."]) end
+	local function Desc(order, text) return { order = order, type = 'description', fontSize = 'medium', name = text } end
+	local function Head(order, text) return { order = order, type = 'header', name = text } end
+	local function NoColumns() return not E.db.KnuUITanks end
+	local function SetCompact(key)
+		return function(_, value)
+			E.db[key] = value
+			if E.db.KnuUITanks and K:ApplyTanks(true) then Reload() end
+		end
+	end
+
 	E.Options.args.KnuUI = {
-		type = 'group', name = [[|TInterface\AddOns\KnuUI\media\icono64:16:16|t KnuUI]],
+		type = 'group', childGroups = 'tab',
+		name = [[|TInterface\AddOns\KnuUI\media\icono64:16:16|t KnuUI]],
 		args = {
-			install = { order = 1, type = 'execute', name = L["Open installer"], func = function() K:OpenInstaller() end },
-			layout = { order = 2, type = 'execute', name = L["Reapply layout"], func = Saved(function() return K:ApplyLayout() end) },
-			role = { order = 2.5, type = 'select', name = L["Role"],
-				values = function() local v = {} for _, r in ipairs(K.roles) do v[r] = K.roleNames[r] end return v end,
-				sorting = K.roles,
-				get = function() return E.db.KnuUIRole or 'mdps' end,
-				set = function(_, role) if K:ApplyRole(role) then E:Print(L["KnuUI: settings saved. Reload from the Done page to see them."]) end end },
-			compactLeft = { order = 2.6, type = 'toggle', name = L["Columns: compact left block (3×4)"],
-				desc = L["Frees 129 px for the left chat; the data bar shrinks the same."],
-				get = function() return E.db.KnuUICompactLeft end,
-				set = function(_, v) E.db.KnuUICompactLeft = v; if E.db.KnuUITanks then K:ApplyTanks(true) end; E:Print(L["KnuUI: settings saved. Reload from the Done page to see them."]) end },
-			compactRight = { order = 2.65, type = 'toggle', name = L["Columns: compact right block (3×4)"],
-				desc = L["Frees 129 px for Details; the data bar shrinks the same."],
-				get = function() return E.db.KnuUICompactRight end,
-				set = function(_, v) E.db.KnuUICompactRight = v; if E.db.KnuUITanks then K:ApplyTanks(true) end; E:Print(L["KnuUI: settings saved. Reload from the Done page to see them."]) end },
-			combatGlow = { order = 2.75, type = 'toggle', name = L["Combat glow on the screen edges"],
-				get = function() return E.db.KnuUICombatGlow ~= false end, set = function(_, v) E.db.KnuUICombatGlow = v end },
-			cinema = { order = 2.8, type = 'execute', name = L["Cinema mode (hide the interface and orbit the camera)"], func = function() K:ToggleCinema() end },
-			theme = { order = 3, type = 'execute', name = L["Reapply theme"], func = Saved(function() return K:ApplyTheme() end) },
-			panels = { order = 3.25, type = 'execute', name = L["Panels: reapply"], func = Saved(function() return K:ApplyIntegratedPanels() end) },
-			decor = { order = 3.5, type = 'execute',
-				name = function() return format(L["Decoration: %s"], E.db.KnuUIDecor ~= false and L["yes"] or L["no"]) end,
-				func = function() K:ToggleDecor() end },
-			addonSkins = { order = 3.75, type = 'toggle', name = L["Addon skins"],
-				desc = L["Reload the UI to apply addon skins."],
-				get = function() return E.db.KnuUIAddonSkins ~= false end,
-				set = function(_, value)
-					if not K:CanApply() then return end
-					E.db.KnuUIAddonSkins = value
-					E:Print(L["Reload the UI to apply addon skins."])
-				end },
-			trackerShow = { order = 4, type = 'execute', name = L["Tracker: show"], func = Saved(function() return K:ApplyTracker(false) end) },
-			trackerHide = { order = 5, type = 'execute', name = L["Tracker: hide with WoW-Pro"], func = Saved(function() return K:ApplyTracker(true) end) },
-			dbm = { order = 9, type = 'toggle', name = L["DBM bars: KnuUI texture and font (changes DBM settings)"], get = function() return E.db.KnuUISkinDBM end, set = function(_, v) E.db.KnuUISkinDBM = v end },
-			camera = { order = 6, type = 'execute', name = L["Camera: cinematic (Shushudaa)"], func = function() K:ApplyCamera(true, "Shushudaa's preset") end },
-			cameraImm = { order = 7, type = 'execute', name = L["Camera: soft immersive"], func = function() K:ApplyCamera(true, 'Immersive') end },
-			cameraVan = { order = 8, type = 'execute', name = L["Camera: classic (almost no ActionCam)"], func = function() K:ApplyCamera(true, 'Vanillalike') end },
+			intro = Desc(1, L["Compact layout for WoW Forever. Changes are saved to the current ElvUI profile and most of them show after a reload."]),
+			general = {
+				order = 10, type = 'group', name = L["General"],
+				args = {
+					desc = Desc(1, L["Install or reapply KnuUI. The installer walks you through every section."]),
+					install = { order = 2, type = 'execute', width = 'double', name = L["Open installer"], func = function() K:OpenInstaller() end },
+					applyAll = { order = 3, type = 'execute', width = 'double', name = L["Apply all"], desc = L["Apply layout, theme, chat and addon settings, then reload."],
+						func = function() E:StaticPopup_Show('KNUUI_APPLY') end },
+				},
+			},
+			layout = {
+				order = 20, type = 'group', name = L["Layout"],
+				args = {
+					roleHead = Head(1, L["Role"]),
+					roleDesc = Desc(2, L["Tank: threat borders. MDPS: the base layout. RDPS: bigger cast bar and target debuffs. Healer: party and raid in the centre with incoming heals."]),
+					role = { order = 3, type = 'select', width = 'double', name = L["Role"],
+						values = function() local v = {} for _, r in ipairs(K.roles) do v[r] = K.roleNames[r] end return v end,
+						sorting = K.roles,
+						get = function() return E.db.KnuUIRole or 'mdps' end,
+						set = function(_, role) if K:ApplyRole(role) then Reload() end end },
+					columnsHead = Head(10, L["Health and mana columns"]),
+					columnsDesc = Desc(11, L["Vertical health and mana bars next to the main bars, with larger side blocks of buttons."]),
+					columns = { order = 12, type = 'toggle', width = 'full', name = L["Use health and mana columns"],
+						get = function() return E.db.KnuUITanks end,
+						set = function(_, value) if K:ApplyTanks(value) then Reload() end end },
+					compactLeft = { order = 13, type = 'toggle', width = 'full', name = L["Compact left block (3×4): wider left chat"],
+						desc = L["Frees 129 px for the left chat; the data bar shrinks the same."], disabled = NoColumns,
+						get = function() return E.db.KnuUICompactLeft end, set = SetCompact('KnuUICompactLeft') },
+					compactRight = { order = 14, type = 'toggle', width = 'full', name = L["Compact right block (3×4): wider Details"],
+						desc = L["Frees 129 px for Details; the data bar shrinks the same."], disabled = NoColumns,
+						get = function() return E.db.KnuUICompactRight end, set = SetCompact('KnuUICompactRight') },
+					resetHead = Head(20, L["Positions"]),
+					reapply = { order = 21, type = 'execute', width = 'double', name = L["Reapply layout"], desc = L["Puts bars, frames and panels back in their KnuUI positions."],
+						func = function() if K:ApplyLayout() then Reload() end end },
+					nameplates = { order = 22, type = 'execute', width = 'double', name = L["Reapply nameplates"],
+						func = function() if K:ApplyNameplates() then Reload() end end },
+				},
+			},
+			look = {
+				order = 30, type = 'group', name = L["Appearance"],
+				args = {
+					desc = Desc(1, L["Colours, decoration and visual effects."]),
+					theme = { order = 2, type = 'select', width = 'double', name = L["Theme"],
+						values = { knunet = L["Knunet amber"], neon = L["Neon cyan and magenta"] },
+						get = function() return E.db.KnuUITheme or 'knunet' end,
+						set = function(_, value) if K:ApplyTheme(nil, value) then Reload() end end },
+					classHealth = { order = 3, type = 'toggle', width = 'full', name = L["Health bars in class colour"],
+						get = function() return E.db.KnuUIClassHealth ~= false end,
+						set = function(_, value) if K:ApplyTheme(value) then Reload() end end },
+					decor = { order = 4, type = 'toggle', width = 'full', name = L["Decoration: minimap corners, stripes and shadows"],
+						get = function() return E.db.KnuUIDecor ~= false end,
+						set = function(_, value) if (E.db.KnuUIDecor ~= false) ~= value then K:ToggleDecor() end end },
+					combatGlow = { order = 5, type = 'toggle', width = 'full', name = L["Combat glow on the screen edges"],
+						get = function() return E.db.KnuUICombatGlow ~= false end, set = function(_, value) E.db.KnuUICombatGlow = value end },
+					panels = { order = 6, type = 'execute', width = 'double', name = L["Reapply chat and Details panels"],
+						func = function() if K:ApplyIntegratedPanels() then Reload() end end },
+				},
+			},
+			addons = {
+				order = 40, type = 'group', name = L["Addons"],
+				args = {
+					desc = Desc(1, L["How KnuUI looks after other addons. Skins need a reload."]),
+					addonSkins = { order = 2, type = 'toggle', width = 'full', name = L["Skins for supported addons (Auctionator, BugSack, Pawn, Questie...)"],
+						get = function() return E.db.KnuUIAddonSkins ~= false end,
+						set = function(_, value) if K:CanApply() then E.db.KnuUIAddonSkins = value; E:Print(L["Reload the UI to apply addon skins."]) end end },
+					wowpro = { order = 3, type = 'toggle', width = 'full', name = L["WoW-Pro skin"],
+						get = function() return E.db.KnuUISkinWoWPro ~= false end,
+						set = function(_, value) E.db.KnuUISkinWoWPro = value; Reload() end },
+					dbm = { order = 4, type = 'toggle', width = 'full', name = L["DBM bars with KnuUI texture and font"],
+						desc = L["This writes DBM's own settings."],
+						get = function() return E.db.KnuUISkinDBM end, set = function(_, value) E.db.KnuUISkinDBM = value; Reload() end },
+					trackerHead = Head(10, L["Quest tracker"]),
+					tracker = { order = 11, type = 'select', width = 'double', name = L["Quest tracker"],
+						values = { show = L["Always show"], hide = L["Hide when WoW-Pro is loaded"] },
+						get = function() return E.db.KnuUIHideTracker and 'hide' or 'show' end,
+						set = function(_, value) if K:ApplyTracker(value == 'hide') then Reload() end end },
+				},
+			},
+			camera = {
+				order = 50, type = 'group', name = L["Camera"],
+				args = {
+					desc = Desc(1, L["DynamicCam presets (needs DynamicCam). Applied to a DynamicCam profile called KnuUI."]),
+					preset = { order = 2, type = 'select', width = 'double', name = L["Camera preset"],
+						values = { ["Shushudaa's preset"] = L["Cinematic (Shushudaa)"], Immersive = L["Soft immersive"], Vanillalike = L["Classic (almost no ActionCam)"] },
+						get = function() return E.global.KnuUICameraPreset or "Shushudaa's preset" end,
+						set = function(_, value) K:ApplyCamera(true, value) end },
+					cinemaHead = Head(10, L["Cinema mode"]),
+					cinemaDesc = Desc(11, L["Hides the interface and slowly orbits the camera; it ends when you enter combat. Also /knu cine or a key binding (Key Bindings > AddOns > KnuUI)."]),
+					cinema = { order = 12, type = 'execute', width = 'double', name = L["Start cinema mode"], func = function() K:ToggleCinema() end },
+				},
+			},
 		},
 	}
 end

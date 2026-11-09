@@ -231,7 +231,19 @@ assert(#eventFrames == count) -- No instala eventos ni hooks competidores.
 loaded.ForeverDock = nil
 dock.enabled = true
 options()
-assert(E.Options.args.KnuUI.args.layout.type == 'execute' and E.Options.args.KnuUI.args.theme.type == 'execute')
+-- Menú en pestañas: cada grupo tiene descripción y todos los controles tienen nombre.
+local menu = E.Options.args.KnuUI
+assert(menu.childGroups == 'tab')
+for _, key in ipairs({ 'general', 'layout', 'look', 'addons', 'camera' }) do
+ local group = menu.args[key]
+ assert(group and group.type == 'group', key)
+ for name, item in pairs(group.args) do
+  assert(item.type and item.name ~= nil and item.order, key..'.'..name)
+  if item.type == 'toggle' or item.type == 'select' or item.type == 'execute' then assert(item.width, key..'.'..name..' sin ancho') end
+ end
+end
+assert(menu.args.layout.args.reapply.type == 'execute' and menu.args.look.args.theme.type == 'select')
+assert(menu.args.layout.args.compactRight.disabled() == not E.db.KnuUITanks)
 SlashCmdList.KNUUI('')
 assert(not popup and reloads == 0 and not E.db.datatexts.panels.KnuUI_Data)
 SlashCmdList.KNUUI(' aplicar ')
@@ -643,10 +655,11 @@ module.addonSkinEvents.OnEvent(nil, 'PLAYER_REGEN_ENABLED')
 assert(dbtWrites == 4 and DBT.Options.Width == 173)
 
 -- Opciones y fade: ease-out en 150 ms, cierre inmediato e interrupción limpia.
-assert(E.Options.args.KnuUI.args.addonSkins.type == 'toggle')
-E.Options.args.KnuUI.args.addonSkins.set(nil, false)
+local skinsOption = E.Options.args.KnuUI.args.addons.args.addonSkins
+assert(skinsOption.type == 'toggle')
+skinsOption.set(nil, false)
 assert(not E.db.KnuUIAddonSkins)
-E.Options.args.KnuUI.args.addonSkins.set(nil, true)
+skinsOption.set(nil, true)
 local flyout = module.flyout
 flyout:Hide(); flyout:Show()
 assert(flyout.alpha == 0 and flyout.OnUpdate)

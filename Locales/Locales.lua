@@ -8,7 +8,6 @@ ns.L = L
 
 local locale = GetLocale and GetLocale() or 'enUS'
 if locale ~= 'esES' and locale ~= 'esMX' then return end
-L["DBM bars: KnuUI texture and font (changes DBM settings)"] = "Barras de DBM: textura y letra de KnuUI (cambia la configuración de DBM)"
 
 -- Core.lua
 L["KnuUI requires World of Warcraft: Forever."] = "KnuUI requiere World of Warcraft: Forever."
@@ -32,7 +31,6 @@ L["incompatible API; the adjustment could not be completed"] = "API incompatible
 L["texture and font applied; the dock keeps its anchors"] = "textura y fuente aplicadas; el dock conserva los anclajes"
 L["no existing windows; no windows were created"] = "sin ventanas existentes; no se crearon ventanas"
 L["includes its own ElvUI skin; pick it in Baganator. Your bags are kept"] = "incluye skin ElvUI propia; elegila en Baganator. Se conservan sus bolsas"
-L["your profile is kept; configure its bars from the DBM options"] = "se conserva su perfil; configurá sus barras desde las opciones de DBM"
 L["position saved below the minimap; reload to see it"] = "posición guardada bajo el minimapa; recargá para verla"
 L["position saved to the left of WoW-Pro; reload to see it"] = "posición guardada a la izquierda de WoW-Pro; recargá para verla"
 
@@ -111,9 +109,43 @@ L["Healer turns on incoming heals and HoT indicators. Reload to see it."] = "Hea
 L["Columns on"] = "Columnas sí"
 L["Columns off"] = "Columnas no"
 
+-- Installer.lua: menú de opciones en pestañas
+L["Compact layout for WoW Forever. Changes are saved to the current ElvUI profile and most of them show after a reload."] = "Diseño compacto para WoW Forever. Los cambios se guardan en el perfil actual de ElvUI y la mayoría se ve al recargar."
+L["General"] = "General"
+L["Install or reapply KnuUI. The installer walks you through every section."] = "Instalá o reaplicá KnuUI. El asistente te lleva por cada sección."
+L["Apply layout, theme, chat and addon settings, then reload."] = "Aplica diseño, tema, chat y ajustes de addons, y recarga."
+L["Tank: threat borders. MDPS: the base layout. RDPS: bigger cast bar and target debuffs. Healer: party and raid in the centre with incoming heals."] = "Tank: bordes de amenaza. MDPS: el diseño base. RDPS: barra de lanzamiento y perjuicios del objetivo más grandes. Healer: grupo y banda al centro con curación entrante."
+L["Health and mana columns"] = "Columnas de vida y maná"
+L["Vertical health and mana bars next to the main bars, with larger side blocks of buttons."] = "Barras verticales de vida y maná junto a las barras principales, con bloques laterales de botones más grandes."
+L["Use health and mana columns"] = "Usar columnas de vida y maná"
+L["Compact left block (3×4): wider left chat"] = "Bloque izquierdo compacto (3×4): chat izquierdo más ancho"
+L["Compact right block (3×4): wider Details"] = "Bloque derecho compacto (3×4): Details más ancho"
+L["Positions"] = "Posiciones"
+L["Puts bars, frames and panels back in their KnuUI positions."] = "Devuelve barras, marcos y paneles a sus posiciones de KnuUI."
+L["Reapply nameplates"] = "Reaplicar placas de nombre"
+L["Appearance"] = "Apariencia"
+L["Colours, decoration and visual effects."] = "Colores, decoración y efectos visuales."
+L["Health bars in class colour"] = "Barras de vida con el color de la clase"
+L["Decoration: minimap corners, stripes and shadows"] = "Decoración: esquinas del minimapa, franjas y sombras"
+L["Reapply chat and Details panels"] = "Reaplicar paneles de chat y Details"
+L["How KnuUI looks after other addons. Skins need a reload."] = "Cómo integra KnuUI a otros addons. Las skins necesitan recargar."
+L["Skins for supported addons (Auctionator, BugSack, Pawn, Questie...)"] = "Skins para addons compatibles (Auctionator, BugSack, Pawn, Questie...)"
+L["DBM bars with KnuUI texture and font"] = "Barras de DBM con la textura y la letra de KnuUI"
+L["This writes DBM's own settings."] = "Esto cambia la configuración propia de DBM."
+L["Quest tracker"] = "Rastreador de misiones"
+L["Always show"] = "Mostrar siempre"
+L["Hide when WoW-Pro is loaded"] = "Ocultar si WoW-Pro está cargado"
+L["Camera"] = "Cámara"
+L["DynamicCam presets (needs DynamicCam). Applied to a DynamicCam profile called KnuUI."] = "Configuraciones de DynamicCam (hace falta DynamicCam). Se aplican en un perfil de DynamicCam llamado KnuUI."
+L["Camera preset"] = "Configuración de cámara"
+L["Cinematic (Shushudaa)"] = "Cinematográfica (Shushudaa)"
+L["Soft immersive"] = "Inmersiva suave"
+L["Classic (almost no ActionCam)"] = "Clásica (casi sin ActionCam)"
+L["Cinema mode"] = "Modo cine"
+L["Hides the interface and slowly orbits the camera; it ends when you enter combat. Also /knu cine or a key binding (Key Bindings > AddOns > KnuUI)."] = "Oculta la interfaz y gira la cámara despacio; se corta al entrar en combate. También con /knu cine o una tecla (Teclado > AddOns > KnuUI)."
+L["Start cinema mode"] = "Activar modo cine"
+
 -- Tanks.lua: bloques compactos
-L["Columns: compact left block (3×4)"] = "Columnas: bloque izquierdo compacto (3×4)"
-L["Columns: compact right block (3×4)"] = "Columnas: bloque derecho compacto (3×4)"
 L["Frees 129 px for the left chat; the data bar shrinks the same."] = "Libera 129 px para el chat izquierdo; la barra de datos se achica lo mismo."
 L["Frees 129 px for Details; the data bar shrinks the same."] = "Libera 129 px para Details; la barra de datos se achica lo mismo."
 
@@ -166,13 +198,6 @@ L["Finish and reload"] = "Terminar y recargar"
 -- Installer.lua: ElvUI options
 L["Open installer"] = "Abrir asistente"
 L["Reapply layout"] = "Reaplicar diseño"
-L["Reapply theme"] = "Reaplicar tema"
-L["Panels: reapply"] = "Paneles: reaplicar"
-L["Tracker: show"] = "Rastreador: mostrar"
-L["Tracker: hide with WoW-Pro"] = "Rastreador: ocultar con WoW-Pro"
-L["Camera: cinematic (Shushudaa)"] = "Cámara: cinematográfica (Shushudaa)"
-L["Camera: soft immersive"] = "Cámara: inmersiva suave"
-L["Camera: classic (almost no ActionCam)"] = "Cámara: clásica (casi sin ActionCam)"
 
 -- Installer.lua: popup
 L["Do you want to apply the layout, theme, chat/data and compatible addon settings to the current profile and reload?"] = "¿Querés aplicar diseño, tema, chat/datos y ajustes compatibles de addons al perfil actual y recargar?"
@@ -180,7 +205,6 @@ L["Apply and reload"] = "Aplicar y recargar"
 L["Cancel"] = "Cancelar"
 
 -- Skins/Engine.lua e Installer.lua: integraciones opcionales.
-L["Addon skins"] = "Skins de addons"
 L["Addon skins: %s"] = "Skins de addons: %s"
 L["Reload the UI to apply addon skins."] = "Recargá la interfaz para aplicar las skins de addons."
 L["DBM bars follow the addon skins setting; reload to apply it"] = "las barras de DBM siguen el ajuste de skins de addons; recargá para aplicarlo"

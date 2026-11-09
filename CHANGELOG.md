@@ -2,6 +2,8 @@
 
 ## 3.3.2 (2026-11-08)
 
+- New options menu in ElvUI > KnuUI: tabs (General, Layout, Appearance, Addons, Camera), a short
+  explanation per tab, full-width options so no label is cut, and dependent options greyed out.
 - Details on Forever: right text in Details' simple format ("total (per second, percent)" in one string at
   the right edge). The aligned columns sat 60 px apart and covered the name, which Details cannot trim
   on Forever because text widths are secret values.
