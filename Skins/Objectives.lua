@@ -42,13 +42,35 @@ local function Style()
 	if not frame then return end
 	local t = K:GetTheme()
 
+	-- Con WoW-Pro cargado se oculta por defecto (pedido del user): en Forever Blizzard lo estira hasta
+	-- abajo de la pantalla en su posición por defecto (Blizzard_ObjectiveTrackerContainer.lua:189-210)
+	-- y tapaba a Details. Además de transparente queda colapsado, así las misiones invisibles no
+	-- capturan clics; si Blizzard lo expande (misión nueva), se vuelve a colapsar fuera de combate.
+	if E.db.KnuUIHideTracker == nil then E.db.KnuUIHideTracker = true end
 	if E.db.KnuUIHideTracker and K:IsLoaded('WoWPro') then
 		frame:SetAlpha(0)
 		frame:EnableMouse(false)
+		local mini = frame.Header and frame.Header.MinimizeButton
+		if mini then mini:EnableMouse(false) end
+		if not InCombatLockdown() and not frame.isCollapsed and type(frame.SetCollapsed) == 'function' then
+			pcall(frame.SetCollapsed, frame, true)
+		end
+		if not frame.KnuHideHook and type(frame.SetCollapsed) == 'function' then
+			frame.KnuHideHook = true
+			local busy
+			hooksecurefunc(frame, 'SetCollapsed', function(self, collapsed)
+				if busy or collapsed or InCombatLockdown() then return end
+				if E.db.KnuUIHideTracker and K:IsLoaded('WoWPro') then
+					busy = true; pcall(self.SetCollapsed, self, true); busy = false
+				end
+			end)
+		end
 		return
 	end
 	frame:SetAlpha(1)
 	frame:EnableMouse(true) -- por si antes se ocultó con WoW-Pro
+	local mini = frame.Header and frame.Header.MinimizeButton
+	if mini then mini:EnableMouse(true) end
 
 	if not frame.KnuBackdrop then
 		-- Fondo que abarca sólo el contenido visible (no todo el alto reservado del marco),
