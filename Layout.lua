@@ -39,6 +39,9 @@ local movers = {
 	ElvUF_Raid2Mover = 'TOPLEFT,ElvUIParent,LEFT,8,110',
 	ElvUF_Raid3Mover = 'TOPLEFT,ElvUIParent,LEFT,8,110',
 	MinimapMover = 'TOPRIGHT,ElvUIParent,TOPRIGHT,-8,-8',
+	-- Aviso de amigos de Battle.net (Modules/Blizzard/Blizzard.lua:168-173): arriba del chat
+	-- izquierdo (y 4-184) dejando lugar a la caja de escribir, en vez de debajo del minimapa.
+	BNETMover = 'BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,4,212',
 	BuffsMover = 'TOPRIGHT,ElvUIParent,TOPRIGHT,-200,-8',
 	DebuffsMover = 'TOPRIGHT,ElvUIParent,TOPRIGHT,-200,-148', -- debajo de 3 filas de buffs de 36
 }

@@ -18,19 +18,48 @@ local function Settings()
  })
 end
 
+-- Pestañas del chat a la misma altura. Las ventanas agregadas (p. ej. «Botín / Comerciar») van en
+-- el contenedor de pestañas dinámicas, que ElvUI ancla a la derecha de Registro (Modules/Chat/Chat.lua:3104-3109);
+-- según el FrameXML público de Blizzard (FloatingChatFrame.lua:1895-1914) la primera dinámica se ubica en
+-- Y=-1, así que la pestaña entera queda más abajo y centrar el texto dentro de ella no alcanza.
+-- Se mide la diferencia de altura con la pestaña principal y se compensa en el texto. Propuesta de Codex,
+-- revisada; sin verificar en el juego. Se reaplica después de StyleChat (Chat.lua:981) y del dock.
+local tabsHooked
 local function FixChatTabs()
- -- Todas las pestañas con el mismo alto de texto: sin salto de línea y centradas igual que las
- -- deja ElvUI (Modules/Chat/Chat.lua:1034-1038). Un nombre largo se corta con "..." en una línea.
- for i = 1, (_G.NUM_CHAT_WINDOWS or 10) do
-  local tab = _G['ChatFrame'..i..'Tab']
+ if InCombatLockdown() then return end
+ local ch = E:GetModule('Chat', true)
+ if not ch or type(ch.GetTab) ~= 'function' then return end
+ local dock = _G.GeneralDockManager
+ for _, name in ipairs(_G.CHAT_FRAMES or {}) do
+  local frame = _G[name]
+  local tab = frame and ch:GetTab(frame)
   local text = tab and tab.Text
   if text then
+   local y = -1 -- el mismo desplazamiento que usa ElvUI (Chat.lua:1038)
+   local ref = frame.isDocked and dock and dock.primary and ch:GetTab(dock.primary)
+   if ref and ref ~= tab then
+    local _, ry = ref:GetCenter()
+    local _, ty = tab:GetCenter()
+    if ry and ty then
+     local rs, ts = ref:GetEffectiveScale(), tab:GetEffectiveScale()
+     y = (ry * rs - ty * ts - rs) / ts
+    end
+   end
+   local _, height = text:GetFont()
    if text.SetWordWrap then text:SetWordWrap(false) end
    if text.SetNonSpaceWrap then text:SetNonSpaceWrap(false) end
    if text.SetMaxLines then text:SetMaxLines(1) end
    text:SetJustifyV('MIDDLE')
    text:ClearAllPoints()
-   text:SetPoint('CENTER', tab, 'CENTER', 0, -1)
+   if height then text:SetHeight(height) end
+   text:SetPoint('CENTER', tab, 'CENTER', 0, y)
+  end
+ end
+ if not tabsHooked then
+  tabsHooked = true
+  hooksecurefunc(ch, 'StyleChat', function() FixChatTabs() end)
+  if type(_G.FCFDock_UpdateTabs) == 'function' then
+   hooksecurefunc('FCFDock_UpdateTabs', function() FixChatTabs() end)
   end
  end
 end

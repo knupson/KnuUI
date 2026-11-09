@@ -82,7 +82,7 @@ function K:Initialize()
 	self:SetupInstaller()
 	self:SetupAFK()
 	if E.Forever then
-		for _, setup in ipairs({ 'SetupAddonSkins', 'SetupButtons', 'SetupDock', 'SetupWoWProSkin', 'SetupTanks', 'SetupTracker', 'SetupDecor', 'SetupPanels', 'SetupWoWProES', 'SetupTomTomSkin', 'SetupBaganatorSkin', 'SetupExtras' }) do
+		for _, setup in ipairs({ 'SetupAddonSkins', 'SetupButtons', 'SetupDock', 'SetupWoWProSkin', 'SetupTanks', 'SetupTracker', 'SetupDecor', 'SetupPanels', 'SetupWoWProES', 'SetupTomTomSkin', 'SetupBaganatorSkin', 'SetupExtras', 'SetupBNToast' }) do
 			local ok, err = pcall(self[setup], self)
 			if not ok then E:Print(format(L["KnuUI: %s failed: %s"], setup, tostring(err))) end
 		end

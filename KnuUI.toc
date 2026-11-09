@@ -44,6 +44,7 @@ Decor.lua
 Skins/WoWPro.lua
 Skins/WoWProES.lua
 Skins/TomTom.lua
+Skins/BNToast.lua
 Skins/Baganator.lua
 Skins/Objectives.lua
 Installer.lua

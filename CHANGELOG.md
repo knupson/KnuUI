@@ -2,6 +2,9 @@
 
 ## 3.3.2 (2026-11-08)
 
+- Battle.net friend notifications with the KnuUI theme, moved above the left chat.
+- Knunet intense orange is now a clearly different orange (#ff6a00).
+- GearQuest skin only styles its outer frame (the parchment titles were turning black).
 - More themes: Knunet intense orange, Dracula, Nord, Catppuccin Mocha, Gruvbox and Tokyo Night
   (official palette values), selectable in ElvUI > KnuUI > Appearance.
 - Quest tracker background 8 px from the screen edge, like the minimap; the empty tab bar above

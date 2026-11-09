@@ -717,6 +717,14 @@ for key, theme in pairs(module.themes) do
 end
 assert(module:ApplyTheme(nil, 'knunet'))
 
+-- Aviso de Battle.net: posición sobre el chat izquierdo y borde del tema.
+BNToastFrame = CreateFrame('Frame', 'BNToastFrame')
+E.db.movers.BNETMover = nil
+combat = false
+module:SetupBNToast()
+assert(E.db.movers.BNETMover == 'BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,4,212')
+assert(BNToastFrame.KnuLine)
+
 -- Roles: cada uno sólo usa claves que existen en los defaults de ElvUI y se deshace al cambiar.
 E.Forever, combat = true, false
 local units = E.db.unitframe.units
