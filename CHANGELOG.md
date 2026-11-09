@@ -4,6 +4,8 @@
 
 - The expanded quest tracker never covers the tooltip (tracker in MEDIUM strata, tooltip raised on show).
 - TomTom skin re-applied after TomTom repaints its coordinate block (it reset colours and font).
+- Action buttons no longer stay grey after their cooldown: "Desaturate Cooldowns" is turned off
+  (ElvUI evaluates it once with secret values on Forever; the cooldown numbers remain).
 
 ## 3.3.0 — extras (2026-11-08)
 

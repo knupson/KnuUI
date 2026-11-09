@@ -3,7 +3,7 @@ local E = unpack(ElvUI)
 local L = ns.L
 local K = E:NewModule('KnuUI')
 K.addonName = addonName
-K.version = 28 -- Clave propia del perfil; se confirma al terminar el asistente.
+K.version = 29 -- Clave propia del perfil; se confirma al terminar el asistente.
 
 local function Set(db, values)
 	for key, value in pairs(values) do

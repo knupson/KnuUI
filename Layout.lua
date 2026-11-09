@@ -94,6 +94,10 @@ function K:ApplyLayout()
 
 
 	E.db.actionbar.globalFadeAlpha = 0 -- pedido del user: nada se vuelve transparente (1 - 0 = opaco)
+	-- Sin gris en enfriamiento: con valores secretos ElvUI evalúa la desaturación una sola vez
+	-- (Modules/ActionBars/ActionBars.lua:1762-1768) y el ícono puede quedar gris al terminar.
+	-- El instalador de ElvUI (General/Install.lua:321) y el de S&L la prenden; los números ya alcanzan.
+	E.db.actionbar.desaturateOnCooldown = false
 	-- perRow, tamaño, separación, sólo con mouse.
 	local bars = {
 		[1] = { 12, 32, 2, false },
