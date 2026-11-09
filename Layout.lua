@@ -288,6 +288,7 @@ function K:ApplyChat()
 	for _, name in ipairs({ 'LeftChatMover', 'RightChatMover', 'DTPanelKnuUI_DataMover' }) do
 		E.db.movers[name] = movers[name]
 	end
+	if E.db.KnuUITanks then self:ApplySideBlocks() end -- Tanks.lua: bloques compactos
 	self:CleanupLegacy()
 	self:ApplyIntegratedPanels()
 	return true

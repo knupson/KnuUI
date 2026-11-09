@@ -68,6 +68,8 @@ Each integration only touches the addon it belongs to.
 
 KnuUI only touches other addons when you ask for it, and never sends anything outside the game.
 
+- **Details!:** besides texture and font, turns on Details' simple right-text format (a global Details
+  setting) so the numbers do not cover the player name in narrow docked windows on Forever.
 - **DynamicCam:** creates and selects its own profile `KnuUI` (your profiles are untouched) and loads one of DynamicCam's bundled presets. Applied once by "Apply all", or from ElvUI > KnuUI.
 - **WoW-Pro:** moves the guide window 8 px from the top-left corner once per ElvUI profile (stored in WoW-Pro's own position setting); its notes can be localized at load time if the private `KnuUI_WoWProES` data addon is installed.
 - **Questie / WoW-Pro tracker position:** only from their buttons on the installer's Addons page.

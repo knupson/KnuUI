@@ -111,6 +111,12 @@ L["Healer turns on incoming heals and HoT indicators. Reload to see it."] = "Hea
 L["Columns on"] = "Columnas sí"
 L["Columns off"] = "Columnas no"
 
+-- Tanks.lua: bloques compactos
+L["Columns: compact left block (3×4)"] = "Columnas: bloque izquierdo compacto (3×4)"
+L["Columns: compact right block (3×4)"] = "Columnas: bloque derecho compacto (3×4)"
+L["Frees 129 px for the left chat; the data bar shrinks the same."] = "Libera 129 px para el chat izquierdo; la barra de datos se achica lo mismo."
+L["Frees 129 px for Details; the data bar shrinks the same."] = "Libera 129 px para Details; la barra de datos se achica lo mismo."
+
 -- Extras.lua
 L["%d min"] = "%d min"
 L["%d h %d min"] = "%d h %d min"

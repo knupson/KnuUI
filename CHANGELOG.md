@@ -1,5 +1,13 @@
 # KnuUI changelog
 
+## 3.3.2 (2026-11-08)
+
+- Details on Forever: right text in Details' simple format ("total (per second, percent)" in one string at
+  the right edge). The aligned columns sat 60 px apart and covered the name, which Details cannot trim
+  on Forever because text widths are secret values.
+- Column mode: compact side blocks (3×4) selectable per side in ElvUI > KnuUI. Each compact side gives
+  129 px to its chat/Details panel and the data bar shrinks the same.
+
 ## 3.3.1 (2026-11-08)
 
 - The expanded quest tracker never covers the tooltip (tracker in MEDIUM strata, tooltip raised on show).

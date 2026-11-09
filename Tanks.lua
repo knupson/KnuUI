@@ -26,6 +26,42 @@ local BARS = {
 }
 local tank
 
+-- Bloques laterales compactos (elegibles por lado en ElvUI > KnuUI): 3×4 botones de 41×37
+-- (3·41+2·2 = 127 de ancho, 154 de alto, y 28-182) en vez de 6×4; sólo la barra 3 (izquierda)
+-- o la 4 (derecha) y se apaga la 5 o la 6. Los 129 px que se liberan van al panel de ese lado
+-- (chat o Details) y la barra de datos de abajo se achica y se corre lo mismo.
+local FREED = 256 - 127
+local SIDES = {
+	left = { key = 'KnuUICompactLeft', bar = 'bar3', extra = 'bar5', mover = 'BOTTOM,ElvUIParent,BOTTOM,-356,28' }, -- x 541-668
+	right = { key = 'KnuUICompactRight', bar = 'bar4', extra = 'bar6', mover = 'BOTTOM,ElvUIParent,BOTTOM,356,28' }, -- x 1252-1379
+}
+
+-- Anchos de chat y barra de datos según los bloques. Sin modo columnas vuelve a 400 / 1100.
+function K:ApplySideBlocks()
+	local left = E.db.KnuUITanks and E.db.KnuUICompactLeft and FREED or 0
+	local right = E.db.KnuUITanks and E.db.KnuUICompactRight and FREED or 0
+	if E.db.KnuUITanks then
+		for _, side in pairs(SIDES) do
+			if E.db[side.key] then
+				self.Set(E.db.actionbar[side.bar], {
+					enabled = true, buttons = 12, buttonsPerRow = 3, buttonSize = 41, buttonHeight = 37,
+					buttonSpacing = 2, keepSizeRatio = false, mouseover = false, inheritGlobalFade = false,
+					alpha = 1, point = 'TOPLEFT',
+				})
+				E.db.actionbar[side.extra].enabled = false
+				E.db.movers['ElvAB_'..side.bar:match('%d+')] = side.mover
+			end
+		end
+	end
+	-- Chat: Profile.lua (E.db.chat.separateSizes, panelWidthRight); Dock.lua:316 usa el derecho.
+	self.Set(E.db.chat, {
+		separateSizes = left ~= right, panelWidth = 400 + left, panelWidthRight = 400 + right,
+	})
+	local data = E.global.datatexts.customPanels.KnuUI_Data
+	if data then data.width = 1100 - left - right end
+	E.db.movers.DTPanelKnuUI_DataMover = format('BOTTOM,ElvUIParent,BOTTOM,%d,2', math.floor((left - right) / 2))
+end
+
 local function PowerColor()
 	local _, token = UnitPowerType('player')
 	local c = token and PowerBarColor and PowerBarColor[token]
@@ -119,10 +155,12 @@ function K:ApplyTanks(enable)
 				E.db.movers['ElvAB_'..key:match('%d+')] = cfg.mover
 			end
 		end
+		self:ApplySideBlocks() -- bloques compactos elegidos y anchos de chat/datos
 		self:ApplyRoleOverlay() -- el grupo del Healer sube para no pisar el objetivo centrado
 	else
 		player.health.orientation = 'HORIZONTAL'
 		self:ApplyLayout() -- vuelve al marco 240×54 y a las posiciones del boceto v4
+		self:ApplySideBlocks() -- chats de 400 y barra de datos de 1100 otra vez
 	end
 	return true
 end

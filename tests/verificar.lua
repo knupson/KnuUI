@@ -668,6 +668,23 @@ module:ToggleCinema(true); assert(orbit == 1) -- ya estaba prendido
 module:ToggleCinema(false); assert(orbit == 0)
 assert(type(KnuUI_ToggleCinema) == 'function' and BINDING_NAME_KNUUI_CINEMA)
 
+-- Bloques laterales compactos: sólo en modo columnas; el panel del lado gana 129 px.
+E.Forever, combat = true, false
+E.db.KnuUICompactRight = true
+E.global.datatexts.customPanels.KnuUI_Data = E.global.datatexts.customPanels.KnuUI_Data or { width = 1100 }
+assert(module:ApplyTanks(true))
+local ab = E.db.actionbar
+assert(ab.bar4.buttonsPerRow == 3 and ab.bar4.buttons == 12 and not ab.bar6.enabled and ab.bar5.enabled)
+assert(E.db.movers.ElvAB_4 == 'BOTTOM,ElvUIParent,BOTTOM,356,28')
+assert(E.db.chat.separateSizes and E.db.chat.panelWidth == 400 and E.db.chat.panelWidthRight == 529)
+assert(E.global.datatexts.customPanels.KnuUI_Data.width == 971)
+assert(E.db.movers.DTPanelKnuUI_DataMover == 'BOTTOM,ElvUIParent,BOTTOM,-65,2')
+Check(E.db.actionbar, P.actionbar, 'E.db.actionbar'); Check(E.db.chat, P.chat, 'E.db.chat')
+assert(module:ApplyTanks(false))
+assert(not E.db.chat.separateSizes and E.db.chat.panelWidthRight == 400 and E.global.datatexts.customPanels.KnuUI_Data.width == 1100)
+assert(E.db.movers.DTPanelKnuUI_DataMover == 'BOTTOM,ElvUIParent,BOTTOM,0,2')
+E.db.KnuUICompactRight = nil
+
 -- Roles: cada uno sólo usa claves que existen en los defaults de ElvUI y se deshace al cambiar.
 E.Forever, combat = true, false
 local units = E.db.unitframe.units
