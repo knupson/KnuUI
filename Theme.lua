@@ -36,10 +36,12 @@ K.themes = {
 	-- de la web; el fondo y los textos son los de knunet.
 	knunetIntense = {
 		label = L["Knunet intense orange"],
-		accent = C('ff8c1a'), accentHi = C('ffb04d'), accentDim = C('d96d0f'),
-		text = C('ecd9bd'), muted = C('a88f70'),
-		backdrop = C('1f160e'), backdropFade = C('110c08', 0.85), border = C('4a3522'),
-		cast = C('ff8c1a'), castNoInterrupt = C('e0523a'), health = C('ffb04d'),
+		-- v2: el primer naranja (#ff8c1a) casi no se distinguía del ámbar (#ffa82e). Este es naranja puro
+		-- (#ff6a00, matiz 25° contra 35° del ámbar, saturación 100 %) y los bordes también van en naranja, no en marrón.
+		accent = C('ff6a00'), accentHi = C('ff8c33'), accentDim = C('d95500'),
+		text = C('f2e0c8'), muted = C('b08a68'),
+		backdrop = C('1f140b'), backdropFade = C('120b06', 0.85), border = C('7a3a08'),
+		cast = C('ff6a00'), castNoInterrupt = C('e0523a'), health = C('ff8c33'),
 		healthBackdrop = C('18110b'),
 	},
 	-- Paletas populares con sus valores oficiales (leídos el 2026-11-08):
