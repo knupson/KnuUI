@@ -12,14 +12,14 @@ local Set = K.Set
 -- Modules/DataBars/Experience.lua:314; Modules/DataTexts/DataTexts.lua:341.
 -- Coordenadas absolutas sobre ElvUIParent; origen abajo a la izquierda.
 -- Elementos de Blizzard (boceto aprobado el 2026-11-09, 1920×1080). Nombres de mover tomados del
--- perfil real del usuario (existen en Forever). La barra de aire y el rastreador los ubica el Modo
--- edición de Blizzard y no figuran acá.
+-- código de ElvUI para Forever (E.Modern): Modules/Blizzard/WidgetsUI.lua:150-178, Blizzard.lua:157-158,
+-- AlertFrame.lua:105, Misc/Loot.lua, Misc/QueueStatus.lua:158, ActionBars/ExtraAB.lua, General/Core.lua.
+-- Fuera: durabilidad y diálogo de NPC (ElvUI sólo los crea en Legacy), errores, vehículo y cartel de
+-- nivel (ElvUI no tiene mover). Barras de duración, rastreador y durabilidad: Modo edición de Blizzard.
 K.blizzardMovers = {
 	-- Columna central, debajo de la flecha de TomTom (y 30-115).
 	TopCenterContainerMover = 'TOP,ElvUIParent,TOP,0,-122', -- estado de zona / campo de batalla
-	UIErrorsFrameMover = 'TOP,ElvUIParent,TOP,0,-212', -- errores en rojo
 	BossBannerMover = 'TOP,ElvUIParent,TOP,0,-270', -- carteles grandes, transitorios
-	LevelUpBossBannerMover = 'TOP,ElvUIParent,TOP,0,-270',
 	EventToastMover = 'TOP,ElvUIParent,TOP,0,-270',
 	PowerBarContainerMover = 'TOP,ElvUIParent,TOP,0,-350', -- poder alternativo
 	LossControlMover = 'CENTER,ElvUIParent,CENTER,0,60', -- pérdida de control
@@ -29,14 +29,11 @@ K.blizzardMovers = {
 	LootFrameMover = 'TOPLEFT,ElvUIParent,TOPLEFT,270,-400',
 	-- Encima del chat izquierdo (y 4-184, caja de escribir encima).
 	BNETMover = 'BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,4,212',
-	TalkingHeadFrameMover = 'BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,4,284',
 	-- Botones especiales encima del jugador y del objetivo: fuera del grupo del Healer (x 747-1173).
 	BossButton = 'BOTTOM,ElvUIParent,BOTTOM,-352,280',
 	ZoneAbility = 'BOTTOM,ElvUIParent,BOTTOM,352,280',
 	-- Debajo de los beneficios, junto al minimapa.
 	BelowMinimapContainerMover = 'TOPRIGHT,ElvUIParent,TOPRIGHT,-200,-196',
-	DurabilityFrameMover = 'TOPRIGHT,ElvUIParent,TOPRIGHT,-204,-246',
-	VehicleSeatMover = 'TOPRIGHT,ElvUIParent,TOPRIGHT,-340,-246',
 	QueueStatusMover = 'TOPRIGHT,ElvUIParent,TOPRIGHT,-40,-236',
 }
 
