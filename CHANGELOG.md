@@ -2,6 +2,8 @@
 
 ## 3.3.2 (2026-11-08)
 
+- Breath / fatigue bars with the KnuUI look (Melli texture, colour per type, theme border). Their
+  position on Forever comes from Blizzard's Edit Mode (Duration Bars).
 - Blizzard alerts (achievements, recipes, loot) at the top centre below the TomTom arrow, with
   ElvUI's alert skin turned on.
 - Chat tabs: the first added window (e.g. a loot tab) sat 0.7 px lower; its label is now aligned

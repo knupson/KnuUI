@@ -165,8 +165,40 @@ local function SetupAlerts()
 	end
 end
 
+-- Barras de aire / fatiga / fingir muerte (MirrorTimerContainer). En Forever las ubica el Modo
+-- edición ("Barras de duración"; ElvUI Modules/Misc/Misc.lua:447-451) y ElvUI las viste dejando la
+-- textura de Blizzard recortada (Skins/MirrorTimers.lua:18-52). Acá: textura Melli, color por tipo,
+-- letra Expressway y borde del tema, después de ElvUI y en cada barra nueva.
+local MIRROR_COLORS = {
+	BREATH = { 0.25, 0.6, 1 }, EXHAUSTION = { 1, 0.55, 0.1 }, FEIGNDEATH = { 1, 0.85, 0.2 },
+}
+local function StyleMirror(container, timer)
+	local bar = container and container.GetAvailableTimer and container:GetAvailableTimer(timer)
+	if not bar or not bar.StatusBar then return end
+	local t = K:GetTheme()
+	local status = bar.StatusBar
+	status:SetStatusBarTexture(E.Libs.LSM:Fetch('statusbar', 'Melli'))
+	local c = MIRROR_COLORS[timer] or { t.accent.r, t.accent.g, t.accent.b }
+	status:SetStatusBarColor(c[1], c[2], c[3])
+	if bar.SetBackdropBorderColor then
+		bar:SetBackdropColor(t.backdropFade.r, t.backdropFade.g, t.backdropFade.b, 0.9)
+		bar:SetBackdropBorderColor(t.accentDim.r, t.accentDim.g, t.accentDim.b)
+	end
+	for _, text in ipairs({ bar.Text, status.TimerText }) do
+		if text and text.FontTemplate then text:FontTemplate('Expressway', 12, 'OUTLINE') end
+	end
+end
+
+local function SetupMirrorTimers()
+	local container = _G.MirrorTimerContainer
+	if not container or type(container.SetupTimer) ~= 'function' or K.mirrorHooked then return end
+	K.mirrorHooked = true
+	hooksecurefunc(container, 'SetupTimer', function(self, timer) pcall(StyleMirror, self, timer) end)
+end
+
 function K:SetupExtras()
 	pcall(SetupAlerts)
+	pcall(SetupMirrorTimers)
 	if E.db.KnuUICombatGlow == nil then E.db.KnuUICombatGlow = true end
 	if not glow then CreateGlow() end
 	SetupXP()
