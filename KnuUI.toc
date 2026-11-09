@@ -5,8 +5,9 @@
 ## Notes-esMX: Diseño compacto y tema ámbar para ElvUI en WoW Forever. Abrí el asistente con /knu.
 ## IconTexture: Interface\AddOns\KnuUI\media\icono
 ## Author: Alejandro Benzoni (KnuPwns)
-## Version: 3.3.0
+## Version: 3.3.1
 ## X-License: MIT
+## X-Curse-Project-ID: 1793253
 ## X-Website: https://knunet.com
 ## X-Category: Interface Enhancements
 ## Dependencies: ElvUI

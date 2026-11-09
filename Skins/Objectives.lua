@@ -79,6 +79,17 @@ local function Style()
 		C_Timer.NewTicker(1, function() pcall(Fit) end) -- liviano: sólo geometría
 	end
 	frame.KnuBackdrop:SetBackdropBorderColor(t.border.r, t.border.g, t.border.b)
+	-- El rastreador expandido nunca tapa el tooltip: el rastreador va en MEDIUM y el tooltip
+	-- en TOOLTIP, arriba de todo, cada vez que se muestra. Sólo fuera de combate.
+	if not InCombatLockdown() and frame:GetFrameStrata() ~= 'MEDIUM' then frame:SetFrameStrata('MEDIUM') end
+	local tip = _G.GameTooltip
+	if tip and not K.tooltipOnTop then
+		K.tooltipOnTop = true
+		tip:HookScript('OnShow', function(self)
+			if self:GetFrameStrata() ~= 'TOOLTIP' then self:SetFrameStrata('TOOLTIP') end
+			self:Raise()
+		end)
+	end
 
 	StyleHeader(frame.Header)
 	-- Contraído por defecto (pedido del user): una vez por sesión, con el mismo botón que usa

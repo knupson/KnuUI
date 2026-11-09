@@ -33,7 +33,15 @@ function K:SkinTomTom()
 	pcall(Style)
 end
 
+local hooked
 function K:SetupTomTomSkin()
+	-- TomTom vuelve a poner sus colores y su letra cada vez que corre ShowHideCoordBlock
+	-- (modules/coord_block.lua:147-150,167); la skin se aplica justo después.
+	local tomtom = _G.TomTom
+	if not hooked and tomtom and type(tomtom.ShowHideCoordBlock) == 'function' then
+		hooked = true
+		hooksecurefunc(tomtom, 'ShowHideCoordBlock', function() K:SkinTomTom() end)
+	end
 	local f = CreateFrame('Frame')
 	f:RegisterEvent('PLAYER_ENTERING_WORLD')
 	f:SetScript('OnEvent', function()

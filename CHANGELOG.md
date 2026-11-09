@@ -1,5 +1,10 @@
 # KnuUI changelog
 
+## 3.3.1 (2026-11-08)
+
+- The expanded quest tracker never covers the tooltip (tracker in MEDIUM strata, tooltip raised on show).
+- TomTom skin re-applied after TomTom repaints its coordinate block (it reset colours and font).
+
 ## 3.3.0 — extras (2026-11-08)
 
 - Combat glow: thin amber gradient on the screen edges while in combat (150 ms in, 300 ms out).
