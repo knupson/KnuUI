@@ -151,7 +151,22 @@ function KnuUI_ToggleCinema() K:ToggleCinema() end
 _G.BINDING_HEADER_KNUUI = 'KnuUI'
 _G.BINDING_NAME_KNUUI_CINEMA = L["Cinema mode (hide the interface and orbit the camera)"]
 
+-- Alertas: posición de KnuUI una vez por perfil y skin de ElvUI prendida (requiere recargar).
+local function SetupAlerts()
+	if E.db.KnuUIAlertsPlaced then return end
+	E.db.KnuUIAlertsPlaced = true
+	E.db.movers = E.db.movers or {}
+	E.db.movers.AlertFrameMover = 'TOP,ElvUIParent,TOP,0,-140'
+	if E.SetMoverPoints then pcall(E.SetMoverPoints, E, 'AlertFrameMover') end
+	local skins = E.private.skins and E.private.skins.blizzard
+	if skins and skins.alertframes == false then
+		skins.alertframes = true
+		E:Print(L["KnuUI: alert skin turned on; reload to see it."])
+	end
+end
+
 function K:SetupExtras()
+	pcall(SetupAlerts)
 	if E.db.KnuUICombatGlow == nil then E.db.KnuUICombatGlow = true end
 	if not glow then CreateGlow() end
 	SetupXP()

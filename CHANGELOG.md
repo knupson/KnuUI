@@ -2,6 +2,10 @@
 
 ## 3.3.2 (2026-11-08)
 
+- Blizzard alerts (achievements, recipes, loot) at the top centre below the TomTom arrow, with
+  ElvUI's alert skin turned on.
+- Chat tabs: the first added window (e.g. a loot tab) sat 0.7 px lower; its label is now aligned
+  with General (measured in game).
 - Battle.net friend notifications with the KnuUI theme, moved above the left chat.
 - Knunet intense orange is now a clearly different orange (#ff6a00).
 - GearQuest skin only styles its outer frame (the parchment titles were turning black).

@@ -151,6 +151,7 @@ L["Frees 129 px for the left chat; the data bar shrinks the same."] = "Libera 12
 L["Frees 129 px for Details; the data bar shrinks the same."] = "Libera 129 px para Details; la barra de datos se achica lo mismo."
 
 -- Extras.lua
+L["KnuUI: alert skin turned on; reload to see it."] = "KnuUI: se prendió la skin de alertas; recargá para verla."
 L["%d min"] = "%d min"
 L["%d h %d min"] = "%d h %d min"
 L["KnuUI: estimate after a minute of gaining experience"] = "KnuUI: la estimación aparece tras un minuto ganando experiencia"

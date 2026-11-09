@@ -42,6 +42,9 @@ local movers = {
 	-- Aviso de amigos de Battle.net (Modules/Blizzard/Blizzard.lua:168-173): arriba del chat
 	-- izquierdo (y 4-184) dejando lugar a la caja de escribir, en vez de debajo del minimapa.
 	BNETMover = 'BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,4,212',
+	-- Alertas de Blizzard (logros, recetas, botín): arriba al centro, debajo de la flecha de TomTom
+	-- (y 30-115 en 1920×1080). ElvUI: Modules/Blizzard/AlertFrame.lua:105, mover AlertFrameMover.
+	AlertFrameMover = 'TOP,ElvUIParent,TOP,0,-140',
 	BuffsMover = 'TOPRIGHT,ElvUIParent,TOPRIGHT,-200,-8',
 	DebuffsMover = 'TOPRIGHT,ElvUIParent,TOPRIGHT,-200,-148', -- debajo de 3 filas de buffs de 36
 }
@@ -96,6 +99,9 @@ function K:ApplyLayout()
 	-- Barra de marcas de banda de S&L: sólo en grupo (por defecto aparece al tener objetivo).
 
 
+	-- Skin de alertas de ElvUI (Skins/Alerts.lua:14, opción privada 'alertframes'): la apagó un perfil
+	-- anterior y las alertas quedaban con el pergamino de Blizzard. Se ve al recargar.
+	if E.private.skins and E.private.skins.blizzard then E.private.skins.blizzard.alertframes = true end
 	E.db.actionbar.globalFadeAlpha = 0 -- pedido del user: nada se vuelve transparente (1 - 0 = opaco)
 	-- Sin gris en enfriamiento: con valores secretos ElvUI evalúa la desaturación una sola vez
 	-- (Modules/ActionBars/ActionBars.lua:1762-1768) y el ícono puede quedar gris al terminar.
