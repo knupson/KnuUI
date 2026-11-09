@@ -43,9 +43,11 @@ function K:SkinBNToast() pcall(Style) end
 function K:SetupBNToast()
 	local toast = _G.BNToastFrame
 	if not toast then return end
-	-- Perfiles sin posición propia: se aplica la de KnuUI ya, sin pedir reinstalar (Movers.lua:58).
+	-- Una vez por perfil, aunque ya haya una posición guardada (perfiles viejos traen la de S&L,
+	-- TOPRIGHT,UIParent,-249,-175); después se respeta lo que mueva el usuario (Movers.lua:58).
 	E.db.movers = E.db.movers or {}
-	if not E.db.movers.BNETMover then
+	if not E.db.KnuUIBNETPlaced then
+		E.db.KnuUIBNETPlaced = true
 		E.db.movers.BNETMover = POSITION
 		if E.SetMoverPoints then pcall(E.SetMoverPoints, E, 'BNETMover') end
 	end

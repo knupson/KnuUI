@@ -298,6 +298,7 @@ local function Validate()
  base.KnuUIDecor = true
  base.KnuUICombatGlow = true
  base.KnuUIAlertsPlaced = true
+ base.KnuUIBNETPlaced = true
  base.KnuUISkinTracker = true
  base.datatexts.panels.KnuUI_Data = { enable = true, battleground = false }
  for i = 1, 8 do base.datatexts.panels.KnuUI_Data[i] = '' end
@@ -720,7 +721,8 @@ assert(module:ApplyTheme(nil, 'knunet'))
 
 -- Aviso de Battle.net: posición sobre el chat izquierdo y borde del tema.
 BNToastFrame = CreateFrame('Frame', 'BNToastFrame')
-E.db.movers.BNETMover = nil
+E.db.movers.BNETMover = 'TOPRIGHT,UIParent,TOPRIGHT,-249,-175' -- posición vieja de S&L
+E.db.KnuUIBNETPlaced = nil
 combat = false
 module:SetupBNToast()
 assert(E.db.movers.BNETMover == 'BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,4,212')
