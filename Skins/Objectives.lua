@@ -14,6 +14,8 @@ local TRACKERS = {
 	'WorldQuestObjectiveTracker', 'InitiativeTasksObjectiveTracker',
 }
 local hooked
+local TRACKER_POSITION = 'TOPRIGHT,ElvUIParent,TOPRIGHT,-28,-266'
+local OLD_POSITION = 'TOPRIGHT,ElvUIParent,TOPRIGHT,-22,-266'
 
 local function SetFont(text, size)
 	if text and text.FontTemplate then pcall(text.FontTemplate, text, FONT, size, 'OUTLINE') end
@@ -128,13 +130,20 @@ function K:ApplyTracker(hideWithWoWPro)
 	E.db.general.objectiveFrameHeight = 420 -- Profile.lua:55
 	-- Separado del borde (40 px, deja lugar a los íconos que salen a la izquierda del fondo)
 	-- y debajo de la botonera del minimapa; con 420 de alto termina lejos de Details (y=184).
-	E.db.movers.ObjectiveFrameMover = 'TOPRIGHT,ElvUIParent,TOPRIGHT,-22,-266' -- con el +/- adentro, termina a ~8 px del borde
+	-- El fondo termina a 8 px del borde (x 1912 en 1920); con -28 el botón +/- termina en 1906 y
+	-- queda 6 px adentro del fondo. Con -22 el botón llegaba a 1912 y se salía del fondo.
+	E.db.movers.ObjectiveFrameMover = TRACKER_POSITION
 	-- El "8" junto al minimapa es el compartimento de addons de Blizzard: se oculta (Profile.lua:302-304).
 	if E.db.general.addonCompartment then E.db.general.addonCompartment.hide = true end
 	return true
 end
 
 function K:SetupTracker()
+	-- Perfiles con la posición vieja de KnuUI: se corre 6 px sin pedir reinstalar (Movers.lua:58).
+	if E.db.movers and E.db.movers.ObjectiveFrameMover == OLD_POSITION then
+		E.db.movers.ObjectiveFrameMover = TRACKER_POSITION
+		if E.SetMoverPoints then pcall(E.SetMoverPoints, E, 'ObjectiveFrameMover') end
+	end
 	local f = CreateFrame('Frame')
 	f:RegisterEvent('PLAYER_ENTERING_WORLD')
 	f:RegisterEvent('ADDON_LOADED')
