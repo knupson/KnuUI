@@ -700,6 +700,23 @@ assert(not E.db.chat.separateSizes and E.db.chat.panelWidthRight == 400 and E.gl
 assert(E.db.movers.DTPanelKnuUI_DataMover == 'BOTTOM,ElvUIParent,BOTTOM,0,2')
 E.db.KnuUICompactRight = nil
 
+-- Temas: todos tienen los 12 colores que usa KnuUI, figuran en el orden del menú y se aplican.
+local fields = { 'accent', 'accentHi', 'accentDim', 'text', 'muted', 'backdrop', 'backdropFade', 'border',
+ 'cast', 'castNoInterrupt', 'health', 'healthBackdrop' }
+local ordered = {}
+for _, key in ipairs(module.themeOrder) do ordered[key] = true end
+for key, theme in pairs(module.themes) do
+ assert(ordered[key], 'tema fuera del orden: '..key)
+ assert(type(theme.label) == 'string', key)
+ for _, field in ipairs(fields) do
+  local c = theme[field]
+  assert(c and c.r and c.g and c.b and c.r >= 0 and c.r <= 1, key..'.'..field)
+ end
+ E.Forever, combat = true, false
+ assert(module:ApplyTheme(nil, key) and E.db.KnuUITheme == key and module:GetTheme() == theme)
+end
+assert(module:ApplyTheme(nil, 'knunet'))
+
 -- Roles: cada uno sólo usa claves que existen en los defaults de ElvUI y se deshace al cambiar.
 E.Forever, combat = true, false
 local units = E.db.unitframe.units

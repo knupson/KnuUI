@@ -2,6 +2,10 @@
 
 ## 3.3.2 (2026-11-08)
 
+- More themes: Knunet intense orange, Dracula, Nord, Catppuccin Mocha, Gruvbox and Tokyo Night
+  (official palette values), selectable in ElvUI > KnuUI > Appearance.
+- Quest tracker background 8 px from the screen edge, like the minimap; the empty tab bar above
+  docked Details is hidden; chat tab labels forced to one line.
 - New options menu in ElvUI > KnuUI: tabs (General, Layout, Appearance, Addons, Camera), a short
   explanation per tab, full-width options so no label is cut, and dependent options greyed out.
 - Details on Forever: right text in Details' simple format ("total (per second, percent)" in one string at

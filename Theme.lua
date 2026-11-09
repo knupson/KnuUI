@@ -32,7 +32,65 @@ K.themes = {
 		cast = C('ff2e88'), castNoInterrupt = C('ffc440'), health = C('00e5ff'),
 		healthBackdrop = C('0e1018'),
 	},
+	-- Más naranja que knunet.com (pedido del user): estos tres acentos los eligió KnuUI, no salen
+	-- de la web; el fondo y los textos son los de knunet.
+	knunetIntense = {
+		label = L["Knunet intense orange"],
+		accent = C('ff8c1a'), accentHi = C('ffb04d'), accentDim = C('d96d0f'),
+		text = C('ecd9bd'), muted = C('a88f70'),
+		backdrop = C('1f160e'), backdropFade = C('110c08', 0.85), border = C('4a3522'),
+		cast = C('ff8c1a'), castNoInterrupt = C('e0523a'), health = C('ffb04d'),
+		healthBackdrop = C('18110b'),
+	},
+	-- Paletas populares con sus valores oficiales (leídos el 2026-11-08):
+	-- Dracula: github.com/dracula/dracula-theme README (Background, Current Line, Comment, Purple...).
+	dracula = {
+		label = 'Dracula',
+		accent = C('bd93f9'), accentHi = C('ff79c6'), accentDim = C('6272a4'),
+		text = C('f8f8f2'), muted = C('6272a4'),
+		backdrop = C('282a36'), backdropFade = C('282a36', 0.9), border = C('44475a'),
+		cast = C('bd93f9'), castNoInterrupt = C('ff5555'), health = C('50fa7b'),
+		healthBackdrop = C('282a36'),
+	},
+	-- Nord: github.com/nordtheme/nord src/nord.css (--nord0 a --nord15).
+	nord = {
+		label = 'Nord',
+		accent = C('88c0d0'), accentHi = C('8fbcbb'), accentDim = C('5e81ac'),
+		text = C('eceff4'), muted = C('81a1c1'),
+		backdrop = C('3b4252'), backdropFade = C('2e3440', 0.9), border = C('434c5e'),
+		cast = C('88c0d0'), castNoInterrupt = C('bf616a'), health = C('a3be8c'),
+		healthBackdrop = C('2e3440'),
+	},
+	-- Catppuccin Mocha: github.com/catppuccin/palette palette.json (mocha).
+	catppuccin = {
+		label = 'Catppuccin Mocha',
+		accent = C('cba6f7'), accentHi = C('f5c2e7'), accentDim = C('7f849c'),
+		text = C('cdd6f4'), muted = C('a6adc8'),
+		backdrop = C('1e1e2e'), backdropFade = C('181825', 0.9), border = C('313244'),
+		cast = C('cba6f7'), castNoInterrupt = C('f38ba8'), health = C('a6e3a1'),
+		healthBackdrop = C('11111b'),
+	},
+	-- Gruvbox Dark: github.com/morhetz/gruvbox colors/gruvbox.vim.
+	gruvbox = {
+		label = 'Gruvbox',
+		accent = C('fe8019'), accentHi = C('fabd2f'), accentDim = C('d65d0e'),
+		text = C('ebdbb2'), muted = C('928374'),
+		backdrop = C('282828'), backdropFade = C('1d2021', 0.9), border = C('3c3836'),
+		cast = C('fe8019'), castNoInterrupt = C('fb4934'), health = C('b8bb26'),
+		healthBackdrop = C('1d2021'),
+	},
+	-- Tokyo Night Storm: github.com/folke/tokyonight.nvim lua/tokyonight/colors/storm.lua.
+	tokyonight = {
+		label = 'Tokyo Night',
+		accent = C('7aa2f7'), accentHi = C('7dcfff'), accentDim = C('565f89'),
+		text = C('c0caf5'), muted = C('a9b1d6'),
+		backdrop = C('24283b'), backdropFade = C('1f2335', 0.9), border = C('292e42'),
+		cast = C('bb9af7'), castNoInterrupt = C('f7768e'), health = C('9ece6a'),
+		healthBackdrop = C('1f2335'),
+	},
 }
+-- Orden en el menú de opciones.
+K.themeOrder = { 'knunet', 'knunetIntense', 'neon', 'dracula', 'nord', 'catppuccin', 'gruvbox', 'tokyonight' }
 K.palette = K.themes.knunet -- compatibilidad con el código que lee K.palette
 
 function K:GetTheme()

@@ -247,7 +247,8 @@ local function Options()
 				args = {
 					desc = Desc(1, L["Colours, decoration and visual effects."]),
 					theme = { order = 2, type = 'select', width = 'double', name = L["Theme"],
-						values = { knunet = L["Knunet amber"], neon = L["Neon cyan and magenta"] },
+						values = function() local v = {} for key, theme in pairs(K.themes) do v[key] = theme.label end return v end,
+						sorting = K.themeOrder,
 						get = function() return E.db.KnuUITheme or 'knunet' end,
 						set = function(_, value) if K:ApplyTheme(nil, value) then Reload() end end },
 					classHealth = { order = 3, type = 'toggle', width = 'full', name = L["Health bars in class colour"],

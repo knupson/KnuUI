@@ -17,6 +17,7 @@ L["KnuUI: %s failed: %s"] = "KnuUI: falló %s: %s"
 -- Theme.lua
 L["Knunet amber"] = "Knunet ámbar"
 L["Neon cyan and magenta"] = "Neón cian y magenta"
+L["Knunet intense orange"] = "Knunet naranja intenso"
 
 -- Camera.lua
 L["KnuUI: DynamicCam is not installed."] = "KnuUI: DynamicCam no está instalado."
