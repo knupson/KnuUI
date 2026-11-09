@@ -1,0 +1,21 @@
+{
+  "_comment": "Addons que KnuUI viste o soporta. 'tested' = versión con la que se probó la skin; al revisarla, actualizar este valor. Fuentes: tukui (ElvUI), github (releases), curseforge (archivo más nuevo para Forever 1.60.1).",
+  "gameVersion": "1.60.1",
+  "addons": [
+    { "name": "ElvUI", "source": "tukui", "slug": "elvui", "tested": "16.01" },
+    { "name": "DBM", "source": "github", "repo": "DeadlyBossMods/DeadlyBossMods", "tested": "12.1.20" },
+    { "name": "BugSack", "source": "github", "repo": "funkydude/BugSack", "tested": "v12.1.9" },
+    { "name": "ThreatClassic2", "source": "github", "repo": "dfherr/ThreatClassic2", "tested": "2.77" },
+    { "name": "WoW-Pro", "source": "github", "repo": "Ludovicus-Maior/WoW-Pro-Guides", "tested": "20261105" },
+    { "name": "WhatsTraining", "source": "github", "repo": "fusionpit/WhatsTraining", "tested": "11.3.1" },
+    { "name": "Details!", "source": "curseforge", "id": 61284, "tested": "20261107.15404.172" },
+    { "name": "TomTom", "source": "curseforge", "id": 18808, "tested": "v4.4.1" },
+    { "name": "DynamicCam", "source": "curseforge", "id": 101120, "tested": "2.21.6" },
+    { "name": "GearQuest Forever", "source": "curseforge", "id": 1698950, "tested": "1.1.0" },
+    { "name": "Leatrix Plus", "source": "curseforge", "id": 94855, "tested": "1.60.29" },
+    { "name": "GTFO", "source": "curseforge", "id": 20697, "tested": "6.12.3" },
+    { "name": "Auctionator", "source": "curseforge", "id": 6124, "tested": "343" },
+    { "name": "Pawn", "source": "curseforge", "id": 4646, "tested": "2.14.1" },
+    { "name": "Baganator", "source": "curseforge", "slug": "baganator", "tested": "846" }
+  ]
+}
