@@ -164,6 +164,10 @@ function K:ApplyTheme(classHealth, themeName)
 	if self.RefreshDecor then self:RefreshDecor() end
 	if self.SkinWoWPro then self:SkinWoWPro() end
 	if self.SkinBNToast then self:SkinBNToast() end
+	if self.StyleRaidMarkers then self:StyleRaidMarkers() end
+	if self.StyleFlightTimer then self.StyleFlightTimer() end
+	if self.StyleFadeButtons then self:StyleFadeButtons() end
+	if self.StyleMotionFrames then self:StyleMotionFrames() end
 	if self.ApplyIntegratedPanels then self:ApplyIntegratedPanels() end
 	return true
 end

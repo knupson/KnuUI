@@ -5,22 +5,28 @@
 ## Notes-esMX: Diseño compacto y tema ámbar para ElvUI en WoW Forever. Abrí el asistente con /knu.
 ## IconTexture: Interface\AddOns\KnuUI\media\icono
 ## Author: Alejandro Benzoni (KnuPwns)
-## Version: 3.3.4
+## Version: 3.4.0
 ## X-License: MIT
 ## X-Curse-Project-ID: 1793253
 ## X-Website: https://knunet.com
 ## X-Category: Interface Enhancements
 ## Dependencies: ElvUI
-## OptionalDeps: Details, Baganator, DBM-Core, DBM-StatusBarTimers, Questie, WoWPro, TomTom, DynamicCam, GearQuestForever, Auctionator, BugSack, Leatrix_Plus, Pawn, WhatsTraining, ThreatClassic2, GTFO
+## OptionalDeps: Details, Baganator, DBM-Core, DBM-StatusBarTimers, Questie, WoWPro, TomTom, DynamicCam, GearQuestForever, Auctionator, BugSack, Leatrix_Plus, Pawn, WhatsTraining, ThreatClassic2, GTFO, RareScanner, WIM, PallyPower
 
 Locales/Locales.lua
 Core.lua
 Layout.lua
 Theme.lua
+Motion.lua
 Nameplates.lua
 Tanks.lua
 Roles.lua
 Extras.lua
+RaidMarkers.lua
+Flight.lua
+Fade.lua
+LootMonitor.lua
+Ranks.lua
 Compat.lua
 Camera.lua
 Afk.lua
@@ -36,6 +42,9 @@ Skins/AddOns/GearQuestForever.lua
 Skins/AddOns/Questie.lua
 Skins/AddOns/DBM-Core.lua
 Skins/AddOns/GTFO.lua
+Skins/AddOns/RareScanner.lua
+Skins/AddOns/WIM.lua
+Skins/AddOns/PallyPower.lua
 Skins/Details.lua
 Skins/Panels.lua
 Buttons.lua
@@ -45,6 +54,7 @@ Skins/WoWPro.lua
 Skins/WoWProES.lua
 Skins/TomTom.lua
 Skins/BNToast.lua
+Skins/PlayerSpells.lua
 Skins/Baganator.lua
 Skins/Objectives.lua
 Installer.lua

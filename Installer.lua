@@ -259,6 +259,29 @@ local function Options()
 						set = function(_, value) if (E.db.KnuUIDecor ~= false) ~= value then K:ToggleDecor() end end },
 					combatGlow = { order = 5, type = 'toggle', width = 'full', name = L["Combat glow on the screen edges"],
 						get = function() return E.db.KnuUICombatGlow ~= false end, set = function(_, value) E.db.KnuUICombatGlow = value end },
+					raidMarkers = { order = 5.5, type = 'select', width = 'double', name = L["Raid marker bar"],
+						desc = L["Left click marks your target, right click places a ground marker. Move it with /moveui."],
+						values = { group = L["Only in a group"], always = L["Always"], off = L["Off"] },
+						sorting = { 'group', 'always', 'off' },
+						get = function() return E.db.KnuUIRaidMarkers or 'group' end,
+						set = function(_, value) E.db.KnuUIRaidMarkers = value; K:UpdateRaidMarkers() end },
+					detailsFade = { order = 5.55, type = 'toggle', width = 'full', name = L["Details very transparent out of combat (eye button above the panel keeps it visible)"],
+						get = function() return E.db.KnuUIDetailsFade ~= false end,
+						set = function(_, value) E.db.KnuUIDetailsFade = value; K:UpdatePanelFade() end },
+					lootMonitor = { order = 5.57, type = 'toggle', width = 'full', name = L["Loot monitor: what you and your group loot, above the right panel"],
+						get = function() return E.db.KnuUILootMonitor ~= false end, set = function(_, value) E.db.KnuUILootMonitor = value end },
+					lootSelf = { order = 5.58, type = 'select', width = 'normal', name = L["Your loot from"],
+						values = { [0] = L["Grey"], [1] = L["White"], [2] = L["Green"], [3] = L["Blue"], [4] = L["Purple"] },
+						disabled = function() return E.db.KnuUILootMonitor == false end,
+						get = function() return E.db.KnuUILootSelfQuality or 1 end, set = function(_, value) E.db.KnuUILootSelfQuality = value end },
+					lootGroup = { order = 5.59, type = 'select', width = 'normal', name = L["Group loot from"],
+						values = { [0] = L["Grey"], [1] = L["White"], [2] = L["Green"], [3] = L["Blue"], [4] = L["Purple"] },
+						disabled = function() return E.db.KnuUILootMonitor == false end,
+						get = function() return E.db.KnuUILootGroupQuality or 2 end, set = function(_, value) E.db.KnuUILootGroupQuality = value end },
+					rankUpgrade = { order = 5.595, type = 'toggle', width = 'full', name = L["Replace old spell ranks on your bars when you learn a new one"],
+						get = function() return E.db.KnuUIRankUpgrade ~= false end, set = function(_, value) E.db.KnuUIRankUpgrade = value end },
+					flightTimer = { order = 5.6, type = 'toggle', width = 'full', name = L["Flight timer (learns each route the first time you fly it)"],
+						get = function() return E.db.KnuUIFlightTimer ~= false end, set = function(_, value) E.db.KnuUIFlightTimer = value end },
 					panels = { order = 6, type = 'execute', width = 'double', name = L["Reapply chat and Details panels"],
 						func = function() if K:ApplyIntegratedPanels() then Reload() end end },
 				},
@@ -267,6 +290,19 @@ local function Options()
 				order = 40, type = 'group', name = L["Addons"],
 				args = {
 					desc = Desc(1, L["How KnuUI looks after other addons. Skins need a reload."]),
+					pinned = { order = 1.5, type = 'multiselect', width = 'full', name = L["Minimap buttons always visible next to the K"],
+						desc = L["The rest stay inside the K launcher."],
+						values = function()
+							local v = {}
+							for key, entry in pairs(K.launcherAddons or {}) do v[key] = entry.label or key end
+							return v
+						end,
+						get = function(_, key) return (E.db.KnuUIPinned or {})[key] == true end,
+						set = function(_, key, value)
+							E.db.KnuUIPinned = E.db.KnuUIPinned or {}
+							E.db.KnuUIPinned[key] = value or nil
+							K:RefreshLauncher()
+						end },
 					addonSkins = { order = 2, type = 'toggle', width = 'full', name = L["Skins for supported addons (Auctionator, BugSack, Pawn, Questie...)"],
 						get = function() return E.db.KnuUIAddonSkins ~= false end,
 						set = function(_, value) if K:CanApply() then E.db.KnuUIAddonSkins = value; E:Print(L["Reload the UI to apply addon skins."]) end end },
@@ -291,6 +327,10 @@ local function Options()
 						values = { ["Shushudaa's preset"] = L["Cinematic (Shushudaa)"], Immersive = L["Soft immersive"], Vanillalike = L["Classic (almost no ActionCam)"] },
 						get = function() return E.global.KnuUICameraPreset or "Shushudaa's preset" end,
 						set = function(_, value) K:ApplyCamera(true, value) end },
+					combatZoom = { order = 3, type = 'toggle', width = 'full', name = L["Maximum camera distance and zoom out in combat"],
+						desc = L["Raises the camera limit to the maximum and, with DynamicCam, zooms out when combat starts and back when it ends."],
+						get = function() return E.global.KnuUICombatZoom ~= false end,
+						set = function(_, value) E.global.KnuUICombatZoom = value; K:ApplyCombatZoom() end },
 					cinemaHead = Head(10, L["Cinema mode"]),
 					cinemaDesc = Desc(11, L["Hides the interface and slowly orbits the camera; it ends when you enter combat. Also /knu cine or a key binding (Key Bindings > AddOns > KnuUI)."]),
 					cinema = { order = 12, type = 'execute', width = 'double', name = L["Start cinema mode"], func = function() K:ToggleCinema() end },

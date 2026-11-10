@@ -62,6 +62,34 @@ function K:ScanMinimapButtons()
   -- Se oculta el botón sin usar SetHidden, que guardaría la opción en GearQuest (Minimap.lua:119-123).
   _G.GearQuestMinimapButton:Hide()
  end)
+ pcall(function()
+  -- WIM no usa LibDBIcon: su botón propio es WIM3MinimapButton (WIM/Modules/MinimapIcon.lua:165).
+  -- Clic: el mismo menú que abre el botón original con clic izquierdo (MinimapIcon.lua:123-131,257-262:
+  -- Menu:AnchorTo + Menu:ShowFor; WIM.Menu se crea en Modules/Menu.lua:1223-1301), anclado al
+  -- lanzador de KnuUI. Con Mayús: opciones (WIM.ShowOptions, Sources/Options/Options.lua:42).
+  -- (Antes abría sólo los mensajes sin leer, WindowHandler.lua:2068: sin conversaciones no mostraba nada.)
+  -- WIM usa setfenv(1, WIM), así que sus funciones globales viven en la tabla WIM.
+  local wim = _G.WIM
+  local button = _G.WIM3MinimapButton
+  if not (wim and button) then return end
+  entries.WIM = {
+   label = 'WIM', icon = [[Interface\AddOns\WIM\Skins\Default\minimap]],
+   click = function()
+    if IsShiftKeyDown() and type(wim.ShowOptions) == 'function' then wim.ShowOptions() return end
+    local menu = wim.Menu
+    if menu and type(menu.AnchorTo) == 'function' and type(menu.ShowFor) == 'function' then
+     if menu:IsShown() then menu:Hide() return end
+     local anchor = K.buttons or UIParent
+     menu:AnchorTo(anchor)
+     menu:ShowFor(anchor, false)
+    elseif type(wim.ShowAllUnreadWindows) == 'function' then
+     wim.ShowAllUnreadWindows()
+    end
+   end,
+  }
+  -- Sólo se oculta por esta sesión; la opción guardada de WIM no se toca. Se reaplica en cada escaneo.
+  button:Hide()
+ end)
  self:RefreshLauncher()
 end
 

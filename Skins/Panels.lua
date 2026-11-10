@@ -94,6 +94,8 @@ local function Style()
    tab.KnuLine:SetColorTexture(t.accentDim.r, t.accentDim.g, t.accentDim.b, 0.8)
   end
  end
+ -- Botón del chat transparente (Fade.lua): se reaplica después de pintar el fondo.
+ if K.ApplyChatClear then K:ApplyChatClear() end
 end
 
 function K:RefreshPanels()

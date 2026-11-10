@@ -53,12 +53,63 @@ local function ArrowColors(t)
 	local tomtom = _G.TomTom
 	local profile = tomtom and ((tomtom.db and tomtom.db.profile) or tomtom.profile)
 	local arrowDB = profile and profile.arrow
-	if E.db.KnuUITomTomColors or type(arrowDB) ~= 'table' then return end
+	if type(arrowDB) ~= 'table' then return end
+	-- La 3.4 pasaba la flecha al tema "classic" (más fea y encimada sobre el recuadro): quien
+	-- quedó así vuelve una vez a "modern" (themes.lua:30-52, SetActiveTheme).
+	if E.db.KnuUITomTomClassic then
+		E.db.KnuUITomTomClassic = nil
+		if arrowDB.theme == 'classic' then
+			arrowDB.theme = 'modern'
+			local handler = tomtom.CrazyArrowThemeHandler
+			if handler and handler.SetActiveTheme and _G.TomTomCrazyArrow then
+				pcall(handler.SetActiveTheme, handler, _G.TomTomCrazyArrow, 'modern')
+			end
+		end
+	end
+	if E.db.KnuUITomTomColors then return end
 	E.db.KnuUITomTomColors = true
 	arrowDB.goodcolor = { t.accentHi.r, t.accentHi.g, t.accentHi.b } -- bien encaminado
 	arrowDB.exactcolor = { t.accentHi.r, t.accentHi.g, t.accentHi.b }
 	arrowDB.middlecolor = { t.accent.r, t.accent.g, t.accent.b }
 	arrowDB.badcolor = { t.castNoInterrupt.r, t.castNoInterrupt.g, t.castNoInterrupt.b } -- al revés
+end
+
+-- Flecha moderna teñida: el tema "modern" (theme_modern.lua:12) dibuja una imagen ya coloreada y no
+-- usa los colores de TomTom; sólo el "classic" los aplica (theme_classic.lua:99-113). Después de
+-- cada cuadro del moderno se desatura la imagen y se tiñe con los mismos colores y la misma
+-- cuenta que el clásico: bueno/medio/malo según el ángulo, "exacto" al llegar.
+local function Lerp(a, b, f) return a + (b - a) * f end
+local function Gradient(perc, bad, mid, good)
+	if perc >= 1 then return unpack(good) elseif perc <= 0 then return unpack(bad) end
+	local f = perc * 2
+	local c1, c2 = bad, mid
+	if f >= 1 then f, c1, c2 = f - 1, mid, good end
+	return Lerp(c1[1], c2[1], f), Lerp(c1[2], c2[2], f), Lerp(c1[3], c2[3], f)
+end
+
+local function TintModern()
+	local tomtom = _G.TomTom
+	local handler = tomtom and tomtom.CrazyArrowThemeHandler
+	local modern = handler and handler.themes and handler.themes.modern and handler.themes.modern.tbl
+	if not modern or K.tomtomTinted then return end
+	K.tomtomTinted = true
+	local function Arrow()
+		local arrowDB = tomtom.db and tomtom.db.profile and tomtom.db.profile.arrow
+		local tex = modern.arrowTexture
+		if arrowDB and tex and tex.SetDesaturated then tex:SetDesaturated(true) return tex, arrowDB end
+	end
+	hooksecurefunc(modern, 'NavigationArrow_OnUpdate', function(_, _, angle)
+		local tex, db = Arrow()
+		if not tex or type(angle) ~= 'number' then return end
+		local perc = math.abs((math.pi - math.abs(angle)) / math.pi)
+		local r, g, b
+		if perc > 0.98 then r, g, b = unpack(db.exactcolor) else r, g, b = Gradient(perc, db.badcolor, db.middlecolor, db.goodcolor) end
+		tex:SetVertexColor(r, g, b)
+	end)
+	hooksecurefunc(modern, 'ArrivalArrow_OnUpdate', function()
+		local tex, db = Arrow()
+		if tex then tex:SetVertexColor(unpack(db.exactcolor)) end
+	end)
 end
 
 local function Style()
@@ -71,6 +122,7 @@ local function Style()
 		Font(arrow.tta, 11, t.muted)
 		if not InCombatLockdown() then Panel(arrow, t) end
 		ArrowColors(t)
+		pcall(TintModern)
 	end
 	local block = _G.TomTomBlock
 	if block then

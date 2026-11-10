@@ -147,6 +147,12 @@ local function Widget()
  function w:SetFrameStrata() end
  function w:SetClampedToScreen() end
  function w:SetJustifyH() end
+ function w:SetBlendMode() end
+ function w:GetBackdropBorderColor() return unpack(self.border or {}) end
+ function w:RegisterForClicks() end
+ function w:SetWordWrap() end
+ function w:EnableMouse() end
+ function w:GetTexture() return self.texture end
  function w:SetAllPoints() end
  function w:GetFrameLevel() return 5 end
  function w:GetFrameStrata() return 'BACKGROUND' end
@@ -303,6 +309,9 @@ local function Validate()
  base.KnuUITomTomPlaced = true
  base.KnuUITomTomColors = true
  base.KnuUISkinTracker = true
+ base.KnuUIDetailsFade = true
+ base.KnuUIFlightTimer = true
+ base.KnuUIRankUpgrade = true
  base.datatexts.panels.KnuUI_Data = { enable = true, battleground = false }
  for i = 1, 8 do base.datatexts.panels.KnuUI_Data[i] = '' end
  base.datatexts.panels.ForeverUI_Data = { enable = true }
@@ -767,4 +776,234 @@ assert(units.raid1.buffIndicator.enable == P.unitframe.units.raid1.buffIndicator
 assert(units.party.debuffs.sizeOverride == P.unitframe.units.party.debuffs.sizeOverride and units.party.width == 200)
 assert(E.db.movers.ElvUF_PartyMover == 'TOPLEFT,ElvUIParent,LEFT,8,110')
 combat = true; assert(not module:ApplyRole('healer') and E.db.KnuUIRole == 'mdps'); combat = false
-print('OK: TOC, defaults, secciones, compatibilidad, paneles, Details, motor de skins, carga tardía, DBT, toggles, roles, fade y combate.')
+-- Barra de marcas: botones seguros raidtarget/worldmarker, mover propio y visibilidad por driver.
+do
+ local drivers, movers, baseCreate = {}, {}, CreateFrame
+ function CreateFrame(...)
+  local widget = baseCreate(...)
+  function widget:SetAttribute(key, value) self.attrs = self.attrs or {}; self.attrs[key] = value end
+  return widget
+ end
+ function E:CreateMover(frame, name) movers[name] = frame end
+ function E:RegisterClicks(frame) frame.clicks = true end
+ function RegisterStateDriver(frame, _, value) drivers[frame] = value end
+ function UnregisterStateDriver(frame) drivers[frame] = nil end
+ combat = false
+ E.db.KnuUIRaidMarkers = nil
+ assert(module:UpdateRaidMarkers())
+ local bar = _G.KnuUI_RaidMarkers
+ assert(bar and movers.KnuUI_RaidMarkersMover == bar and drivers[bar] == '[group] show; hide')
+ assert(#bar.buttons == 11)
+ local skull, clear = _G.KnuUI_RaidMarker8, _G.KnuUI_RaidMarker0
+ assert(skull.attrs.type1 == 'raidtarget' and skull.attrs.marker1 == 8 and skull.attrs.action1 == 'toggle')
+ assert(skull.attrs.type2 == 'worldmarker' and skull.attrs.marker2 == 8 and skull.clicks)
+ assert(_G.KnuUI_RaidMarker1.attrs.marker2 == 5) -- estrella = marca de suelo 5
+ assert(clear.attrs.action1 == 'clear' and clear.attrs.action2 == 'clear' and not clear.attrs.marker2)
+ E.db.KnuUIRaidMarkers = 'always'; assert(module:UpdateRaidMarkers() and not drivers[bar] and bar.shown)
+ E.db.KnuUIRaidMarkers = 'off'; assert(module:UpdateRaidMarkers() and bar.shown == false)
+ combat = true; assert(not module:UpdateRaidMarkers()); combat = false
+ CreateFrame = baseCreate
+end
+
+-- Temporizador de vuelo: aprende la ruta en el primer vuelo, la usa en el segundo y no guarda
+-- un vuelo cortado con TaxiRequestEarlyLanding.
+do
+ local now, onTaxi, baseCreate = 100, false, CreateFrame
+ function CreateFrame(...)
+  local widget = baseCreate(...)
+  function widget:SetMinMaxValues(_, max) self.max = max end
+  function widget:SetValue(value) self.value = value end
+  function widget:SetStatusBarColor(...) self.barColor = { ... } end
+  function widget:CreateBackdrop() self.backdrop = baseCreate('Frame') end
+  return widget
+ end
+ function E:CreateMover(frame, name) frame.moverName = name end
+ function GetTime() return now end
+ function UnitOnTaxi() return onTaxi end
+ function NumTaxiNodes() return 2 end
+ function TaxiNodeGetType(i) return i == 1 and 'CURRENT' or 'REACHABLE' end
+ function TaxiNodeName(i) return i == 1 and 'Ventormenta, Elwynn' or 'Villa Oscura, Bosque del Ocaso' end
+ function TakeTaxiNode() end
+ function TaxiRequestEarlyLanding() end
+ E.global.KnuUIFlights = nil
+ module:SetupFlightTimer()
+ local function Fly(seconds, early)
+  TakeTaxiNode(2)
+  local bar = _G.KnuUI_FlightTimer
+  bar.OnUpdate() -- todavía en tierra
+  onTaxi = true; now = now + 1; bar.OnUpdate()
+  if early then TaxiRequestEarlyLanding() end
+  now = now + seconds; bar.OnUpdate()
+  onTaxi = false; now = now + 0.2; bar.OnUpdate()
+  return bar
+ end
+ local bar = Fly(80)
+ module:FlushTweens() -- se oculta al terminar el fundido de salida (Motion.lua)
+ assert(bar.moverName == 'KnuUI_FlightTimerMover' and bar.shown == false)
+ assert(E.global.KnuUIFlights['Ventormenta, Elwynn>Villa Oscura, Bosque del Ocaso'] == 80)
+ TakeTaxiNode(2); assert(bar.max == 80 and bar.text.text == 'Villa Oscura' and bar.shown)
+ onTaxi = true; now = now + 1; bar.OnUpdate(); now = now + 30; bar.OnUpdate()
+ assert(bar.value == 30 and bar.time.text == '0:50')
+ onTaxi = false; bar.OnUpdate()
+ Fly(20, true)
+ -- Queda el último vuelo completo (30 s); el cortado con TaxiRequestEarlyLanding no lo pisa.
+ assert(E.global.KnuUIFlights['Ventormenta, Elwynn>Villa Oscura, Bosque del Ocaso'] == 30)
+ CreateFrame = baseCreate
+end
+
+-- Zoom de combate: sube el tope de cámara, aleja al entrar en combate y vuelve a la distancia de
+-- antes al salir; las situaciones de DynamicCam no se tocan.
+do
+ local cvars, baseLoaded = {}, module.IsLoaded
+ function SetCVar(name, value) cvars[name] = value end
+ local situations = { ['006'] = { enabled = false } }
+ _G.DynamicCam = { db = { profile = { standardSettings = { cvars = {} }, situations = situations } } }
+ function module:IsLoaded(name) return name == 'DynamicCam' or baseLoaded(self, name) end
+ combat = false; E.global.KnuUICombatZoom = nil
+ assert(module:ApplyCombatZoom() and cvars.cameraDistanceMaxZoomFactor == 2.6)
+ assert(_G.DynamicCam.db.profile.standardSettings.cvars.cameraDistanceMaxZoomFactor == 2.6)
+ assert(situations['006'].enabled == false and not situations['006'].viewZoom)
+ local zoom = 12
+ function GetCameraZoom() return zoom end
+ function CameraZoomOut(d) zoom = zoom + d end
+ function CameraZoomIn(d) zoom = zoom - d end
+ -- Sin LibCamera: zoom común de Blizzard.
+ local oldStub = LibStub; LibStub = nil
+ module:CombatZoom(true); assert(zoom == 39)
+ module:CombatZoom(false); assert(zoom == 12)
+ -- Con LibCamera (DynamicCam): zoom por tiempo con curva suave.
+ local calls = {}
+ local libs = { ['LibCamera-1.0'] = { SetZoom = function(_, target, duration, curve) calls[#calls + 1] = { target, duration, curve }; zoom = target end },
+  ['LibEasing-1.0'] = { InOutSine = 'sine' } }
+ LibStub = setmetatable({}, { __call = function(_, name) return libs[name] end })
+ module:CombatZoom(true); module:CombatZoom(false)
+ assert(calls[1][1] == 39 and calls[1][2] == 3 and calls[1][3] == 'sine' and calls[2][1] == 12 and calls[2][2] == 4)
+ LibStub = oldStub
+ E.global.KnuUICombatZoom = false; module:CombatZoom(true); assert(zoom == 12)
+ combat = true; E.global.KnuUICombatZoom = nil; assert(not module:ApplyCombatZoom()); combat = false
+ module.IsLoaded, _G.DynamicCam, E.global.KnuUICombatZoom = baseLoaded, nil, nil
+end
+
+-- Fundido de paneles: Details usa su regla "fuera de combate" al 15 %; el ojo la apaga; el chat
+-- sólo cambia con su botón.
+do
+ local base, rows, switch = Widget(), Widget(), Widget()
+ -- Regla vieja encendida por la versión anterior (valor 15): se apaga.
+ local instance = { baseframe = base, rowframe = rows, windowSwitchButton = switch, hide_on_context = { {}, { enabled = true, value = 15 } } }
+ local oldDetails = _G.Details
+ _G.Details = { GetInstance = function(_, id) return id == 1 and instance or nil end, SetWindowAlphaForCombat = function() end }
+ function UnitAffectingCombat() return false end
+ combat = false
+ E.db.KnuUIDetailsFade, E.db.KnuUIDetailsKeep, E.db.KnuUIChatClear = nil, nil, nil
+ module.detailsAlphaHooked = nil
+ module:SetupPanelFade(); module:UpdatePanelFade()
+ local rule = instance.hide_on_context[2]
+ assert(not rule.enabled and rule.value == 100)
+ assert(RightChatPanel.alpha == 0.1 and base.alpha == 0.1 and rows.alpha == 0.1 and switch.alpha == 0.1)
+ -- Details repone su alfa: KnuUI lo vuelve a bajar.
+ base:SetAlpha(1); _G.Details.SetWindowAlphaForCombat(instance); assert(base.alpha == 0.1)
+ combat = true; module:UpdatePanelFade(); assert(base.alpha == 1 and RightChatPanel.alpha == 1); combat = false
+ local keep, chat = _G.KnuUI_DetailsKeep, _G.KnuUI_ChatClear
+ keep.OnClick(keep); module:FlushTweens() -- el ojo anima el cambio (Motion.lua)
+ assert(E.db.KnuUIDetailsKeep and base.alpha == 1 and RightChatPanel.alpha == 1)
+ assert(LeftChatPanel.alpha ~= 0.1)
+ chat.OnClick(chat); module:FlushTweens(); assert(E.db.KnuUIChatClear and LeftChatPanel.alpha == 0.1)
+ chat.OnClick(chat); module:FlushTweens(); assert(LeftChatPanel.alpha == 1)
+ E.db.KnuUIDetailsKeep, E.db.KnuUIChatClear = nil, nil
+ _G.Details = oldDetails
+end
+
+-- Monitor de botín: muestra propio y de grupo según calidad, y nunca toca un texto secreto.
+do
+ local qualities = { [111] = 3, [222] = 0, [333] = 2 }
+ C_Item = C_Item or {}
+ function C_Item.GetItemInfo(link) local id = tonumber(link:match('item:(%d+)')); return 'x', link, qualities[id], nil, nil, nil, nil, nil, nil, 1000 + id end
+ function C_Item.GetItemQualityColor() return 0, 0.4, 1 end
+ function UnitName() return 'Knu' end
+ function Ambiguate(name) return (name:gsub('%-.*', '')) end
+ local secret = {}
+ function issecretvalue(v) return v == secret end
+ local baseCreate = CreateFrame
+ function CreateFrame(...)
+  local w = baseCreate(...)
+  function w:SetWordWrap() end
+  function w:GetTexture() return self.texture end
+  function w:GetBackdropBorderColor() return unpack(self.border or {}) end
+  return w
+ end
+ function E:CreateMover(frame, name) frame.moverName = name end
+ local link = function(id, name) return '|cff0070dd|Hitem:'..id..'::::::::|h['..name..']|h|r' end
+ E.db.KnuUILootMonitor = nil
+ module:LootMessage('Recibes botín: '..link(111, 'Espada')..'x2.', 'Knu-Reino')
+ local holder = _G.KnuUI_LootMonitor
+ local rows = holder.rows
+ assert(holder.moverName == 'KnuUI_LootMonitorMover')
+ assert(rows[1].text.text == link(111, 'Espada')..' x2' and rows[1].shown and rows[1].icon.texture == 1111)
+ module:LootMessage('Ana recibe botín: '..link(222, 'Basura')..'.', 'Ana') -- gris de otro: no
+ assert(rows[1].text.text == link(111, 'Espada')..' x2')
+ module:LootMessage('Ana recibe botín: '..link(333, 'Anillo')..'.', 'Ana-Otro') -- verde de otro: sí
+ assert(rows[1].text.text == 'Ana: '..link(333, 'Anillo') and rows[2].text.text == link(111, 'Espada')..' x2')
+ module:LootMessage(secret, 'Ana') -- secreto: se saltea sin error
+ module:LootMessage('Ana recibe botín: '..link(333, 'Anillo')..'.', secret)
+ module:LootMessage('texto sin objeto', 'Ana')
+ assert(rows[1].text.text == 'Ana: '..link(333, 'Anillo') and not rows[3].shown)
+ E.db.KnuUILootMonitor = false
+ module:LootMessage('Recibes botín: '..link(111, 'Espada')..'.', 'Knu')
+ assert(rows[1].text.text == 'Ana: '..link(333, 'Anillo'))
+ E.db.KnuUILootMonitor = nil
+ CreateFrame = baseCreate
+ issecretvalue = nil
+end
+
+-- Rangos: al aprender Sello rango 2, las casillas con rango 1 pasan al 2; otras no se tocan.
+do
+ local spells = { [10] = { 'Sello', 'Rango 1' }, [20] = { 'Sello', 'Rango 2' }, [30] = { 'Bendición', 'Rango 1' }, [40] = { 'Sello', 'Rango 3' } }
+ local actions = { [1] = 10, [5] = 30, [61] = 10, [99] = 40 }
+ local cursor
+ C_Spell = C_Spell or {}
+ function C_Spell.GetSpellName(id) return spells[id] and spells[id][1] end
+ function C_Spell.GetSpellSubtext(id) return spells[id] and spells[id][2] end
+ function C_Spell.PickupSpell(id) cursor = id end
+ function GetActionInfo(slot) if actions[slot] then return 'spell', actions[slot] end end
+ function PlaceAction(slot) actions[slot], cursor = cursor, actions[slot] end
+ function ClearCursor() cursor = nil end
+ function GetCursorInfo() return cursor end
+ combat = false; E.db.KnuUIRankUpgrade = nil
+ assert(module:UpgradeSpellRank(20) == 2)
+ assert(actions[1] == 20 and actions[61] == 20 and actions[5] == 30 and actions[99] == 40 and not cursor)
+ combat = true; actions[1] = 10; assert(module:UpgradeSpellRank(20) == 0 and actions[1] == 10); combat = false
+ E.db.KnuUIRankUpgrade = false; assert(module:UpgradeSpellRank(20) == 0); E.db.KnuUIRankUpgrade = nil
+end
+
+-- Accesos fijos: el marcado sale del desplegable y queda como botón a la izquierda de la K.
+do
+ combat = false
+ local clicked
+ module.launcherAddons = { WIM = { label = 'WIM', icon = 1, click = function() clicked = 'WIM' end },
+  GearQuest = { label = 'GearQuest', icon = 2, click = function() end } }
+ E.db.KnuUIPinned = { WIM = true }
+ module:RefreshLauncher()
+ local pin = _G.KnuUI_Pinned1
+ assert(pin and pin.shown ~= false and pin.entry.label == 'WIM' and pin.point[2] == module.buttons)
+ pin.OnClick(pin); assert(clicked == 'WIM')
+ for _, row in ipairs(module.flyout.rows) do assert(not (row.entry and row.entry.label == 'WIM')) end
+ E.db.KnuUIPinned = {}; module:RefreshLauncher(); assert(pin.shown == false)
+ module.launcherAddons, E.db.KnuUIPinned = nil, nil
+end
+
+-- Cámara sutil: sin cambios de vista ni giros, transiciones de al menos 2,5 s; lo demás no se toca.
+do
+ local baseLoaded = module.IsLoaded
+ local npc = { transitionTime = { timeToEnter = 1, timeToExit = 0.5 }, viewZoom = { enabled = true, viewZoomType = 'view', viewNumber = 2 } }
+ local mount = { transitionTime = { timeToEnter = 4, timeToExit = 3 }, viewZoom = { enabled = true, viewZoomType = 'zoom', zoomValue = 20 }, rotation = { enabled = true } }
+ local custom = { rotation = { enabled = true } }
+ _G.DynamicCam = { db = { profile = { situations = { ['300'] = npc, ['100'] = mount, ['999'] = custom } } } }
+ function module:IsLoaded(name) return name == 'DynamicCam' or baseLoaded(self, name) end
+ assert(module:SoftenCamSituations() == 3)
+ assert(npc.transitionTime.timeToEnter == 2.5 and npc.transitionTime.timeToExit == 2.5 and npc.viewZoom.enabled == false)
+ assert(mount.transitionTime.timeToEnter == 4 and mount.viewZoom.enabled and mount.rotation.enabled == false)
+ assert(custom.rotation.enabled == false and custom.transitionTime.timeToEnter == 2.5)
+ module.IsLoaded, _G.DynamicCam = baseLoaded, nil
+end
+
+print('OK: TOC, defaults, secciones, compatibilidad, paneles, Details, motor de skins, carga tardía, DBT, toggles, roles, fade, combate, marcas, vuelos, cámara, transparencia, botín, rangos, accesos fijos y cámara sutil.')

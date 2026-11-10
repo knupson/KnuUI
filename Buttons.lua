@@ -37,12 +37,56 @@ function K:StyleButtons()
  end
 end
 
+-- Accesos fijos: los que el jugador marca en ElvUI > KnuUI > Addons quedan a la vista como botones
+-- del tamaño de la K, en fila hacia su izquierda, y salen del desplegable.
+local pinnedButtons = {}
+function K:RefreshPinned()
+ if not self.buttons or InCombatLockdown() then return end
+ local pinned, names = E.db.KnuUIPinned or {}, {}
+ for name in pairs(self.launcherAddons or {}) do if pinned[name] then names[#names + 1] = name end end
+ table.sort(names)
+ local t = self:GetTheme()
+ for i, name in ipairs(names) do
+  local entry = self.launcherAddons[name]
+  local b = pinnedButtons[i]
+  if not b then
+   b = CreateFrame('Button', 'KnuUI_Pinned'..i, E.UIParent)
+   b:SetSize(26, 24)
+   b:SetTemplate('Default')
+   if K.KnuFrame then K:KnuFrame(b) end
+   b.icon = b:CreateTexture(nil, 'ARTWORK')
+   b.icon:SetSize(20, 20)
+   b.icon:SetPoint('CENTER')
+   b.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+   b:RegisterForClicks('AnyUp')
+   b:SetScript('OnClick', function(self) if self.entry and self.entry.click then self.entry.click(self) end end)
+   b:SetScript('OnEnter', function(self)
+    GameTooltip:SetOwner(self, 'ANCHOR_BOTTOMLEFT')
+    GameTooltip:AddLine(self.entry and self.entry.label or '')
+    GameTooltip:Show()
+   end)
+   b:SetScript('OnLeave', function() GameTooltip:Hide() end)
+   if K.Hoverable then K:Hoverable(b) end
+   pinnedButtons[i] = b
+  end
+  b.entry = entry
+  b.icon:SetTexture(entry.icon or ICON)
+  b:SetBackdropBorderColor(t.accent.r, t.accent.g, t.accent.b)
+  b:ClearAllPoints()
+  b:SetPoint('RIGHT', i == 1 and self.buttons or pinnedButtons[i - 1], 'LEFT', -4, 0)
+  b:Show()
+ end
+ for i = #names + 1, #pinnedButtons do pinnedButtons[i]:Hide() end
+end
+
 function K:RefreshLauncher()
  if not self.flyout or InCombatLockdown() then return end
  local entries, names = Actions(), {}
- for name in pairs(self.launcherAddons or {}) do names[#names + 1] = name end
+ local pinned = E.db.KnuUIPinned or {}
+ for name in pairs(self.launcherAddons or {}) do if not pinned[name] then names[#names + 1] = name end end
  table.sort(names)
  for _, name in ipairs(names) do entries[#entries + 1] = self.launcherAddons[name] end
+ self:RefreshPinned()
  local panel = self.flyout
  local pages = math.max(1, math.ceil(#entries / PAGE_SIZE))
  panel.page = math.min(panel.page or 1, pages)
@@ -67,6 +111,23 @@ function K:RefreshLauncher()
  self:StyleButtons()
 end
 
+-- La K va pegada debajo del brillo naranja del minimapa con 2 px de aire, el mismo espaciado que los
+-- botones de las barras (Layout.lua buttonSpacing = 2). Debajo del panel de datos hay 2 px de aire,
+-- 6 de franjas, 1 de separación y 8 de brillo (Decor.lua): 17 px + 2 = 19. Se mide en vivo porque el
+-- alto del panel depende de la escala. Si el jugador movió la K a mano (otra x u otro anclaje) no se toca.
+function K:SnapLauncher()
+ if not self.buttons or InCombatLockdown() then return end
+ local saved = E.db.movers and E.db.movers.KnuUI_ButtonsMover
+ if saved and not saved:match('^TOPRIGHT,ElvUIParent,TOPRIGHT,%-8,%-%d+$') then return end
+ local panel, parent = _G.MinimapPanel, E.UIParent
+ if not panel or not panel:IsShown() or not panel:GetBottom() or not parent:GetTop() then return end
+ local bottom = panel:GetBottom() * panel:GetEffectiveScale() / parent:GetEffectiveScale()
+ local y = math.floor(parent:GetTop() - bottom + 0.5) + 19
+ E.db.movers = E.db.movers or {}
+ E.db.movers.KnuUI_ButtonsMover = 'TOPRIGHT,ElvUIParent,TOPRIGHT,-8,'..(-y)
+ if E.SetMoverPoints then E:SetMoverPoints('KnuUI_ButtonsMover', self.buttons) end
+end
+
 function K:SetupButtons()
  if self.buttons then return end
  if InCombatLockdown() then
@@ -86,6 +147,8 @@ function K:SetupButtons()
  button:SetSize(26, 24)
  button:SetPoint('TOPRIGHT', E.UIParent, 'TOPRIGHT', -8, -212)
  button:SetTemplate('Default')
+ if K.Hoverable then K:Hoverable(button) end
+ if K.KnuFrame then K:KnuFrame(button) end
  local icon = button:CreateTexture(nil, 'ARTWORK')
  icon:SetTexture(ICON)
  icon:SetSize(22, 22)
@@ -98,6 +161,7 @@ function K:SetupButtons()
  panel:SetFrameStrata('DIALOG')
  panel:SetClampedToScreen(true)
  panel:SetTemplate('Default')
+ if K.KnuFrame then K:KnuFrame(panel) end
  panel:Hide()
  -- Sólo opacidad, 150 ms y curva cúbica ease-out. No hay una opción global de
  -- movimiento reducido en Defaults/Profile.lua ni Defaults/Private.lua de ElvUI 16.01.
@@ -162,6 +226,8 @@ function K:SetupButtons()
   panel:Show()
  end)
  E:CreateMover(button, 'KnuUI_ButtonsMover', L["KnuUI launcher"], nil, nil, nil, 'ALL', nil, 'KnuUI')
+ -- Después de que ElvUI ubica el minimapa y su panel (Modules/Maps/Minimap.lua:600-614).
+ C_Timer.After(1, function() K:SnapLauncher() end)
  self:RefreshLauncher()
  self:SetupMinimapButtons()
 end

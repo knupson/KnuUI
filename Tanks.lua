@@ -9,9 +9,11 @@ local K = E:GetModule('KnuUI')
 -- unidad: Modules/UnitFrames/Elements/Health.lua:221-222). Maná: columna propia que se
 -- actualiza igual que oUF (oUF/elements/power.lua:261-264), válido con valores secretos.
 
-local W, H = 56, 154 -- misma altura que los chats: y 28-182 (techo de chats en 184)
+local W, H = 66, 154 -- misma altura que los chats: y 28-182 (techo de chats en 184)
+local X = 256 -- centro de cada columna respecto del centro de pantalla
 -- Distribución en modo tanques (x en px; chats terminan en 404 y empiezan en 1516):
--- [3+5: 410-668] [vida: 674-730] [barras 1-2: 739-1181] [maná: 1190-1246] [4+6: 1252-1510]
+-- [3+5: 410-668] [vida: 671-737] [barras 1-2: 739-1181] [maná: 1183-1249] [4+6: 1252-1510]
+-- (columnas de 66: 2-3 px de separación a cada lado, como el espaciado de los botones)
 -- Bloques laterales: 6×4 botones de 41×37 (256×154) = dos barras de 12.
 local BARS = {
 	-- Bloques laterales 6×4 (24 botones por lado) en el mismo espacio: botones de 41×37
@@ -95,7 +97,7 @@ local function CreateTank()
 	text:FontTemplate(nil, 13, 'OUTLINE')
 	text:SetPoint('TOP', bar, 'TOP', 0, -4)
 	tank.text = text
-	tank:SetPoint('BOTTOM', E.UIParent, 'BOTTOM', 258, 28) -- pegado a las barras centrales (x 1190-1246 en 1920)
+	tank:SetPoint('BOTTOM', E.UIParent, 'BOTTOM', X, 28) -- pegado a las barras centrales (x 1183-1249 en 1920)
 	E:CreateMover(tank, 'KnuUI_ManaTankMover', L["KnuUI: mana tank"], nil, nil, nil, 'ALL,GENERAL')
 	tank:RegisterUnitEvent('UNIT_POWER_FREQUENT', 'player')
 	tank:RegisterUnitEvent('UNIT_MAXPOWER', 'player')
@@ -107,8 +109,26 @@ end
 function K:SetupTanks()
 	if not E.db.KnuUITanks then return end
 	if not tank then CreateTank() end
+	-- Perfiles armados con columnas de 56 px: una vez se pasan a 64 y se recentran. Sólo se cambia
+	-- el perfil y el marco propio del maná; el del jugador lo redibuja ElvUI con su perfil al cargar.
+	-- No se llama a UF:CreateAndUpdateUF: si ElvUI todavía no registró el marco, crea uno nuevo
+	-- (UnitFrames.lua:1376-1381) y el de vida desaparecía.
+	if E.db.KnuUITanksWidth ~= W and not InCombatLockdown() then
+		E.db.KnuUITanksWidth = W
+		E.db.unitframe.units.player.width = W
+		E.db.movers.ElvUF_PlayerMover = 'BOTTOM,ElvUIParent,BOTTOM,'..(-X)..',28'
+		E.db.movers.KnuUI_ManaTankMover = 'BOTTOM,ElvUIParent,BOTTOM,'..X..',28'
+		tank:SetSize(W, H)
+		local UF = E:GetModule('UnitFrames', true)
+		if UF and UF.player and type(UF.player.Update) == 'function' then pcall(UF.player.Update) end
+		if E.SetMoverPoints and _G.KnuUI_ManaTankMover then pcall(E.SetMoverPoints, E, 'KnuUI_ManaTankMover') end
+		if E.SetMoverPoints and _G.ElvUF_PlayerMover then pcall(E.SetMoverPoints, E, 'ElvUF_PlayerMover') end
+	end
 	local t = self:GetTheme()
-	tank:SetBackdropBorderColor(t.accentDim.r, t.accentDim.g, t.accentDim.b)
+	-- Mismo borde que la columna de vida y los botones: el de ElvUI (E.media.bordercolor). El
+	-- t.border del tema Knunet intenso es marrón anaranjado y se veía distinto de la vida.
+	local bc = E.media.bordercolor
+	if bc then tank:SetBackdropBorderColor(bc[1], bc[2], bc[3]) else tank:SetBackdropBorderColor(t.border.r, t.border.g, t.border.b) end
 	tank:Show()
 	UpdateTank()
 end
@@ -126,8 +146,8 @@ function K:ApplyTanks(enable)
 			health = { orientation = 'VERTICAL', position = 'TOP', xOffset = 0, yOffset = -4, text_format = '[perhp<%]' },
 		})
 		self.Set(E.db.movers, {
-			ElvUF_PlayerMover = 'BOTTOM,ElvUIParent,BOTTOM,-258,28', -- vida: x 674-730
-			KnuUI_ManaTankMover = 'BOTTOM,ElvUIParent,BOTTOM,258,28', -- maná: x 1190-1246
+			ElvUF_PlayerMover = 'BOTTOM,ElvUIParent,BOTTOM,'..(-X)..',28', -- vida: x 671-737
+			KnuUI_ManaTankMover = 'BOTTOM,ElvUIParent,BOTTOM,'..X..',28', -- maná: x 1183-1249
 			ExperienceBarMover = 'BOTTOM,ElvUIParent,BOTTOM,0,104', -- 442×8, y 104-112
 			ShiftAB = 'BOTTOM,ElvUIParent,BOTTOM,0,116', -- y 116-140
 			ElvUF_PlayerCastbarMover = 'BOTTOM,ElvUIParent,BOTTOM,14,146', -- y 146-174

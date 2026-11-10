@@ -52,7 +52,10 @@ its own settings; the last page reloads the interface.
   GearQuestForever (log), Questie (Journey and options), GTFO (options) and, if you enable it, DBM bars.
   Turn them all off from the installer's Addons page or **ElvUI → KnuUI**, or exclude one addon with
   `E.db.KnuUIAddonSkinsOff["AddonName"] = true`. Changes wait until you leave combat.
-- DynamicCam presets from the addon's own bundle (cinematic / immersive / classic).
+- DynamicCam presets from the addon's own bundle (cinematic / immersive / classic), slow combat zoom.
+- Raid marker bar, flight timer, loot monitor, automatic spell rank update on action buttons, and
+  Details/chat transparency with eye buttons.
+- Skins for the spellbook and talents, RareScanner, WIM and PallyPower.
 - Positions are anchored to the screen centre so the layout stays centred on any width
   (tuned for 1920×1080).
 
@@ -70,7 +73,8 @@ KnuUI only touches other addons when you ask for it, and never sends anything ou
 
 - **Details!:** besides texture and font, turns on Details' simple right-text format (a global Details
   setting) so the numbers do not cover the player name in narrow docked windows on Forever.
-- **DynamicCam:** creates and selects its own profile `KnuUI` (your profiles are untouched) and loads one of DynamicCam's bundled presets. Applied once by "Apply all", or from ElvUI > KnuUI.
+- **DynamicCam:** creates and selects its own profile `KnuUI` (your profiles are untouched) and loads one of DynamicCam's bundled presets. Applied once by "Apply all", or from ElvUI > KnuUI. In that profile it also slows down situation transitions and turns off two situations that fail on Forever.
+- **PallyPower:** moves its bar once under the WoW-Pro guide.
 - **WoW-Pro:** moves the guide window 8 px from the top-left corner once per ElvUI profile (stored in WoW-Pro's own position setting); its notes can be localized at load time if the private `KnuUI_WoWProES` data addon is installed.
 - **Questie / WoW-Pro tracker position:** only from their buttons on the installer's Addons page.
 - **DBM:** bar texture and font are changed only if you enable "DBM bars" in ElvUI > KnuUI (this writes DBM's own settings).

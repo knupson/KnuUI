@@ -1,5 +1,27 @@
 # KnuUI changelog
 
+## 3.4.0 (2026-11-09)
+
+- Raid marker bar under the launcher: left click marks your target, right click places a ground
+  marker, plus clear, ready check and a 10 s pull. Uses Blizzard's secure actions, so it works on
+  Forever. Shown in a group, always or never (ElvUI > KnuUI > Appearance).
+- Flight timer: learns each route the first time you fly it, then shows a countdown bar and the
+  flight time in the flight map tooltip.
+- Loot monitor: small notices with icon for what you and your group loot (minimum quality per case).
+- Spell ranks: when you learn a new rank, the action buttons with the old rank are updated.
+- Details and chat transparency: Details fades out of combat (eye button keeps it visible), the chat
+  fades only from its own eye button. The whole block fades, not only its background.
+- Combat zoom: the camera zooms out slowly when combat starts and comes back slowly after.
+  DynamicCam situation transitions are slowed down, and two situations that fail on Forever are
+  turned off.
+- Motion and finish: 250 ms fades, loot notices slide in, accent hover on KnuUI buttons, accent
+  line and soft shadow on KnuUI frames.
+- Pinned launcher buttons: choose addons in ElvUI > KnuUI > Addons to keep them as buttons left of K.
+- The launcher sits 2 px under the minimap's orange glow (measured in game at load).
+- Health and mana columns wider, with the same border on both.
+- New skins: spellbook and talents, RareScanner, WIM (windows and minimap entry in the launcher)
+  and PallyPower (dark bar placed under the WoW-Pro guide).
+
 ## 3.3.4 (2026-11-09)
 
 - Fixed Lua taint errors from the quest tracker (`GetAuraDataByIndex(): Auras cannot be accessed

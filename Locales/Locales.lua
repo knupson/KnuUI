@@ -161,6 +161,57 @@ L["KnuUI: this character's role is %s; reload to see it."] = "KnuUI: el rol de e
 L["Cinema mode (hide the interface and orbit the camera)"] = "Modo cine (oculta la interfaz y gira la cámara)"
 L["Combat glow on the screen edges"] = "Aviso de combate en los bordes de la pantalla"
 
+-- RaidMarkers.lua
+L["Raid marker bar"] = "Barra de marcas"
+L["Left click marks your target, right click places a ground marker. Move it with /moveui."] = "Clic izquierdo marca a tu objetivo, clic derecho pone una marca en el suelo. Se mueve con /moveui."
+L["Only in a group"] = "Sólo en grupo"
+L["Always"] = "Siempre"
+L["Off"] = "Apagada"
+L["Left click: mark your target. Right click: place or remove the ground marker."] = "Clic izquierdo: marca a tu objetivo. Clic derecho: pone o saca la marca de suelo."
+L["Clear markers"] = "Borrar marcas"
+L["Left click: clear your target's marker. Right click: clear all ground markers."] = "Clic izquierdo: borra la marca de tu objetivo. Clic derecho: borra todas las marcas de suelo."
+L["Ready check"] = "Comprobar listos"
+L["Pull timer"] = "Cuenta atrás de pull"
+L["Starts a 10 second countdown for the group."] = "Inicia una cuenta atrás de 10 segundos para el grupo."
+L["KnuUI: raid markers"] = "KnuUI: marcas"
+
+-- Camera.lua (zoom de combate)
+L["Maximum camera distance and zoom out in combat"] = "Distancia máxima de cámara y alejar en combate"
+L["Raises the camera limit to the maximum and, with DynamicCam, zooms out when combat starts and back when it ends."] = "Sube el límite de la cámara al máximo y, con DynamicCam, la aleja al entrar en combate y la devuelve al salir."
+
+-- Fade.lua
+L["Details always visible (click to fade out of combat)"] = "Details siempre visible (clic para que se transparente fuera de combate)"
+L["Details fades out of combat (click to keep it visible)"] = "Details se transparenta fuera de combate (clic para dejarlo siempre visible)"
+L["Chat faded (click to show it)"] = "Chat transparente (clic para mostrarlo)"
+L["Chat visible (click to fade it)"] = "Chat visible (clic para transparentarlo)"
+L["Details very transparent out of combat (eye button above the panel keeps it visible)"] = "Details muy transparente fuera de combate (el botón del ojo sobre el panel lo deja visible)"
+
+-- LootMonitor.lua
+L["KnuUI: loot monitor"] = "KnuUI: monitor de botín"
+L["Loot monitor: what you and your group loot, above the right panel"] = "Monitor de botín: lo que saqueás vos y tu grupo, arriba del panel derecho"
+L["Your loot from"] = "Tu botín desde"
+L["Group loot from"] = "Botín del grupo desde"
+L["Grey"] = "Gris"
+L["White"] = "Blanco"
+L["Green"] = "Verde"
+L["Blue"] = "Azul"
+L["Purple"] = "Violeta"
+
+-- Buttons.lua (accesos fijos)
+L["Minimap buttons always visible next to the K"] = "Botones del minimapa siempre a la vista junto a la K"
+L["The rest stay inside the K launcher."] = "El resto queda adentro del lanzador K."
+
+-- Ranks.lua
+L["KnuUI: %s rank %d placed on %d action buttons."] = "KnuUI: %s rango %d puesto en %d botones."
+L["Replace old spell ranks on your bars when you learn a new one"] = "Reemplazar los rangos viejos de tus barras al aprender uno nuevo"
+
+-- Flight.lua
+L["KnuUI: flight timer"] = "KnuUI: temporizador de vuelo"
+L["%s (learning)"] = "%s (aprendiendo)"
+L["Flight time: %s"] = "Tiempo de vuelo: %s"
+L["Flight time: not learned yet"] = "Tiempo de vuelo: todavía sin datos"
+L["Flight timer (learns each route the first time you fly it)"] = "Temporizador de vuelo (aprende cada ruta la primera vez que la volás)"
+
 -- Installer.lua: page 3
 L["Theme: Knunet amber or Neon"] = "Tema: Knunet ámbar o Neón"
 L["Dark backgrounds, thin borders, Expressway font and Melli texture."] = "Fondos oscuros, bordes finos, fuente Expressway y textura Melli."
