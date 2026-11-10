@@ -42,15 +42,15 @@ function K:ApplyCamera(force, preset)
 	E.global.KnuUICameraPreset = PRESET
 	self:DisableBrokenCamSituations()
 	self:SoftenCamSituations()
+	self:FixHearthCamSituation()
 	self:ApplyCombatZoom()
 	E:Print(format(L['KnuUI: camera "%s" applied to DynamicCam profile "%s".'], PRESET, PROFILE))
 	return true
 end
 
--- Situaciones de DynamicCam que fallan en Forever con su script y abren su ventana de error:
--- 200 "Piedra de hogar/Teletransporte" (DefaultSettings.lua:418-421; 'teleportSpells' nil al abrir
--- una caja) y 201 "Hechizos molestos" (:610-632; "bad argument #1 to 'pairs'"). Se apagan.
-local BROKEN_SITUATIONS = { '200', '201' }
+-- 201 "Hechizos molestos" falla en Forever con su script ("bad argument #1 to 'pairs'",
+-- DefaultSettings.lua:610-632) y abre la ventana de error de DynamicCam: se apaga.
+local BROKEN_SITUATIONS = { '201' }
 function K:DisableBrokenCamSituations()
 	local dc = self:IsLoaded('DynamicCam') and _G.DynamicCam
 	local situations = dc and dc.db and dc.db.profile and dc.db.profile.situations
@@ -58,6 +58,30 @@ function K:DisableBrokenCamSituations()
 	for _, id in ipairs(BROKEN_SITUATIONS) do
 		if situations[id] then situations[id].enabled = false end
 	end
+end
+
+-- 200 "Piedra de hogar/Teletransporte": el preset guarda un script de inicio viejo que llena
+-- this.spells, pero la condición actual de DynamicCam lee this.teleportSpells
+-- (DefaultSettings.lua:473-482), por eso fallaba ('teleportSpells' nil). Se reemplaza por el script
+-- original de DynamicCam (DynamicCam.defaults, DefaultSettings.lua:106). Se prende con su giro
+-- (el del preset: 360° a 20°/s) y se vuelve a correr su inicio con UpdateSituation, porque
+-- DynamicCam sólo inicia al cargar las situaciones que ya estaban prendidas (Core.lua:1349-1358).
+function K:FixHearthCamSituation()
+	local dc = self:IsLoaded('DynamicCam') and _G.DynamicCam
+	local situations = dc and dc.db and dc.db.profile and dc.db.profile.situations
+	local s = situations and situations['200']
+	if type(s) ~= 'table' then return false end
+	-- Se copia el script original: con nil RunScript no hace nada (SituationManager.lua:120-122)
+	-- y AceDB no vuelve solo al valor por defecto.
+	local stock = dc.defaults and dc.defaults.profile and dc.defaults.profile.situations
+		and dc.defaults.profile.situations['200']
+	if not (stock and type(stock.executeOnInit) == 'string') then return false end
+	s.executeOnInit = stock.executeOnInit
+	s.errorEncountered, s.errorMessage = nil, nil
+	s.enabled = true
+	if type(s.rotation) == 'table' then s.rotation.enabled = true end
+	if type(dc.UpdateSituation) == 'function' then pcall(dc.UpdateSituation, dc, '200') end
+	return true
 end
 
 -- Todos los cambios de cámara sutiles (pedido del user: hablar con un jugador mareaba).
@@ -158,6 +182,7 @@ function K:SetupCombatZoom()
 		end
 		pcall(K.DisableBrokenCamSituations, K) -- también en perfiles ya aplicados
 		pcall(K.SoftenCamSituations, K)
+		pcall(K.FixHearthCamSituation, K) -- después de suavizar, que apaga los giros
 		pcall(K.ApplyCombatZoom, K)
 	end)
 end

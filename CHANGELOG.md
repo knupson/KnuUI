@@ -1,5 +1,21 @@
 # KnuUI changelog
 
+## 3.4.1 (2026-11-10)
+
+- WoW-Pro on non-English clients: auto accept, select and turn in work again. WoW-Pro compares the
+  quest title with the guide's English title; KnuUI now puts the client's title on the steps with the
+  same quest ID before WoW-Pro checks, and retries the NPC dialog WoW-Pro skipped when its quests
+  arrived late. Survives WoW-Pro updates (no WoW-Pro file is changed).
+- Hearthstone camera (DynamicCam situation 200) fixed: its old start script is replaced by
+  DynamicCam's own.
+- Flight timer stays visible when DynamicCam hides the interface during the flight, and sits lower
+  (120 px from the top) so it no longer overlaps TomTom's arrow.
+- The "leave flight" button no longer stays on screen after landing (DynamicCam showed it again
+  when restoring the interface).
+- WhatsTraining: readable text on the dark skin (its parchment colours are swapped for its own
+  dark-theme colours).
+- Clock in 24-hour format; minimap panel: clock on the left, coordinates on the right.
+
 ## 3.4.0 (2026-11-09)
 
 - Raid marker bar under the launcher: left click marks your target, right click places a ground

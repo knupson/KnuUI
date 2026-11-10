@@ -34,7 +34,8 @@ local function Place(name) return (name or ''):match('^([^,]+)') or name end
 local function CreateBar()
 	bar = CreateFrame('StatusBar', 'KnuUI_FlightTimer', E.UIParent)
 	bar:SetSize(240, 18)
-	bar:SetPoint('TOP', E.UIParent, 'TOP', 0, -40)
+	-- Debajo de la flecha de TomTom, que suele ir arriba al centro.
+	bar:SetPoint('TOP', E.UIParent, 'TOP', 0, -120)
 	bar:SetStatusBarTexture(E.Libs.LSM:Fetch('statusbar', 'Melli'))
 	bar:CreateBackdrop('Transparent')
 	if K.KnuFrame and bar.backdrop then K:KnuFrame(bar.backdrop) end
@@ -47,6 +48,33 @@ local function CreateBar()
 	for _, text in ipairs({ bar.text, bar.time }) do text:FontTemplate('Expressway', 12, 'OUTLINE') end
 	bar:Hide()
 	E:CreateMover(bar, 'KnuUI_FlightTimerMover', L["KnuUI: flight timer"], nil, nil, nil, 'ALL,GENERAL', nil, 'KnuUI')
+end
+
+-- Al volar, DynamicCam (situación "Taxi") puede esconder toda la interfaz con UIParent:Hide()
+-- (DynamicCam/Core.lua:510-518). Mientras dura el vuelo la barra cuelga de WorldFrame, que no se
+-- esconde, en el mismo lugar y tamaño de pantalla; al terminar vuelve a su mover.
+local function Detach()
+	if not bar or bar.detached then return end
+	local x, y = bar:GetCenter()
+	if not x then return end
+	local s, ws = bar:GetEffectiveScale(), WorldFrame:GetEffectiveScale()
+	bar.detached = { bar:GetPoint() }
+	bar:SetParent(WorldFrame)
+	bar:SetScale(s / ws)
+	bar:SetFrameStrata('HIGH')
+	bar:ClearAllPoints()
+	-- Con la escala nueva la barra conserva su escala efectiva, así que el centro queda en las mismas unidades.
+	bar:SetPoint('CENTER', WorldFrame, 'BOTTOMLEFT', x, y)
+end
+
+local function Attach()
+	if not bar or not bar.detached then return end
+	local point = bar.detached
+	bar.detached = nil
+	bar:SetParent(E.UIParent)
+	bar:SetScale(1)
+	bar:ClearAllPoints()
+	if point[1] then bar:SetPoint(point[1], point[2], point[3], point[4], point[5]) end
 end
 
 local function Style()
@@ -69,7 +97,8 @@ local function Finish(landed)
 	if bar then
 		bar:SetScript('OnUpdate', nil)
 		-- Se va con fundido (Motion.lua) y recién ahí se oculta.
-		if K.FadeTo then K:FadeTo(bar, 0, nil, function() if not flight then bar:Hide() end end) else bar:Hide() end
+		local function Gone() if not flight then bar:Hide(); Attach() end end
+		if K.FadeTo then K:FadeTo(bar, 0, nil, Gone) else Gone() end
 	end
 end
 
@@ -86,6 +115,7 @@ local function OnUpdate()
 		return
 	end
 	if not onTaxi then return Finish(true) end
+	if not bar.detached then pcall(Detach) end -- por si al arrancar todavía no tenía posición
 	local elapsed = now - flight.started
 	if flight.total then
 		bar:SetValue(math.min(elapsed, flight.total))
@@ -106,6 +136,7 @@ local function Start(slot)
 	bar.text:SetText(flight.total and Place(to) or format(L["%s (learning)"], Place(to) or ''))
 	bar:SetAlpha(0)
 	bar:Show()
+	pcall(Detach)
 	if K.FadeTo then K:FadeTo(bar, 1) else bar:SetAlpha(1) end
 	bar:SetScript('OnUpdate', OnUpdate)
 end
@@ -128,7 +159,30 @@ local function HookFlightMap()
 	end)
 end
 
+-- Botón de bajarse del vuelo que queda colgado al aterrizar.
+-- DynamicCam, al esconder la interfaz en el vuelo, anota qué marcos estaban a la vista y los
+-- esconde (DynamicCam/UiHideModule.lua:530-536); al terminar muestra otra vez los anotados
+-- (:608-610). El botón de bajarse estaba a la vista durante el vuelo, así que al aterrizar vuelve
+-- a aparecer aunque ya no haya taxi ni vehículo, y tocarlo da error. Se esconde si no corresponde.
+local function NotNeeded()
+	if UnitOnTaxi and UnitOnTaxi('player') then return false end
+	if CanExitVehicle and CanExitVehicle() then return false end
+	return true
+end
+
+local function HookLeaveButton()
+	local button = _G.MainMenuBarVehicleLeaveButton
+	if not button or K.leaveButtonHooked then return end
+	K.leaveButtonHooked = true
+	button:HookScript('OnShow', function(self)
+		C_Timer.After(0, function()
+			if self:IsShown() and not InCombatLockdown() and NotNeeded() then self:Hide() end
+		end)
+	end)
+end
+
 function K:SetupFlightTimer()
+	pcall(HookLeaveButton)
 	if type(TakeTaxiNode) ~= 'function' then return end
 	if E.db.KnuUIFlightTimer == nil then E.db.KnuUIFlightTimer = true end
 	hooksecurefunc('TakeTaxiNode', function(slot) pcall(Start, slot) end)

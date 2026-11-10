@@ -320,6 +320,7 @@ local function Validate()
  Check(E.db, base, 'E.db')
  local global = E:CopyTable({}, G)
  global.datatexts.customPanels.KnuUI_Data = G.datatexts.newPanelInfo
+ global.KnuUIClock24 = true
  Check(E.global, global, 'E.global'); Check(E.private, V, 'E.private')
  for key in pairs(P.actionbar) do
   local id = tonumber(key:match('^bar(%d+)$'))

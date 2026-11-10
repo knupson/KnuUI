@@ -75,7 +75,7 @@ KnuUI only touches other addons when you ask for it, and never sends anything ou
   setting) so the numbers do not cover the player name in narrow docked windows on Forever.
 - **DynamicCam:** creates and selects its own profile `KnuUI` (your profiles are untouched) and loads one of DynamicCam's bundled presets. Applied once by "Apply all", or from ElvUI > KnuUI. In that profile it also slows down situation transitions and turns off two situations that fail on Forever.
 - **PallyPower:** moves its bar once under the WoW-Pro guide.
-- **WoW-Pro:** moves the guide window 8 px from the top-left corner once per ElvUI profile (stored in WoW-Pro's own position setting); its notes can be localized at load time if the private `KnuUI_WoWProES` data addon is installed.
+- **WoW-Pro:** moves the guide window 8 px from the top-left corner once per ElvUI profile (stored in WoW-Pro's own position setting); its notes can be localized at load time if the private `KnuUI_WoWProES` data addon is installed. On non-English clients, before WoW-Pro checks a quest dialog, KnuUI copies the client's quest titles into the guide steps with the same quest ID, so auto accept, select and turn in work (no WoW-Pro file is modified).
 - **Questie / WoW-Pro tracker position:** only from their buttons on the installer's Addons page.
 - **DBM:** bar texture and font are changed only if you enable "DBM bars" in ElvUI > KnuUI (this writes DBM's own settings).
 - **Minimap buttons (LibDBIcon, GearQuest):** hidden for the session and moved into the KnuUI launcher; their saved settings are not modified.

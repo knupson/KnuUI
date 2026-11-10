@@ -202,7 +202,44 @@ local function SetupMirrorTimers()
 	hooksecurefunc(container, 'SetupTimer', function(self, timer) pcall(StyleMirror, self, timer) end)
 end
 
+-- Reloj del minimapa en 24 h: opción propia del datatext de hora de ElvUI
+-- (Defaults/Global.lua:94 time24; DataTexts/Time.lua:272-274). Se fija una vez por cuenta.
+function K:ApplyClock24()
+	local settings = E.global.datatexts and E.global.datatexts.settings
+	local time = settings and settings.Time
+	if type(time) ~= 'table' then return false end
+	time.time24 = true
+	local dt = E:GetModule('DataTexts', true)
+	if dt and dt.ForceUpdate_DataText then pcall(dt.ForceUpdate_DataText, dt, 'Time') end
+	return true
+end
+
+-- Panel del minimapa: la hora pegada a la izquierda y las coordenadas a la derecha. ElvUI sólo tiene
+-- una alineación por panel (textJustify, DataTexts.lua:645), así que se ajusta cada hueco después de
+-- que ElvUI arma el panel (DT:UpdatePanelInfo, DataTexts.lua:561; huecos en panel.dataPanels).
+local function AlignMinimapPanel(_, name, panel)
+	if name ~= 'MinimapPanel' then return end
+	panel = panel or _G.MinimapPanel
+	local slots = panel and panel.dataPanels
+	if not slots or #slots ~= 2 then return end
+	for i, dt in ipairs(slots) do
+		if dt.text and not (dt.icon and dt.icon:IsShown()) then
+			local side = i == 1 and 'LEFT' or 'RIGHT'
+			dt.text:ClearAllPoints()
+			dt.text:SetPoint(side, dt, side, i == 1 and 4 or -4, 0)
+			dt.text:SetJustifyH(side)
+		end
+	end
+end
+
 function K:SetupExtras()
+	if not E.global.KnuUIClock24 and self:ApplyClock24() then E.global.KnuUIClock24 = true end
+	local dt = E:GetModule('DataTexts', true)
+	if dt and type(dt.UpdatePanelInfo) == 'function' and not self.minimapPanelHooked then
+		self.minimapPanelHooked = true
+		hooksecurefunc(dt, 'UpdatePanelInfo', AlignMinimapPanel)
+		pcall(AlignMinimapPanel, dt, 'MinimapPanel')
+	end
 	pcall(SetupAlerts)
 	pcall(SetupMirrorTimers)
 	if E.db.KnuUICombatGlow == nil then E.db.KnuUICombatGlow = true end
