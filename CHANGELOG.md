@@ -1,5 +1,13 @@
 # KnuUI changelog
 
+## 3.4.2 (2026-11-10)
+
+- PallyPower reworked as a compact one-row strip right of the WoW-Pro guide: your own buttons
+  (auto, aura, Righteous Fury + seal), then one 31 px tile per class present; it grows to the
+  right and player lists open downwards under their class. Theme border and Expressway text
+  inside a KnuUI frame, the state colour on a bar at the bottom. A "!" on the aura tile when
+  another paladin in your subgroup has the same aura.
+
 ## 3.4.1 (2026-11-10)
 
 - WoW-Pro on non-English clients: auto accept, select and turn in work again. WoW-Pro compares the
