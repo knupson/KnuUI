@@ -1,5 +1,31 @@
 # KnuUI changelog
 
+## 3.4.3 (2026-11-11)
+
+- TomTom arrow along Shortest Path Forever's route: when a guide (WoW-Pro, Questie, /way) points
+  TomTom's arrow at a destination, KnuUI asks Shortest Path for the shortest route (public API) and
+  points TomTom's arrow at each bend or stop of it, then back at the destination at the end.
+  Shortest Path's own arrow, compass, tracker section and the game's in-world pin are turned off
+  once (they can be turned back on in its options).
+
+- Pawn: the upgrade arrow on bag items (Pawn and Baganator) only counts the scale of your active
+  specialization, the talent tree with the most points. Tooltips still show every scale.
+- OpenMap skin: its windows, panels, dropdowns and menu use the KnuUI theme (dark background,
+  theme border, accent line and shadow) instead of the metal frame and rock background. Its red
+  buttons and search boxes use ElvUI's style. With OpenMap loaded, ElvUI's and TomTom's coordinates
+  on the world map are hidden (OpenMap shows its own), without changing their settings.
+- PallyPower strip follows the WoW-Pro guide when it opens or closes after login (it stayed in the
+  top-left corner, under the guide), starts in that place after a reload (its saved position is
+  updated), and its drag handle no longer takes the mouse (dragging it in combat raised
+  ADDON_ACTION_BLOCKED on PallyPowerFrame:StopMovingOrSizing).
+- Shortest Path Forever skin: its "Nearby services" panel in the quest log uses the KnuUI theme
+  (ElvUI search box and scroll bar), and its settings open from the K launcher (on clients without
+  CreateSecureDelegate, where Shortest Path cannot open them, the launcher says where to find them). ForeverCore's tracker
+  column (Shortest Path's "Journey" section and other Forever addons) gets a KnuUI frame and theme text,
+  and once per profile it is detached and locked where Blizzard's hidden quest tracker starts (it sat
+  over Details). Compass text uses the theme font. Its optional "Journey"
+  button under the minimap is hidden for the session, like other minimap buttons.
+
 ## 3.4.2 (2026-11-10)
 
 - PallyPower reworked as a compact one-row strip right of the WoW-Pro guide: your own buttons

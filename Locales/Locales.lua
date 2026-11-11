@@ -55,6 +55,7 @@ L["KnuUI installer"] = "Asistente de KnuUI"
 L["‹ Previous"] = "‹ Anterior"
 L["%d/%d · Next ›"] = "%d/%d · Siguiente ›"
 L["KnuUI: could not open that action; check the corresponding addon."] = "KnuUI: no se pudo abrir esa acción; revisá el addon correspondiente."
+L["Shortest Path: open the AddOns tab and choose \"Shortest Path Forever\"."] = "Shortest Path: Esc > Opciones > pestaña AddOns > «Shortest Path Forever» (este cliente no deja que un addon abra esas opciones)."
 L["KnuUI launcher"] = "Lanzador KnuUI"
 
 -- Dock.lua

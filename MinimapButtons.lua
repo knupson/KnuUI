@@ -1,4 +1,6 @@
 local E = unpack(ElvUI)
+local _, ns = ...
+local L = ns.L
 local K = E:GetModule('KnuUI')
 
 -- Fuentes relativas a D:/World of Warcraft/_forever_/Interface/AddOns/.
@@ -89,6 +91,28 @@ function K:ScanMinimapButtons()
   }
   -- Sólo se oculta por esta sesión; la opción guardada de WIM no se toca. Se reaplica en cada escaneo.
   button:Hide()
+ end)
+ pcall(function()
+  -- Shortest Path Forever no usa LibDBIcon. Sus opciones se abren con la función del compartimento de
+  -- addons (ShortestPathForever.toc:19; definida en UI/Settings.lua:797, llama a ns.OpenSettings). Su
+  -- botón "Journey" va colgado debajo del minimapa, sobre el panel de KnuUI (UI/Settings.lua:33-35;
+  -- apagado por defecto, Core/Core.lua:82): si está prendido se oculta por esta sesión, sin tocar su opción.
+  local open = _G.ShortestPathForever_OnAddonCompartmentClick
+  if type(open) ~= 'function' then return end
+  entries.ShortestPath = {
+   label = 'Shortest Path', icon = [[Interface\AddOns\ShortestPathForever\media\Icon]],
+   -- ns.OpenSettings usa el abridor seguro de ForeverCore, que necesita CreateSecureDelegate
+   -- (ForeverCore/Core/OpenSettings.lua); en clientes sin esa función no abre nada (probado en el
+   -- juego: nil). Ir directo a la categoría está bloqueado (SettingsPanel:OpenToCategory dio "acción de
+   -- interfaz bloqueada"), y abrir el panel desde KnuUI (SettingsPanel:Open) dejó la interfaz rota
+   -- (íconos transparentes, teclado perdido) hasta recargar: el panel no se abre desde acá. Sin la
+   -- función segura sólo se indica dónde están las opciones (Esc > Opciones > AddOns).
+   click = function()
+    if type(_G.CreateSecureDelegate) == 'function' then open() return end
+    E:Print(L["Shortest Path: open the AddOns tab and choose \"Shortest Path Forever\"."])
+   end,
+  }
+  if _G.ShortestPathForeverOptionsButton then _G.ShortestPathForeverOptionsButton:Hide() end
  end)
  self:RefreshLauncher()
 end

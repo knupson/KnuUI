@@ -169,7 +169,16 @@ local function Arrange()
 	if InCombatLockdown() then pending = true return end
 	pending = false
 	header:SetScale(1)
-	if _G.PallyPowerAnchor then _G.PallyPowerAnchor:Hide() end
+	-- El ancla de arrastre no sirve con la franja (la posición la pone KnuUI). Además de esconderla se
+	-- le apaga el mouse: su OnDragStop llama a PallyPower:DragStop (PallyPower.lua:3950-3953), que no
+	-- revisa el combate y movía PallyPowerFrame, protegido por sus botones seguros
+	-- (ADDON_ACTION_BLOCKED 'PallyPowerFrame:StopMovingOrSizing()').
+	local anchor = _G.PallyPowerAnchor
+	if anchor then
+		anchor:Hide()
+		anchor:EnableMouse(false)
+		anchor:SetAlpha(0)
+	end
 
 	-- Primero lo propio, después las clases presentes en el orden de PallyPower.
 	local items = {}
@@ -181,6 +190,13 @@ local function Arrange()
 	end
 
 	local guide = _G.WoWPro and _G.WoWPro.MainFrame
+	-- La guía puede mostrarse después del primer acomodo (al entrar, o al abrirla): sin esto la
+	-- franja quedaba en la esquina, debajo de la guía. Se reacomoda cada vez que la guía aparece o se va.
+	if guide and not guide.KnuPallyHooked then
+		guide.KnuPallyHooked = true
+		guide:HookScript('OnShow', function() C_Timer.After(0, function() pcall(Arrange) end) end)
+		guide:HookScript('OnHide', function() C_Timer.After(0, function() pcall(Arrange) end) end)
+	end
 	header:ClearAllPoints()
 	if guide and guide:IsShown() then
 		header:SetPoint('TOPLEFT', guide, 'TOPRIGHT', 8 + PAD, -PAD)
@@ -226,6 +242,22 @@ local function Arrange()
 	frame:SetPoint('TOPLEFT', header, 'TOPLEFT', -PAD, PAD)
 	frame:SetSize(col * TILE + math.max(0, col - 1) * GAP + 2 * PAD, TILE + 2 * PAD)
 	frame:SetShown(col ~= 0)
+
+	-- Al cargar, PallyPower pone su barra en el centro de UIParent más opt.display.offsetX/Y, con su
+	-- escala opt.buffscale (PallyPower.lua:309-311): con los valores viejos aparecía un momento en la
+	-- esquina, detrás de la guía, hasta este acomodo. Se guarda ahí la posición final, en las unidades
+	-- de esa escala, para que el próximo arranque ya empiece en su lugar.
+	C_Timer.After(0, function()
+		local display = PP.opt and PP.opt.display
+		local hx, hy = header:GetCenter()
+		local ux, uy = UIParent:GetCenter()
+		if not (display and hx and ux) then return end
+		local ratio = UIParent:GetEffectiveScale() / (header:GetParent() or UIParent):GetEffectiveScale()
+		local scale = tonumber(PP.opt.buffscale) or 1
+		local hs = header:GetEffectiveScale() / UIParent:GetEffectiveScale()
+		display.offsetX = (hx * hs - ux) / scale * ratio
+		display.offsetY = (hy * hs - uy) / scale * ratio
+	end)
 end
 
 -- Aviso de aura repetida: PallyPower pone en Player1/Player2 los paladines del subgrupo con la

@@ -48,7 +48,7 @@ its own settings; the last page reloads the interface.
 - Single launcher button that collects minimap buttons (LibDBIcon and GearQuest).
 - Integrated chat/Details panels, Details docking, skins for WoW-Pro, the quest tracker, TomTom and
   Baganator's title.
-- Addon skins: Auctionator, BugSack, Leatrix Plus (options), Pawn, WhatsTraining, ThreatClassic2,
+- Addon skins: Auctionator, BugSack, Leatrix Plus (options), OpenMap, Pawn, WhatsTraining, ThreatClassic2,
   GearQuestForever (log), Questie (Journey and options), GTFO (options) and, if you enable it, DBM bars.
   Turn them all off from the installer's Addons page or **ElvUI → KnuUI**, or exclude one addon with
   `E.db.KnuUIAddonSkinsOff["AddonName"] = true`. Changes wait until you leave combat.
@@ -64,7 +64,8 @@ See [CHANGELOG.md](CHANGELOG.md) for the release history.
 ## Optional integrations
 
 KnuUI works with ElvUI alone. If any of these addons are installed it can also adjust or skin them:
-Details!, Baganator, DBM, Questie, WoW-Pro, TomTom, DynamicCam and GearQuestForever.
+Details!, Baganator, DBM, Questie, WoW-Pro, TomTom, DynamicCam, GearQuestForever, Pawn, PallyPower,
+OpenMap and Shortest Path Forever.
 Each integration only touches the addon it belongs to.
 
 ## What KnuUI changes in other addons
@@ -76,6 +77,10 @@ KnuUI only touches other addons when you ask for it, and never sends anything ou
 - **DynamicCam:** creates and selects its own profile `KnuUI` (your profiles are untouched) and loads one of DynamicCam's bundled presets. Applied once by "Apply all", or from ElvUI > KnuUI. In that profile it also slows down situation transitions and turns off two situations that fail on Forever.
 - **PallyPower:** redraws its bar as a compact one-row strip right of the WoW-Pro guide (size, position and look only; clicks, spells and PallyPower's settings are unchanged). Its drag anchor is hidden; open its windows from its minimap button or `/pp`.
 - **WoW-Pro:** moves the guide window 8 px from the top-left corner once per ElvUI profile (stored in WoW-Pro's own position setting); its notes can be localized at load time if the private `KnuUI_WoWProES` data addon is installed. On non-English clients, before WoW-Pro checks a quest dialog, KnuUI copies the client's quest titles into the guide steps with the same quest ID, so auto accept, select and turn in work (no WoW-Pro file is modified).
+- **TomTom + Shortest Path Forever:** when a guide points TomTom's arrow at a destination, KnuUI asks Shortest Path (public API) for the shortest route and points TomTom's arrow at each bend or stop of it. Once, it turns off Shortest Path's own arrow, compass and tracker sections, its "Follow TomTom's arrow" option and the game's in-world navigation pin (CVar `showInGameNavigation`); all can be turned back on in Shortest Path's options. Turn the bridge off with `E.db.KnuUITomTomRoute = false`.
+- **Pawn:** the upgrade arrow on bag items only counts the scale of your active talent tree (the one with the most points); tooltips still show every scale. No Pawn setting is changed.
+- **OpenMap:** with OpenMap loaded, ElvUI's and TomTom's world map coordinates are hidden (OpenMap shows its own); their settings are not changed.
+- **ForeverCore tracker column (Shortest Path and other Forever addons):** once per profile it is detached and locked where Blizzard's hidden quest tracker starts, through ForeverCore's public `ForeverTrackerHost` API.
 - **Questie / WoW-Pro tracker position:** only from their buttons on the installer's Addons page.
 - **DBM:** bar texture and font are changed only if you enable "DBM bars" in ElvUI > KnuUI (this writes DBM's own settings).
 - **Minimap buttons (LibDBIcon, GearQuest):** hidden for the session and moved into the KnuUI launcher; their saved settings are not modified.
@@ -104,7 +109,7 @@ abajo al centro de la pantalla, aplica un tema oscuro ámbar y trae logo, ícono
 - **Comandos:** `/knu` (alias `/fui`) abre el asistente; `/knu aplicar` aplica todo con confirmación y recarga; `/knudock` maneja el acople de Details!.
 - **Opciones:** también están en ElvUI → KnuUI (reaplicar diseño o tema, presets de cámara, decoración).
 - **Funciones:** diseño compacto centrado, tema Knunet ámbar y Neón, modo tanques opcional, barra de lanzamiento tipo Quartz, placas de nombre con ElvUI, un solo botón lanzador para los botones del minimapa, paneles integrados, acople de Details!, skins para WoW-Pro, rastreador de misiones, TomTom y Baganator, y presets de DynamicCam.
-- **Integraciones opcionales:** Details!, Baganator, DBM, Questie, WoW-Pro, TomTom, DynamicCam y GearQuestForever.
+- **Integraciones opcionales:** Details!, Baganator, DBM, Questie, WoW-Pro, TomTom, DynamicCam, GearQuestForever, Pawn, PallyPower, OpenMap y Shortest Path Forever (la flecha de TomTom sigue su ruta más corta).
 - **Traducción de WoW-Pro:** las traducciones de las guías **no** vienen incluidas, porque las guías de WoW-Pro tienen licencia CC BY-NC-ND 3.0 (sin obras derivadas).
 - **Idioma:** los clientes esES y esMX ven el addon en castellano; el resto, en inglés.
 - **Licencia:** MIT.
