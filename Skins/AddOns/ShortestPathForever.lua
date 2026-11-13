@@ -147,7 +147,73 @@ local function StyleColumn()
 	pcall(StyleHeaders, host)
 end
 
+-- Aviso "Usar Piedra de hogar" (ns.PointCastPrompt, UI/Arrow.lua:666-700): cuando la ruta conviene con un
+-- teletransporte, Shortest Path muestra un ícono y "Usar %s" en el lugar de su flecha. KnuUI apaga esa flecha
+-- y usa la de TomTom, así que el aviso quedaba suelto debajo del cartel de TomTom con letra grande amarilla
+-- (visto en el juego 2026-11-13). Se vuelve una fila del tema pegada debajo del cartel: ícono y texto.
+-- Es un marco sin nombre hijo de UIParent (Arrow.lua:681): se reconoce por sus campos Icon y Action.
+local function StylePrompt(p)
+	local arrow = _G.TomTomCrazyArrow
+	local t = K:GetTheme()
+	if not p.KnuStyled then
+		p.KnuStyled = true
+		local bg = CreateFrame('Frame', nil, p)
+		bg:SetFrameLevel(math.max(p:GetFrameLevel() - 1, 0))
+		bg:SetTemplate('Transparent')
+		bg:EnableMouse(false)
+		p.KnuBG = bg
+		-- Shortest Path vuelve a poner el ícono a 36 en cada aviso (RenderCastPrompt): se ajusta después.
+		hooksecurefunc(p.Action, 'SetText', function() C_Timer.After(0, function() pcall(StylePrompt, p) end) end)
+	end
+	p.Icon:SetSize(22, 22)
+	p.Icon:ClearAllPoints()
+	p.Icon:SetPoint('LEFT', p.KnuBG, 'LEFT', 6, 0)
+	p.Action:ClearAllPoints()
+	p.Action:SetPoint('LEFT', p.Icon, 'RIGHT', 6, 0)
+	p.Action:SetWidth(0)
+	if p.Action.FontTemplate then pcall(p.Action.FontTemplate, p.Action, 'Expressway', 13, 'OUTLINE') end
+	p.Action:SetTextColor(t.accent.r, t.accent.g, t.accent.b)
+	local w = (p.Action:GetStringWidth() or 0) + 22 + 18
+	p.KnuBG:ClearAllPoints()
+	p.KnuBG:SetSize(math.max(w, 60), 30)
+	p.KnuBG:SetBackdropColor(t.backdropFade.r, t.backdropFade.g, t.backdropFade.b, 0.85)
+	p.KnuBG:SetBackdropBorderColor(t.accentDim.r, t.accentDim.g, t.accentDim.b)
+	if arrow and not InCombatLockdown() then
+		local under = (arrow.KnuPanel and arrow.KnuPanel:IsShown()) and arrow.KnuPanel or arrow
+		p:ClearAllPoints()
+		p:SetPoint('TOP', under, 'BOTTOM', 0, -4)
+		p:SetSize(math.max(w, 60), 30)
+		p.KnuBG:SetPoint('CENTER', p, 'CENTER')
+	end
+end
+
+local promptScan
+local function FindPrompt()
+	promptScan = nil
+	local kids = { _G.UIParent:GetChildren() }
+	for i = #kids, math.max(1, #kids - 8), -1 do
+		local f = kids[i]
+		if f.Action and f.Icon and not f:GetName() and f.Action.SetText and f.Icon.SetTexture then
+			pcall(StylePrompt, f)
+			if not f.KnuPromptHook then
+				f.KnuPromptHook = true
+				f:HookScript('OnShow', function(self) C_Timer.After(0, function() pcall(StylePrompt, self) end) end)
+			end
+			return
+		end
+	end
+end
+
 K:RegisterSkin('ShortestPathForever', function()
+	-- El aviso se crea la primera vez que hace falta (CreateFrame("Frame", nil, UIParent)): se busca entre los
+	-- últimos hijos de UIParent un cuadro después, una sola vez por tanda de marcos creados.
+	hooksecurefunc('CreateFrame', function(kind, name, parent)
+		if kind == 'Frame' and name == nil and parent == _G.UIParent and not promptScan then
+			promptScan = true
+			C_Timer.After(0, FindPrompt)
+		end
+	end)
+	C_Timer.After(5, function() pcall(FindPrompt) end) -- por si ya existía (viaje retomado al entrar)
 	-- El panel se crea cuando existe el registro de misiones (Attach, ServicesPanel.lua:613); se viste
 	-- al crearse o, si ya existía, ahora.
 	K:WatchAddonFrame('ShortestPathForever', 'ShortestPathForeverServicesPanel', function(panel) pcall(StylePanel, panel) end, true)

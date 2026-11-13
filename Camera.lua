@@ -167,6 +167,33 @@ function K:CombatZoom(entering)
 	end
 end
 
+-- Fundido de la interfaz con la piedra de hogar (situación 200 "Hearth/Teleport"): DynamicCam lo hace
+-- durar lo mismo que la transición de cámara (SituationManager.lua:884 FadeOutUI(timeToEnter); al salir,
+-- :854 FadeInUI(exitTransitionTime)), que KnuUI estira a 2,5 s para que la cámara no maree. El user pidió
+-- un fundido más rápido (2026-11-13): sólo el de la interfaz baja a 0,5 s; la cámara sigue suave.
+local HEARTH_FADE = 0.5
+local hearthFaded
+function K:FastHearthFade()
+	local dc = self:IsLoaded('DynamicCam') and _G.DynamicCam
+	if not dc or dc.KnuFastHearth or type(dc.FadeOutUI) ~= 'function' or type(dc.FadeInUI) ~= 'function' then return end
+	dc.KnuFastHearth = true
+	local fadeOut, fadeIn = dc.FadeOutUI, dc.FadeInUI
+	dc.FadeOutUI = function(self, time, settings, ...)
+		local situations = self.db and self.db.profile and self.db.profile.situations
+		local hearth = situations and situations['200']
+		if hearth and settings == hearth.hideUI and type(time) == 'number' and time > HEARTH_FADE then
+			time, hearthFaded = HEARTH_FADE, true
+		end
+		return fadeOut(self, time, settings, ...)
+	end
+	dc.FadeInUI = function(self, time, ...)
+		-- La vuelta que sigue a un fundido de la piedra de hogar, igual de rápida.
+		if hearthFaded and type(time) == 'number' and time > HEARTH_FADE then time = HEARTH_FADE end
+		hearthFaded = nil
+		return fadeIn(self, time, ...)
+	end
+end
+
 -- Al entrar, después de que DynamicCam cargue su perfil (Core.lua:653 demora su arranque).
 -- La versión anterior (3.4 beta sin publicar) prendía las situaciones de combate de DynamicCam:
 -- una vez se recarga el preset de cámara de KnuUI para deshacerlo (ApplyCamera -> LoadPreset).
@@ -183,6 +210,7 @@ function K:SetupCombatZoom()
 		pcall(K.DisableBrokenCamSituations, K) -- también en perfiles ya aplicados
 		pcall(K.SoftenCamSituations, K)
 		pcall(K.FixHearthCamSituation, K) -- después de suavizar, que apaga los giros
+		pcall(K.FastHearthFade, K)
 		pcall(K.ApplyCombatZoom, K)
 	end)
 end

@@ -1,5 +1,13 @@
 # KnuUI changelog
 
+## 3.5.4 (2026-11-13)
+
+- Shortest Path Forever's "Use Hearthstone" prompt (shown when a teleport is the faster route) is now a
+  themed row right under TomTom's arrow box: small icon and the text in the theme font and accent colour.
+  It used to float under the box in large yellow text, where Shortest Path's own arrow would be.
+- Hearthstone/teleport with DynamicCam: the interface fades out and back in 0.5 s instead of 2.5 s. The
+  camera keeps its slow 2.5 s transition.
+
 ## 3.5.3 (2026-11-13)
 
 - Even spacing on the bottom row with health/mana columns: 4 px between chats, side blocks, columns and
