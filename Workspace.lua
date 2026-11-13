@@ -351,7 +351,8 @@ function CC:ApplySizes(rects)
 		RelayoutPanels()
 		local g = _G.WoWPro and _G.WoWPro.MainFrame
 		local WP = _G.WoWProDB and _G.WoWProDB.profile
-		if WP and o.autoresize ~= nil then WP.autoresize = o.autoresize end
+		if WP and db.autoresizeOrig ~= nil then WP.autoresize = db.autoresizeOrig; db.autoresizeOrig = nil
+		elseif WP and o.autoresize ~= nil then WP.autoresize = o.autoresize end
 		if g and o.guideW and _G.WoWPro.SetMainFrameSize then pcall(_G.WoWPro.SetMainFrameSize, o.guideW, o.guideH or g:GetHeight()) end
 		if _G.WoWPro and _G.WoWPro.UpdateGuide then pcall(_G.WoWPro.UpdateGuide, _G.WoWPro) end
 		return
@@ -379,6 +380,9 @@ function CC:ApplySizes(rects)
 		-- Misma altura que chat y Details (pedido del user): WoW-Pro ajusta el alto al contenido con
 		-- autoresize (WoWPro_Frames.lua:960-966); se apaga mientras dure el centro de comando.
 		local WP = _G.WoWProDB and _G.WoWProDB.profile
+		-- Tu valor se guarda aparte (no en sizeOrig): sizeOrig podía tomarse con el autoresize ya apagado por
+		-- un ciclo anterior y devolvía false (visto 2026-11-13: guía cortada en 300 de alto sin Offhand).
+		if WP and db.autoresizeOrig == nil and WP.autoresize ~= false then db.autoresizeOrig = WP.autoresize end
 		if WP then WP.autoresize = false end
 		CC.guideSize = { rects.guide.w * k, rects.guide.h * k }
 		if not CC.guideSizeHooked then
@@ -759,6 +763,22 @@ function CC:RestoreSaved()
 	if d.fadeOrig then pcall(self.ApplyEyes, self, false) end
 	if d.dockChatOrig ~= nil then pcall(self.ApplyOffhandChat, self, false) end
 	if d.sizeOrig then pcall(self.ApplySizes, self, nil) end
+	-- Registro de misiones del mapa (CVar questLogOpen): sin esto quedaba en 0 sin Offhand.
+	if d.questLogOpen ~= nil then pcall(self.MapOnly, self, false) end
+	-- Guía de WoW-Pro: devolver el autoresize. Reparación única para perfiles que quedaron en false por la
+	-- versión anterior: WoW-Pro lo trae prendido (WoWPro.lua:348) y sólo lo apaga el «Resize Handle»
+	-- (WoWPro_Config.lua:353); si ese manejador no está prendido, el false lo dejó el centro de comando.
+	local WP = _G.WoWProDB and _G.WoWProDB.profile
+	if WP then
+		if d.autoresizeOrig ~= nil then
+			WP.autoresize = d.autoresizeOrig
+			d.autoresizeOrig = nil
+		elseif not d.autoresizeFixed and WP.autoresize == false and not WP.resize then
+			WP.autoresize = true
+		end
+		d.autoresizeFixed = true
+		if WP.autoresize and _G.WoWPro.RowSizeSet then pcall(_G.WoWPro.RowSizeSet) end
+	end
 end
 
 function CC:Restore()
@@ -779,6 +799,7 @@ function CC:Restore()
 	pcall(self.ApplySizes, self, nil)
 	if K.PallyArrange then C_Timer.After(0, K.PallyArrange) end
 	if self.ApplyMap then pcall(self.ApplyMap, self, nil) end
+	pcall(self.MapOnly, self, false)
 	if self.ApplyBags then pcall(self.ApplyBags, self, nil) end
 	if holder then holder:Hide() end
 	active = false

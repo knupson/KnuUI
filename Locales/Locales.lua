@@ -91,7 +91,7 @@ L["Done"] = "Listo"
 L["Your interface, with KnuUI identity"] = "Tu interfaz, con identidad KnuUI"
 L["Compact layout for Forever: combat in the centre and chats in the corners."] = "Diseño compacto para Forever: combate al centro y chats en las esquinas."
 L["Apply each section with its buttons or install everything with a confirmation."] = "Aplicá cada sección con sus botones o instalá todo con confirmación."
-L["Changes are saved to the current profile and show up after a reload."] = "Los cambios se guardan en el perfil actual y se ven al recargar."
+L["Each button applies right away to the current profile; a few details finish showing after a reload."] = "Cada botón se aplica en el momento al perfil actual; algunos detalles se terminan de ver al recargar."
 L["Apply all"] = "Aplicar todo"
 L["Go to Layout"] = "Ir a Diseño"
 
@@ -201,6 +201,31 @@ L["Purple"] = "Violeta"
 -- Buttons.lua (accesos fijos)
 L["Minimap buttons always visible next to the K"] = "Botones del minimapa siempre a la vista junto a la K"
 L["The rest stay inside the K launcher."] = "El resto queda adentro del lanzador K."
+
+-- MinimapZoom.lua
+L["Minimap: double size"] = "Minimapa: tamaño doble"
+L["Minimap: normal size"] = "Minimapa: tamaño normal"
+
+-- Installer.lua (aplicar en el momento)
+L["KnuUI: %s applied. Anything that does not change yet shows after a reload."] = "KnuUI: %s aplicado. Lo que todavía no cambie se ve al recargar."
+L["KnuUI: applied. Anything that does not change yet shows after a reload."] = "KnuUI: aplicado. Lo que todavía no cambie se ve al recargar."
+
+-- Share.lua
+L["Share"] = "Compartir"
+L["Your whole interface in one text: ElvUI profile, role and KnuUI settings. Also /knu export and /knu import."] = "Toda tu interfaz en un texto: perfil de ElvUI, rol y opciones de KnuUI. También /knu exportar y /knu importar."
+L["Export KnuUI"] = "Exportar KnuUI"
+L["Import KnuUI"] = "Importar KnuUI"
+L["ElvUI profile, role and KnuUI settings in one text. Ctrl+C to copy."] = "Perfil de ElvUI, rol y opciones de KnuUI en un texto. Ctrl+C para copiar."
+L["Paste a KnuUI text (Ctrl+V). It is imported into a new profile; yours is not overwritten."] = "Pegá un texto de KnuUI (Ctrl+V). Se importa en un perfil nuevo; el tuyo no se pisa."
+L["Select all"] = "Seleccionar todo"
+L["Import"] = "Importar"
+L["Close"] = "Cerrar"
+L["This client cannot encode the text."] = "Este cliente no puede codificar el texto."
+L["Could not read the ElvUI profile."] = "No se pudo leer el perfil de ElvUI."
+L["Could not encode the text."] = "No se pudo codificar el texto."
+L["This is not a KnuUI text."] = "Esto no es un texto de KnuUI."
+L["The text is damaged or incomplete."] = "El texto está dañado o incompleto."
+L["KnuUI: imported into the profile \"%s\". Reloading is recommended."] = "KnuUI: importado en el perfil \"%s\". Conviene recargar."
 
 -- Ranks.lua
 L["KnuUI: %s rank %d placed on %d action buttons."] = "KnuUI: %s rango %d puesto en %d botones."

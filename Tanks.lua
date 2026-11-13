@@ -107,6 +107,25 @@ local function CreateTank()
 end
 
 function K:SetupTanks()
+	-- El ancho de la barra de datos vive en lo global de ElvUI (customPanels, compartido entre perfiles) y
+	-- depende de los bloques compactos de ESTE perfil: al tocar "Chat y datos" en otro perfil quedaba en
+	-- 1100 y pisaba chat y Details en el tuyo (visto en el juego 2026-11-13). Se recalcula al cargar.
+	local data = E.global.datatexts and E.global.datatexts.customPanels and E.global.datatexts.customPanels.KnuUI_Data
+	if data and E.db.datatexts and E.db.datatexts.panels and E.db.datatexts.panels.KnuUI_Data then
+		local left = E.db.KnuUITanks and E.db.KnuUICompactLeft and FREED or 0
+		local right = E.db.KnuUITanks and E.db.KnuUICompactRight and FREED or 0
+		local width = 1100 - left - right
+		if data.width ~= width then
+			data.width = width
+			-- Aplicar ya si ElvUI armó la barra (DataTexts.lua:710, como Workspace.lua RelayoutPanels).
+			local DT = E:GetModule('DataTexts', true)
+			local panel = DT and DT.PanelPool and DT.PanelPool.InUse and DT.PanelPool.InUse.KnuUI_Data
+			if panel and DT.UpdatePanelAttributes then pcall(DT.UpdatePanelAttributes, DT, 'KnuUI_Data', data) end
+			if panel and DT.UpdatePanelInfo then pcall(DT.UpdatePanelInfo, DT, 'KnuUI_Data') end
+			local mover = _G.DTPanelKnuUI_DataMover
+			if mover then mover:SetWidth(width) end
+		end
+	end
 	if not E.db.KnuUITanks then return end
 	if not tank then CreateTank() end
 	-- Perfiles armados con columnas de 56 px: una vez se pasan a 64 y se recentran. Sólo se cambia

@@ -28,9 +28,56 @@ local function Button(index, text, callback)
 	return button
 end
 
-local function Saved(callback)
+-- Pedido del user (2026-11-13): "que cada botón te pida reload es malísimo, no tenés forma de saber qué está
+-- cambiando". Se aplica en el momento con el refresco completo de ElvUI (E:UpdateAll, Core.lua:1751: diseño,
+-- barras, datos, auras, placas, bolsas, chat, tooltip, minimapa y unidades) y se dice qué se aplicó.
+local function Saved(label, callback)
 	return function()
-		if callback() then E:Print(L["KnuUI: settings saved. Reload from the Done page to see them."]) end
+		if not callback() then return end
+		pcall(E.UpdateAll, E)
+		E:Print(format(L["KnuUI: %s applied. Anything that does not change yet shows after a reload."], label))
+	end
+end
+
+-- Los botones que agrega KnuUI con el estilo de ElvUI (los de la página los viste PluginInstaller.lua:302-342).
+local function Skin(button)
+	local S = E:GetModule('Skins')
+	if button and not button.KnuSkinned and S and S.HandleButton then
+		button.KnuSkinned = true
+		S:HandleButton(button)
+	end
+	return button
+end
+
+-- ElvUI cambia el ancho y el lugar de Option1-4 cada vez que se muestra otra (OnShow, PluginInstaller.lua:
+-- 304-338) y el texto largo quedaba afuera del botón. Después de mostrarlas se acomodan acá, centradas.
+local function Row(widths)
+	local f, total, gap = PluginInstallFrame, 0, 4
+	for _, w in ipairs(widths) do total = total + w end
+	total = total + gap * (#widths - 1)
+	local x = -total / 2
+	for i, w in ipairs(widths) do
+		local b = f['Option'..i]
+		b:ClearAllPoints()
+		b:SetWidth(w)
+		b:SetPoint('BOTTOMLEFT', f, 'BOTTOM', x, 45)
+		x = x + w + gap
+	end
+end
+
+-- Barra de progreso con el acento del tema (ElvUI la pinta de rojo a verde, PluginInstaller.lua:126).
+do
+	local PI = E:GetModule('PluginInstaller')
+	if PI and PI.SetPage then
+		hooksecurefunc(PI, 'SetPage', function()
+			local f = PluginInstallFrame
+			if not (f and f.Status and f.Title and f.Title.GetText) then return end
+			if (f.Title:GetText() or ''):find('KNU') and K.GetTheme then
+				local t = K:GetTheme()
+				local c = t and t.accent
+				if c then f.Status:SetStatusBarColor(c.r, c.g, c.b) end
+			end
+		end)
 	end
 end
 
@@ -49,7 +96,7 @@ local installer = {
 			Page(L["Your interface, with KnuUI identity"],
 				L["Compact layout for Forever: combat in the centre and chats in the corners."],
 				L["Apply each section with its buttons or install everything with a confirmation."],
-				L["Changes are saved to the current profile and show up after a reload."])
+				L["Each button applies right away to the current profile; a few details finish showing after a reload."])
 			Button(1, L["Apply all"], Confirm)
 			Button(2, L["Go to Layout"], function() E:GetModule('PluginInstaller'):SetPage(2) end)
 		end,
@@ -58,10 +105,11 @@ local installer = {
 				L["Keeps the coordinates and measurements of the current design for 1920×1080."],
 				L["Bars, units, auras, party, raid, minimap and experience."],
 				L["Chat and colours are applied on their own pages."])
-			Button(1, L["Layout"], Saved(function() return K:ApplyLayout() end))
-			Button(2, L["Nameplates"], Saved(function() return K:ApplyNameplates() end))
-			Button(3, L["Columns on"], Saved(function() return K:ApplyTanks(true) end))
-			Button(4, L["Columns off"], Saved(function() return K:ApplyTanks(false) end))
+			Button(1, L["Layout"], Saved(L["Layout"], function() return K:ApplyLayout() end))
+			Button(2, L["Nameplates"], Saved(L["Nameplates"], function() return K:ApplyNameplates() end))
+			Button(3, L["Columns on"], Saved(L["Columns on"], function() return K:ApplyTanks(true) end))
+			Button(4, L["Columns off"], Saved(L["Columns off"], function() return K:ApplyTanks(false) end))
+			Row({ 110, 110, 110, 110 })
 		end,
 		function()
 			Page(format(L["Role: %s"], K:RoleName()),
@@ -69,22 +117,28 @@ local installer = {
 				L["RDPS: bigger cast bar and target debuffs. Healer: party and raid in the centre."],
 				L["Healer turns on incoming heals and HoT indicators. Reload to see it."])
 			for i, role in ipairs(K.roles) do
-				Button(i, K.roleNames[role], Saved(function() return K:ApplyRole(role) end))
+				Button(i, K.roleNames[role], Saved(K.roleNames[role], function() return K:ApplyRole(role) end))
 			end
+			local widths = {}
+			for i = 1, #K.roles do widths[i] = 110 end
+			Row(widths)
 		end,
 		function()
 			Page(L["Theme: Knunet amber or Neon"],
 				L["Dark backgrounds, thin borders, Expressway font and Melli texture."],
 				L["Knunet: amber on warm black, like knunet.com. Neon: cyan and magenta."],
 				L["Includes the AFK screen with the KnuUI logo. Class health or theme health."])
-			Button(1, L["Knunet amber"], Saved(function() return K:ApplyTheme(nil, 'knunet') end))
-			Button(2, L["Neon"], Saved(function() return K:ApplyTheme(nil, 'neon') end))
-			Button(3, L["Class health"], Saved(function() return K:ApplyTheme(true) end))
-			Button(4, L["Theme health"], Saved(function() return K:ApplyTheme(false) end))
+			Button(1, L["Knunet amber"], Saved(L["Knunet amber"], function() return K:ApplyTheme(nil, 'knunet') end))
+			Button(2, L["Neon"], Saved(L["Neon"], function() return K:ApplyTheme(nil, 'neon') end))
+			Button(3, L["Class health"], Saved(L["Class health"], function() return K:ApplyTheme(true) end))
+			Button(4, L["Theme health"], Saved(L["Theme health"], function() return K:ApplyTheme(false) end))
+			Row({ 120, 120, 120, 120 })
+			-- Sin logo en esta página: el botón de decoración lo tapaba (visto en el juego 2026-11-13).
+			PluginInstallFrame.tutorialImage:Hide()
 			if not decorButton then
-				decorButton = CreateFrame('Button', nil, PluginInstallFrame, 'UIPanelButtonTemplate')
-				decorButton:SetSize(180, 30)
-				decorButton:SetPoint('BOTTOM', PluginInstallFrame, 'BOTTOM', 0, 70)
+				decorButton = Skin(CreateFrame('Button', nil, PluginInstallFrame, 'UIPanelButtonTemplate'))
+				decorButton:SetSize(200, 30)
+				decorButton:SetPoint('BOTTOM', PluginInstallFrame, 'BOTTOM', 0, 81)
 				hooksecurefunc(E:GetModule('PluginInstaller'), 'SetupReset', function() decorButton:Hide() end)
 			end
 			decorButton:SetText(format(L["Decoration: %s"], E.db.KnuUIDecor ~= false and L["yes"] or L["no"]))
@@ -100,8 +154,9 @@ local installer = {
 				L["400×180 chats, edit box above, and panels with the same background and tabs."],
 				L["Central 1100×22 bar with eight data points; time and coordinates on the minimap."],
 				L["Replaces the previous data panels, including ForeverUI_Data."])
-			Button(1, L["Apply chat and data"], Saved(function() return K:ApplyChat() end)):SetWidth(240)
-			Button(2, L["Integrated panels"], Saved(function() return K:ApplyIntegratedPanels() end)):SetWidth(180)
+			Button(1, L["Apply chat and data"], Saved(L["Apply chat and data"], function() return K:ApplyChat() end))
+			Button(2, L["Integrated panels"], Saved(L["Integrated panels"], function() return K:ApplyIntegratedPanels() end))
+			Row({ 200, 200 })
 		end,
 		function()
 			Page(L["Your addons, integrated"],
@@ -112,7 +167,7 @@ local installer = {
 			PluginInstallFrame.tutorialImage:Hide()
 			if not extraButton then
 				-- Botón adicional: mismo template que PluginInstaller.lua:297.
-				extraButton = CreateFrame('Button', nil, PluginInstallFrame, 'UIPanelButtonTemplate')
+				extraButton = Skin(CreateFrame('Button', nil, PluginInstallFrame, 'UIPanelButtonTemplate'))
 				extraButton:SetHeight(30)
 				-- Evita que quede visible cuando otro plugin usa el asistente.
 				-- Hook de métodos: Modules/Skins/Skins.lua:152; SetupReset: PluginInstaller.lua:80.
@@ -123,7 +178,7 @@ local installer = {
 				end)
 			end
 			if not skinButton then
-				skinButton = CreateFrame('Button', nil, PluginInstallFrame, 'UIPanelButtonTemplate')
+				skinButton = Skin(CreateFrame('Button', nil, PluginInstallFrame, 'UIPanelButtonTemplate'))
 				skinButton:SetHeight(30)
 			end
 			skinButton:SetText(L["WoW-Pro skin"])
@@ -143,7 +198,7 @@ local installer = {
 				if not loaded then button:Disable() end
 			end
 			if not addonSkinsButton then
-				addonSkinsButton = CreateFrame('Button', nil, PluginInstallFrame, 'UIPanelButtonTemplate')
+				addonSkinsButton = Skin(CreateFrame('Button', nil, PluginInstallFrame, 'UIPanelButtonTemplate'))
 				addonSkinsButton:SetSize(240, 30)
 				addonSkinsButton:SetPoint('BOTTOM', PluginInstallFrame, 'BOTTOM', 0, 102)
 				hooksecurefunc(E:GetModule('PluginInstaller'), 'SetupReset', function() addonSkinsButton:Hide() end)
@@ -189,7 +244,10 @@ local function Options()
 	-- _ref/ElvUI_Libraries/Game/Shared/LibElvUIPlugin-1.0/LibElvUIPlugin-1.0.lua:107.
 	-- Menú en pestañas (AceConfig childGroups = 'tab'): cada pestaña explica qué hace, las opciones
 	-- ocupan el ancho completo para que ningún texto se corte y las dependientes se apagan solas.
-	local function Reload() E:Print(L["KnuUI: settings saved. Reload from the Done page to see them."]) end
+	local function Reload()
+		pcall(E.UpdateAll, E)
+		E:Print(L["KnuUI: applied. Anything that does not change yet shows after a reload."])
+	end
 	local function Desc(order, text) return { order = order, type = 'description', fontSize = 'medium', name = text } end
 	local function Head(order, text) return { order = order, type = 'header', name = text } end
 	local function NoColumns() return not E.db.KnuUITanks end
@@ -303,6 +361,12 @@ local function Options()
 					install = { order = 2, type = 'execute', width = 'double', name = L["Open installer"], func = function() K:OpenInstaller() end },
 					applyAll = { order = 3, type = 'execute', width = 'double', name = L["Apply all"], desc = L["Apply layout, theme, chat and addon settings, then reload."],
 						func = function() E:StaticPopup_Show('KNUUI_APPLY') end },
+					shareHead = Head(10, L["Share"]),
+					shareDesc = Desc(11, L["Your whole interface in one text: ElvUI profile, role and KnuUI settings. Also /knu export and /knu import."]),
+					export = { order = 12, type = 'execute', width = 'double', name = L["Export KnuUI"],
+						func = function() E:ToggleOptions(); K:OpenShare('export') end },
+					import = { order = 13, type = 'execute', width = 'double', name = L["Import KnuUI"],
+						func = function() E:ToggleOptions(); K:OpenShare('import') end },
 				},
 			},
 			layout = {
@@ -589,6 +653,8 @@ function K:SetupInstaller()
 		local command = (message or ''):match('^%s*(.-)%s*$'):lower()
 		if command == 'aplicar' or command == 'apply' then Confirm()
 		elseif command == 'cine' or command == 'cinema' then K:ToggleCinema()
+		elseif command == 'export' or command == 'exportar' then K:OpenShare('export')
+		elseif command == 'import' or command == 'importar' then K:OpenShare('import')
 		else K:OpenInstaller() end
 	end
 	E.Libs.EP:RegisterPlugin(self.addonName, Options)

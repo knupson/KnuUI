@@ -1,5 +1,22 @@
 # KnuUI changelog
 
+## 3.5.1 (2026-11-13)
+
+- Minimap "+" button above the tracking (magnifier) button: doubles the minimap and moves what it would
+  cover (buffs, debuffs and anything else to its left move left; what sits below moves down). Click "-" to
+  go back; anything you moved by hand while it was big stays where you left it.
+- Export / import your whole interface as one text: ElvUI profile (including every KnuUI option, which
+  ElvUI's own exporter leaves out), role, KnuUI global options and data panel definitions. Import always
+  creates a new profile and never overwrites yours. ElvUI > KnuUI > General > Share, or /knu export and
+  /knu import.
+- Installer: every button applies right away (no reload needed for most changes) and says in chat what was
+  applied; KnuUI's extra buttons use ElvUI's style, text fits inside every button, the decoration button
+  no longer covers the logo and the progress bar uses the theme accent.
+- The bottom data bar width is recalculated for the active profile on load (it is shared between ElvUI
+  profiles and could overlap chat and Details after using another profile).
+- Without Offhand, the world map quest log and WoW-Pro's auto resize come back if the command center had
+  turned them off.
+
 ## 3.5.0 (2026-11-13)
 
 - Offhand support. When Offhand spans the game window over two monitors, ElvUI is fitted to the game
