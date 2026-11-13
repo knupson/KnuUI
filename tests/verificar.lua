@@ -227,6 +227,14 @@ for line in io.lines('addons/KnuUI/KnuUI.toc') do
  local file = line:match('^([%w_/%-]+%.lua)%s*$')
  if file then assert(loadfile('addons/KnuUI/'..file))('KnuUI', ns) end
 end
+-- Reutiliza el entorno sin ejecutar la batería ni sembrar perfiles ajenos.
+if ... == 'render-harness' then
+ return { E = E, K = module, fresh = function()
+  E.db = E:CopyTable({}, P)
+  E.global = E:CopyTable({}, G)
+  E.private = E:CopyTable({}, V)
+ end }
+end
 module:Initialize()
 assert(installer and #installer.Pages == 7 and #installer.StepTitles == 7)
 assert(installer.tutorialImage == [[Interface\AddOns\KnuUI\media\logo]])

@@ -62,7 +62,8 @@ local function Create()
 	holder = CreateFrame('Frame', 'KnuUI_LootMonitor', E.UIParent)
 	holder:SetSize(WIDTH, MAX_ROWS * (ROW_H + 3))
 	-- Arriba del panel derecho (el aviso de amigos va arriba del izquierdo: Layout.lua BNET 4,212).
-	holder:SetPoint('BOTTOMRIGHT', E.UIParent, 'BOTTOMRIGHT', -4, 240)
+	-- A la izquierda de las barras 5 y 6 (Layout.lua, bloques 2×6 en x 1776-1916): a -4 las pisaba.
+	holder:SetPoint('BOTTOMRIGHT', E.UIParent, 'BOTTOMRIGHT', -148, 240)
 	for i = 1, MAX_ROWS do rows[i] = CreateRow(i) end
 	holder.rows = rows
 	E:CreateMover(holder, 'KnuUI_LootMonitorMover', L["KnuUI: loot monitor"], nil, nil, nil, 'ALL,GENERAL', nil, 'KnuUI')

@@ -1,5 +1,16 @@
 # KnuUI changelog
 
+## 3.5.2 (2026-11-13)
+
+- Default layout (without health/mana columns): action bars 5 and 6 are now two 2x6 blocks at the bottom
+  right, above the right panel. As 12-button columns they overlapped the raid marker bar under the
+  launcher and the loot monitor. The loot monitor now sits to their left. Applies when you (re)apply the
+  layout from the installer.
+- Baganator: the bag window title is placed between the real buttons of its top bar (measured each time
+  it opens) instead of fixed offsets, so it is no longer covered when Baganator shows more buttons.
+- Developer tools: an offline layout renderer (tools/render) that computes every block from ElvUI's
+  saved settings and lists overlaps, and a test that checks 20 role and option combinations.
+
 ## 3.5.1 (2026-11-13)
 
 - Minimap "+" button above the tracking (magnifier) button: doubles the minimap and moves what it would

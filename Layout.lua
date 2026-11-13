@@ -47,8 +47,10 @@ local movers = {
 	-- Cuádruples 4×3 de 40 px (166×124) a los costados, donde estaban los marcos.
 	ElvAB_3 = 'BOTTOM,ElvUIParent,BOTTOM,-298,28', -- x 579-745, y 28-152
 	ElvAB_4 = 'BOTTOM,ElvUIParent,BOTTOM,298,28', -- x 1175-1341, y 28-152
-	ElvAB_5 = 'RIGHT,ElvUIParent,RIGHT,-4,0',
-	ElvAB_6 = 'RIGHT,ElvUIParent,RIGHT,-40,0',
+	-- Bloques 2×6 a la derecha, arriba del panel derecho (y 240, como el monitor de botín, que va a su
+	-- izquierda) y debajo de la barra de marcas que cuelga de la K (test render-roles).
+	ElvAB_5 = 'BOTTOMRIGHT,ElvUIParent,BOTTOMRIGHT,-4,240',
+	ElvAB_6 = 'BOTTOMRIGHT,ElvUIParent,BOTTOMRIGHT,-74,240',
 	ExperienceBarMover = 'BOTTOM,ElvUIParent,BOTTOM,0,100', -- 406×8, y 100-108
 	ShiftAB = 'BOTTOM,ElvUIParent,BOTTOM,0,112', -- y 112-136
 	ElvUF_PlayerCastbarMover = 'BOTTOM,ElvUIParent,BOTTOM,14,142', -- 300×28 + ícono, centrado; y 142-170
@@ -133,8 +135,10 @@ function K:ApplyLayout()
 		[2] = { 12, 32, 2, false },
 		[3] = { 4, 40, 2, false },
 		[4] = { 4, 40, 2, false },
-		[5] = { 1, 32, 2, false }, -- siempre visibles, sin mouseover
-		[6] = { 1, 32, 2, false },
+		-- 2×6 (66×202): en una columna de 12 (406 de alto) no entraban entre la barra de marcas que cuelga
+		-- de la K y el chat derecho (test render-roles, elegido por el user 2026-11-13).
+		[5] = { 2, 32, 2, false }, -- siempre visibles, sin mouseover
+		[6] = { 2, 32, 2, false },
 	}
 	for key in pairs(P.actionbar) do
 		local id = tonumber(key:match('^bar(%d+)$'))
