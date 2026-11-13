@@ -17,6 +17,9 @@ local K = E:GetModule('KnuUI')
 -- separación (:2578-2590), así que el tamaño y los íconos/textos internos se ponen acá.
 
 local TILE, GAP, PAD = 31, 2, 3
+local BASE_TILE, MAX_TILE = 31, 54 -- 72 quedó demasiado grande (user 2026-11-13)
+-- Tamaño de letra proporcional a la casilla (con el centro de comando la casilla crece hasta MAX_TILE).
+local function FS(size) return math.max(size, math.floor(size * TILE / BASE_TILE)) end
 local POP_W, POP_H, POP_GAP = 140, 20, 2
 
 local backdrop
@@ -96,15 +99,15 @@ end
 local function StyleTile(name, kind)
 	if kind == 'class' then
 		Icon(_G[name..'ClassIcon'], TILE - 4, 'CENTER', 0, 0)
-		Icon(_G[name..'BuffIcon'], 13, 'TOPLEFT', 2, -2)
-		Text(_G[name..'Time'], 'BOTTOM', 0, 5, 9, 'CENTER', TILE)
-		Text(_G[name..'Time2'], 'BOTTOM', 0, 5, 9, 'CENTER', TILE)
-		Text(_G[name..'Text'], 'TOPRIGHT', -2, -2, 10, 'RIGHT', 16)
+		Icon(_G[name..'BuffIcon'], FS(13), 'TOPLEFT', 2, -2)
+		Text(_G[name..'Time'], 'BOTTOM', 0, 5, FS(9), 'CENTER', TILE)
+		Text(_G[name..'Time2'], 'BOTTOM', 0, 5, FS(9), 'CENTER', TILE)
+		Text(_G[name..'Text'], 'TOPRIGHT', -2, -2, FS(10), 'RIGHT', FS(16))
 	elseif kind == 'auto' then
 		Icon(_G[name..'Icon'], TILE - 4, 'CENTER', 0, 0)
-		Text(_G[name..'Time'], 'BOTTOM', 0, 5, 9, 'CENTER', TILE)
-		Text(_G[name..'Time2'], 'BOTTOM', 0, 5, 9, 'CENTER', TILE)
-		Text(_G[name..'Text'], 'TOPRIGHT', -2, -2, 10, 'RIGHT', 16)
+		Text(_G[name..'Time'], 'BOTTOM', 0, 5, FS(9), 'CENTER', TILE)
+		Text(_G[name..'Time2'], 'BOTTOM', 0, 5, FS(9), 'CENTER', TILE)
+		Text(_G[name..'Text'], 'TOPRIGHT', -2, -2, FS(10), 'RIGHT', FS(16))
 	elseif kind == 'aura' then
 		Icon(_G[name..'Icon'], TILE - 4, 'CENTER', 0, 0)
 		for _, key in ipairs({ 'Player1', 'Player2' }) do
@@ -120,13 +123,13 @@ local function StyleTile(name, kind)
 			Icon(icon, TILE - 4, 'LEFT', 2, 0)
 			Icon(seal, TILE - 4, 'RIGHT', -2, 0)
 			if icon then icon:SetAlpha(1) end
-			if t1 then t1:SetAlpha(1); t1:ClearAllPoints(); t1:SetPoint('BOTTOM', icon, 'BOTTOM', 0, 2); t1:SetWidth(TILE); t1:SetJustifyH('CENTER'); Font(t1, 9) end
+			if t1 then t1:SetAlpha(1); t1:ClearAllPoints(); t1:SetPoint('BOTTOM', icon, 'BOTTOM', 0, 2); t1:SetWidth(TILE); t1:SetJustifyH('CENTER'); Font(t1, FS(9)) end
 		else
 			Icon(seal, TILE - 4, 'CENTER', 0, 0)
 			if icon then icon:SetAlpha(0) end
 			if t1 then t1:SetAlpha(0) end
 		end
-		if t2 then t2:ClearAllPoints(); t2:SetPoint('BOTTOM', seal, 'BOTTOM', 0, 2); t2:SetWidth(TILE); t2:SetJustifyH('CENTER'); Font(t2, 9) end
+		if t2 then t2:ClearAllPoints(); t2:SetPoint('BOTTOM', seal, 'BOTTOM', 0, 2); t2:SetWidth(TILE); t2:SetJustifyH('CENTER'); Font(t2, FS(9)) end
 	end
 end
 
@@ -162,7 +165,7 @@ end
 -- donde Skins/WoWPro.lua pone la guía.
 -- Las listas de jugadores se abren hacia abajo, debajo de su casilla: el mouse baja directo sin
 -- cruzar otra clase (al entrar a otra clase PallyPower cierra la lista abierta, PallyPower.lua:2484, 2502).
-local pending
+local pending, Arrange_retries
 local function Arrange()
 	local PP, header = _G.PallyPower, _G.PallyPowerFrame
 	if not (PP and header and PP.classButtons) then return end
@@ -197,8 +200,29 @@ local function Arrange()
 		guide:HookScript('OnShow', function() C_Timer.After(0, function() pcall(Arrange) end) end)
 		guide:HookScript('OnHide', function() C_Timer.After(0, function() pcall(Arrange) end) end)
 	end
+	-- Si WoW-Pro todavía no creó su ventana, no hay a qué engancharse: la franja quedaba en la esquina,
+	-- detrás de la guía (visto en el juego 2026-11-13, sin Offhand). Se reintenta unas veces.
+	if not (guide and guide:IsShown()) then
+		Arrange_retries = (Arrange_retries or 0) + 1
+		if Arrange_retries <= 15 then C_Timer.After(2, function() pcall(Arrange) end) end
+	else
+		Arrange_retries = 0
+	end
 	header:ClearAllPoints()
-	if guide and guide:IsShown() then
+	local ccZone = guide and guide.KnuCC and _G.KnuUI_CC_pally
+	-- Con el centro de comando las casillas llenan casi todo el ancho del bloque de Tiny Threat (pedidos del
+	-- user 2026-11-13: "agrandar más, casi no veo los contadores", "casi el mismo ancho que el panel").
+	TILE = BASE_TILE
+	if ccZone then
+		local spans = 0
+		for _, item in ipairs(items) do spans = spans + item[3] end
+		local k = ccZone:GetEffectiveScale() / header:GetEffectiveScale()
+		local avail = ccZone:GetWidth() * k - 2 * PAD - 8
+		if spans > 0 then TILE = math.max(BASE_TILE, math.min(MAX_TILE, math.floor((avail - (spans - 1) * GAP) / spans))) end
+	end
+	if ccZone then -- centro de comando (Workspace.lua): arriba de la guía, en su propia zona
+		header:SetPoint('TOPLEFT', ccZone, 'TOPLEFT', PAD, -PAD)
+	elseif guide and guide:IsShown() then
 		header:SetPoint('TOPLEFT', guide, 'TOPRIGHT', 8 + PAD, -PAD)
 	else
 		header:SetPoint('TOPLEFT', E.UIParent, 'TOPLEFT', 8 + PAD, -8 - PAD)
@@ -217,30 +241,60 @@ local function Arrange()
 	frame:SetBackdropColor(t.backdropFade.r, t.backdropFade.g, t.backdropFade.b, t.backdropFade.a)
 	frame:SetBackdropBorderColor(t.border.r, t.border.g, t.border.b)
 
-	local col = 0
+	-- Centro de comando (pedido del user 2026-11-13): la tira va centrada abajo del bloque de Tiny Threat; si
+	-- no entra a lo ancho se parte en filas que crecen hacia arriba (nunca hacia el borde del monitor), y las
+	-- listas de jugadores se abren por encima de la tira completa.
+	local perRow = math.huge
+	if ccZone then
+		local k = ccZone:GetEffectiveScale() / header:GetEffectiveScale()
+		perRow = math.max(1, math.floor((ccZone:GetWidth() * k - 2 * PAD + GAP) / (TILE + GAP)))
+	end
+	-- Primera pasada: fila y columna de cada casilla.
+	local col, row, maxCol = 0, 0, 0
+	for _, item in ipairs(items) do
+		local span = item[3]
+		if col > 0 and col + span > perRow then row, col = row + 1, 0 end
+		item.col, item.row = col, row
+		col = col + span
+		if col > maxCol then maxCol = col end
+	end
+	local rows = (#items > 0) and (row + 1) or 0
+	-- Segunda pasada: ubicar. Fila 0 abajo; las siguientes suben (TILE + GAP cada una).
 	for _, item in ipairs(items) do
 		local button, kind, span, index = item[1], item[2], item[3], item[4]
 		button:ClearAllPoints()
-		button:SetPoint('TOPLEFT', header, 'TOPLEFT', col * (TILE + GAP), 0)
+		button:SetPoint('TOPLEFT', header, 'TOPLEFT', item.col * (TILE + GAP), item.row * (TILE + GAP))
 		Size(button, span * TILE + (span - 1) * GAP, TILE)
 		if kind == 'class' then
 			StyleTile('PallyPowerC'..index, 'class')
 			for p, pop in ipairs(PP.playerButtons[index] or {}) do
-				-- Debajo del marco (4 px por debajo de su borde), alineada con su casilla.
 				pop:ClearAllPoints()
-				pop:SetPoint('TOPLEFT', button, 'BOTTOMLEFT', 0, -(PAD + 4) - (p - 1) * (POP_H + POP_GAP))
+				if ccZone then -- por encima de la tira completa
+					local above = (rows - 1 - item.row) * (TILE + GAP)
+					pop:SetPoint('BOTTOMLEFT', button, 'TOPLEFT', 0, above + (PAD + 4) + (p - 1) * (POP_H + POP_GAP))
+				else
+					-- Debajo del marco (4 px por debajo de su borde), alineada con su casilla.
+					pop:SetPoint('TOPLEFT', button, 'BOTTOMLEFT', 0, -(PAD + 4) - (p - 1) * (POP_H + POP_GAP))
+				end
 				Size(pop, POP_W, POP_H)
 				StylePopup('PallyPowerC'..index..'P'..p)
 			end
 		else
 			StyleTile(button:GetName(), kind)
 		end
-		col = col + span
+	end
+	col = maxCol
+	local width = col * TILE + math.max(0, col - 1) * GAP
+	local height = rows * TILE + math.max(0, rows - 1) * GAP
+	if ccZone and not InCombatLockdown() then
+		-- Centrada en la zona, con la fila de abajo a PAD del borde inferior.
+		header:ClearAllPoints()
+		header:SetPoint('TOPLEFT', ccZone, 'BOTTOM', -width / 2, PAD + TILE)
 	end
 
 	frame:ClearAllPoints()
-	frame:SetPoint('TOPLEFT', header, 'TOPLEFT', -PAD, PAD)
-	frame:SetSize(col * TILE + math.max(0, col - 1) * GAP + 2 * PAD, TILE + 2 * PAD)
+	frame:SetPoint('TOPLEFT', header, 'TOPLEFT', -PAD, PAD + math.max(0, rows - 1) * (TILE + GAP))
+	frame:SetSize(width + 2 * PAD, height + 2 * PAD)
 	frame:SetShown(col ~= 0)
 
 	-- Al cargar, PallyPower pone su barra en el centro de UIParent más opt.display.offsetX/Y, con su
@@ -336,3 +390,6 @@ K:RegisterSkin('PallyPower', function()
 	-- Sólo el marco exterior: adentro hay botones de bendición con íconos propios.
 	K:WatchAddonFrame('PallyPower', 'PallyPowerBlessingsFrame', nil, true)
 end)
+
+-- Para el centro de comando (Workspace.lua): reacomodar la franja cuando la guía cambia de monitor.
+K.PallyArrange = function() if not InCombatLockdown() then pcall(Arrange) end end

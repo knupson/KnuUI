@@ -62,10 +62,10 @@ local function Style(instance)
   Call(instance, 'UpdateRowAreaBorder', false)
   Call(instance, 'InstanceWallpaper', false)
   -- window_main.lua:3895-3984: alto, textura, clase, fondo, alfa y separación.
-  Call(instance, 'SetBarSettings', 16, 'Melli', true, nil, 'Melli', false,
+  Call(instance, 'SetBarSettings', K.CCDetailsRow or 16, 'Melli', true, nil, 'Melli', false,
    { t.muted.r, t.muted.g, t.muted.b, 0.12 }, 1, nil, nil, 1, '')
   -- window_main.lua:3615-3668: fuente, color fijo, clase de textos y contornos.
-  Call(instance, 'SetBarTextSettings', 12, 'Expressway', { t.text.r, t.text.g, t.text.b, 1 }, false, false, true, true)
+  Call(instance, 'SetBarTextSettings', K.CCDetailsFont or 12, 'Expressway', { t.text.r, t.text.g, t.text.b, 1 }, false, false, true, true)
   -- window_main.lua:3740,7708: título visible, tamaño/fondo y texto nativo.
   Call(instance, 'SetTitleBarSettings', true, 20, 'Melli', { t.backdrop.r, t.backdrop.g, t.backdrop.b, 1 })
   Call(instance, 'AttributeMenu', true, nil, nil, 'Expressway', 12, { t.text.r, t.text.g, t.text.b, 1 }, 1, true)
@@ -128,5 +128,24 @@ function K:SkinDetails(instance)
  applying = true
  local ok = self:WithAddon('Details', function() Style(instance) end)
  applying = false
+ if K.CapTinyThreat then pcall(K.CapTinyThreat, K) end
  return ok
+end
+
+-- Tiny Threat: como máximo 10 jugadores listados (pedido del user 2026-11-13). El plugin calcula las filas
+-- según el alto de su ventana (ThreatMeter:SizeChanged, Details_TinyThreat.lua:188-215, CanShow); después de
+-- ese cálculo se recortan a 10 y se esconden las demás. No se cambia ninguna opción del plugin.
+local TT_MAX = 10
+function K:CapTinyThreat()
+	local D = _G.Details
+	local tm = D and D.GetPlugin and D:GetPlugin('DETAILS_PLUGIN_TINY_THREAT')
+	if not tm or tm.KnuCapHooked or type(tm.SizeChanged) ~= 'function' then return end
+	tm.KnuCapHooked = true
+	hooksecurefunc(tm, 'SizeChanged', function(self)
+		if (self.CanShow or 0) <= TT_MAX then return end
+		self.CanShow = TT_MAX
+		for i = #self.ShownRows, TT_MAX + 1, -1 do self.ShownRows[i] = nil end
+		for i = TT_MAX + 1, #self.Rows do self.Rows[i]:Hide() end
+	end)
+	pcall(tm.SizeChanged, tm)
 end

@@ -114,6 +114,36 @@ function K:ScanMinimapButtons()
   }
   if _G.ShortestPathForeverOptionsButton then _G.ShortestPathForeverOptionsButton:Hide() end
  end)
+ pcall(function()
+  -- Offhand no usa LibDBIcon: su botón propio es OffhandMinimapIcon (Offhand/UI/Minimap.lua:3). Clic
+  -- izquierdo del original: Offhand.Options:Open(); clic derecho: asistente y "juntar UI fuera de pantalla"
+  -- (Minimap.lua:87-115). Acá: clic = opciones, Mayús = asistente, Ctrl = juntar UI.
+  local offhand = _G.Offhand
+  local button = _G.OffhandMinimapIcon
+  if not (offhand and button) then return end
+  entries.Offhand = {
+   label = 'Offhand', icon = [[Interface\AddOns\Offhand\Media\OffhandLogo64x64.blp]],
+   click = function()
+    if IsControlKeyDown() and offhand.GatherOffScreenUI then offhand:GatherOffScreenUI() return end
+    if IsShiftKeyDown() then
+     if offhand.IsSetupComplete and not offhand:IsSetupComplete() and offhand.Onboarding and offhand.Onboarding.Open then
+      offhand.Onboarding:Open()
+     elseif offhand.Wizard and offhand.Wizard.Open then
+      offhand.Wizard:Open()
+     end
+     return
+    end
+    if offhand.Options and offhand.Options.Open then offhand.Options:Open() end
+   end,
+  }
+  -- Sólo por esta sesión: Offhand lo vuelve a mostrar en UpdateMinimapIcon (Minimap.lua:63-69); su opción
+  -- guardada showMinimapIcon no se toca.
+  button:Hide()
+  if not K.offhandIconHooked and type(offhand.UpdateMinimapIcon) == 'function' then
+   K.offhandIconHooked = true
+   hooksecurefunc(offhand, 'UpdateMinimapIcon', function() button:Hide() end)
+  end
+ end)
  self:RefreshLauncher()
 end
 

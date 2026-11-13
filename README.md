@@ -65,8 +65,19 @@ See [CHANGELOG.md](CHANGELOG.md) for the release history.
 
 KnuUI works with ElvUI alone. If any of these addons are installed it can also adjust or skin them:
 Details!, Baganator, DBM, Questie, WoW-Pro, TomTom, DynamicCam, GearQuestForever, Pawn, PallyPower,
-OpenMap and Shortest Path Forever.
+OpenMap, Shortest Path Forever and Offhand.
 Each integration only touches the addon it belongs to.
+
+### Offhand (two monitors)
+
+With [Offhand](https://www.curseforge.com/wow/addons/offhand) spanning the game window over two monitors,
+KnuUI detects it by itself and turns the second monitor into a command center: guide + PallyPower, chat,
+Details, data bar, map and bags go to the workspace, laid out from the edge it shares with the game monitor
+(what you look at most sits closest to the game), for a workspace above, below, left or right, horizontal or
+vertical, at any resolution. The game monitor keeps the bars, unit frames, minimap and TomTom's arrow, with
+the same size and 1 px borders as on a single screen. Presets and a destination per block are in
+ElvUI > KnuUI > Offhand. Without Offhand, or when the window is not spanned, KnuUI is the usual single-screen
+layout.
 
 ## What KnuUI changes in other addons
 
@@ -79,7 +90,8 @@ KnuUI only touches other addons when you ask for it, and never sends anything ou
 - **WoW-Pro:** moves the guide window 8 px from the top-left corner once per ElvUI profile (stored in WoW-Pro's own position setting); its notes can be localized at load time if the private `KnuUI_WoWProES` data addon is installed. On non-English clients, before WoW-Pro checks a quest dialog, KnuUI copies the client's quest titles into the guide steps with the same quest ID, so auto accept, select and turn in work (no WoW-Pro file is modified).
 - **TomTom + Shortest Path Forever:** when a guide points TomTom's arrow at a destination, KnuUI asks Shortest Path (public API) for the shortest route and points TomTom's arrow at each bend or stop of it. Once, it turns off Shortest Path's own arrow, compass and tracker sections, its "Follow TomTom's arrow" option and the game's in-world navigation pin (CVar `showInGameNavigation`); all can be turned back on in Shortest Path's options. Turn the bridge off with `E.db.KnuUITomTomRoute = false`.
 - **Pawn:** the upgrade arrow on bag items only counts the scale of your active talent tree (the one with the most points); tooltips still show every scale. No Pawn setting is changed.
-- **OpenMap:** with OpenMap loaded, ElvUI's and TomTom's world map coordinates are hidden (OpenMap shows its own); their settings are not changed.
+- **OpenMap:** with OpenMap loaded, ElvUI's and TomTom's world map coordinates are hidden (OpenMap shows its own); their settings are not changed. With the Offhand command center, OpenMap's saved window place and size point at the map zone while it is active; your own values are kept and written back when the command center turns off.
+- **Offhand:** nothing in Offhand's settings is changed. Its minimap button is hidden for the session and moved into the K launcher. With the command center, DynamicCam's "hide UI" keeps the workspace frames visible (a copy of the situation settings is passed at hide time; DynamicCam's profile is not modified).
 - **ForeverCore tracker column (Shortest Path and other Forever addons):** once per profile it is detached and locked where Blizzard's hidden quest tracker starts, through ForeverCore's public `ForeverTrackerHost` API.
 - **Questie / WoW-Pro tracker position:** only from their buttons on the installer's Addons page.
 - **DBM:** bar texture and font are changed only if you enable "DBM bars" in ElvUI > KnuUI (this writes DBM's own settings).

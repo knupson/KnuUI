@@ -1,5 +1,51 @@
 # KnuUI changelog
 
+## 3.5.0 (2026-11-13)
+
+- Offhand support. When Offhand spans the game window over two monitors, ElvUI is fitted to the game
+  monitor with the same size and 1 px borders as on a single screen (container, pixel size, minimap
+  frames that ignore their parent's scale, and ElvUI movers). Detected automatically: without Offhand, or
+  without a real span, nothing changes.
+- Command center (Offhand): the workspace monitor gets guide + PallyPower, chat, Details, data bar, map
+  and bags; the game monitor keeps only combat. Zones are computed from the edge the workspace shares with
+  the game monitor (above, below, left or right; any resolution or orientation): what you look at most sits
+  next to that edge. Presets (command center, social, only map and bags, raid, everything on the game
+  monitor), a destination per block, unlock to move and reset, in ElvUI > KnuUI > Offhand. Your
+  single-screen layout and OpenMap's saved window are left untouched and come back when Offhand is off.
+- While flying with the command center active, DynamicCam hides the game monitor's interface but keeps the
+  workspace visible (DynamicCam's profile is not changed).
+- ElvUI/KnuUI options open on the workspace monitor with the command center.
+- Offhand in the K launcher (click: options, Shift: wizard, Ctrl: gather off-screen UI); its minimap button
+  is hidden for the session.
+- Recommended UI builds per class and role (Builds tab) and 17 colour palettes with official values and a
+  preview, including a class-colour palette.
+- Options reorganised: General is a status dashboard with quick actions; new Features tab (loot, combat,
+  travel, panels); Appearance keeps palettes and decoration.
+- /knudiag diagnostic: saves size, scale, position and anchor of every KnuUI block to KnuUI's
+  SavedVariables, plus who moved UIParent/ElvUIParent.
+- Command center layout, tuned in game: data bar at the top of the workspace with five more datatexts
+  (location, time, experience, quests, mail); WoW-Pro guide, chat and Details share one height next to the
+  game monitor; PallyPower sits centred at the bottom of the Tiny Threat block, tiles up to 54 px with
+  counters scaled to match; Tiny Threat lists at most 10 players; workspace text 4 px larger; 4 px to
+  every edge and 6 px between blocks, never over Offhand's border.
+- World map on the workspace is map only (no side extras), zoomed a bit on the player; with the quest log
+  open (L) the log is aligned with the map, stays inside the border and its side tabs are hidden.
+- Game monitor with the command center: everything 24 px lower (no data bar there), right block back to
+  6x4, tooltip in the bottom-right corner. Bags open centred on the workspace; Blizzard panels
+  (character and others) open centred over the map, 1.25x larger. The chat/Details fade buttons are hidden (not needed there).
+- Blizzard's "All objectives" tracker is never shown, in any mode.
+- While flying, the data bar stays visible and 3D portraits are hidden (they ignored the fade).
+- WoW-Pro use/target buttons stay inside the guide row instead of floating over the chat.
+- Offhand's own chat docking (dockChat) is turned off while the chat is on the workspace (it pulled the
+  chat out of its panel, e.g. on level up) and restored afterwards.
+- Without Offhand, KnuUI gives back the sizes, fonts, data bar, map and tooltip the command center had
+  changed, and PallyPower waits for the WoW-Pro guide before placing itself.
+- Performance: the command center only redoes sizes, fonts and skins when the window, preset or a
+  destination changes; Offhand's gamepad menu scanner (walks thousands of frames every second) is hidden
+  when the gamepad is off.
+- Known issue (Offhand, not KnuUI): with Offhand loaded, /reload froze the game 35-39 s after logout in
+  our tests; without Offhand the same reload did not freeze.
+
 ## 3.4.3 (2026-11-11)
 
 - TomTom arrow along Shortest Path Forever's route: when a guide (WoW-Pro, Questie, /way) points

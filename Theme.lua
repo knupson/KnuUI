@@ -91,12 +91,65 @@ K.themes = {
 		healthBackdrop = C('1f2335'),
 	},
 }
+-- Mismos doce colores que los temas originales. La asignación a elementos y el alfa son de KnuUI.
+local function Palette(label, accent, hi, dim, text, muted, bg, fade, border, danger, health)
+	return { label = label, accent = C(accent), accentHi = C(hi), accentDim = C(dim),
+		text = C(text), muted = C(muted), backdrop = C(bg), backdropFade = C(fade, 0.9),
+		border = C(border), cast = C(accent), castNoInterrupt = C(danger),
+		health = C(health), healthBackdrop = C(fade) }
+end
+
+-- Valores oficiales consultados el 2026-11-12; fuentes y tokens originales:
+-- https://github.com/altercation/solarized/blob/master/README.md#the-values
+-- blue, cyan, base01, base0, base00, base03, base03, base02, red, green.
+K.themes.solarized = Palette('Solarized Dark', '268bd2', '2aa198', '586e75', '839496', '657b83', '002b36', '002b36', '073642', 'dc322f', '859900')
+-- https://github.com/atom/one-dark-syntax/blob/master/styles/colors.less
+-- hue-2, hue-1, mono-3, mono-1, mono-2, syntax-bg (HSL oficiales convertidos a RGB).
+-- Borde: mismo syntax-bg; fondo atenuado: mismo syntax-bg. hue-5 y hue-4 para peligro/vida.
+K.themes.onedark = Palette('One Dark', '61afef', '56b6c2', '5c6370', 'abb2bf', '828997', '282c34', '282c34', '282c34', 'e06c75', '98c379')
+-- https://github.com/rose-pine/neovim/blob/main/lua/rose-pine/palette.lua (main y moon).
+-- iris, foam, pine, text, subtle, base, surface, overlay, love, rose.
+K.themes.rosepine = Palette('Rosé Pine', 'c4a7e7', '9ccfd8', '31748f', 'e0def4', '908caa', '191724', '1f1d2e', '26233a', 'eb6f92', 'ebbcba')
+K.themes.rosepinemoon = Palette('Rosé Pine Moon', 'c4a7e7', '9ccfd8', '3e8fb0', 'e0def4', '908caa', '232136', '2a273f', '393552', 'eb6f92', 'ea9a97')
+-- https://github.com/catppuccin/palette/blob/main/palette.json (macchiato y frappe).
+-- mauve, pink, overlay1, text, subtext0, base, mantle, surface0, red, green.
+K.themes.macchiato = Palette('Catppuccin Macchiato', 'c6a0f6', 'f5bde6', '8087a2', 'cad3f5', 'a5adcb', '24273a', '1e2030', '363a4f', 'ed8796', 'a6da95')
+K.themes.frappe = Palette('Catppuccin Frappé', 'ca9ee6', 'f4b8e4', '838ba7', 'c6d0f5', 'a5adce', '303446', '292c3c', '414559', 'e78284', 'a6d189')
+-- https://github.com/rebelot/kanagawa.nvim/blob/master/lua/kanagawa/colors.lua
+-- Wave: crystalBlue, springBlue, waveBlue2, fujiWhite, fujiGray, sumiInk3/0/4, samuraiRed, springGreen.
+K.themes.kanagawa = Palette('Kanagawa Wave', '7e9cd8', '7fb4ca', '2d4f67', 'dcd7ba', '727169', '1f1f28', '16161d', '2a2a37', 'e82424', '98bb6c')
+-- Dragon: dragonViolet/Blue2/Gray3/White/Gray2/Black3/Black0/Black4/Red/Green2.
+K.themes.kanagawadragon = Palette('Kanagawa Dragon', '8992a7', '8ba4b0', '7a8382', 'c5c9c5', '9e9b93', '181616', '0d0c0c', '282727', 'c4746e', '8a9a7b')
+-- Base oscura propia de KnuUI; el acento se toma de ElvUI al consultar el tema.
+K.themes.class = Palette(L["Class colour"], 'ffa82e', 'ffa82e', 'ffa82e', 'ecd9bd', 'a88f70', '1f160e', '110c08', '33251a', 'e0523a', 'ffa82e')
+
 -- Orden en el menú de opciones.
-K.themeOrder = { 'knunet', 'knunetIntense', 'neon', 'dracula', 'nord', 'catppuccin', 'gruvbox', 'tokyonight' }
+K.themeOrder = { 'knunet', 'knunetIntense', 'neon', 'class', 'dracula', 'nord', 'catppuccin', 'gruvbox', 'tokyonight',
+	'solarized', 'onedark', 'rosepine', 'rosepinemoon', 'macchiato', 'frappe', 'kanagawa', 'kanagawadragon' }
 K.palette = K.themes.knunet -- compatibilidad con el código que lee K.palette
 
 function K:GetTheme()
+	-- General/Core.lua:266 usa E:ClassColor(classToken, true), que devuelve una tabla RGB.
+	if E.ClassColor then
+		local color = E:ClassColor(E.myclass, true)
+		if color then
+			for _, field in ipairs({ 'accent', 'accentHi', 'accentDim', 'cast', 'health' }) do
+				self.themes.class[field] = { r = color.r, g = color.g, b = color.b, a = 1 }
+			end
+		end
+	end
 	return self.themes[E.db.KnuUITheme or 'knunet'] or self.themes.knunet
+end
+
+function K:ThemePreview(key)
+	self:GetTheme() -- refresca también la muestra de clase
+	local theme, swatches = self.themes[key] or self.themes.knunet, {}
+	for _, field in ipairs({ 'accent', 'accentHi', 'accentDim', 'text', 'backdrop', 'border' }) do
+		local c = theme[field]
+		-- Textura blanca teñida (|T...:R:G:B|t): la fuente de Forever no tiene el carácter ■ (salía un cuadrado vacío, visto en el juego 2026-11-13).
+		swatches[#swatches + 1] = format('|TInterface\\Buttons\\WHITE8X8:12:18:0:0:8:8:0:8:0:8:%d:%d:%d|t', math.floor(c.r * 255 + 0.5), math.floor(c.g * 255 + 0.5), math.floor(c.b * 255 + 0.5))
+	end
+	return theme.label..'  '..table.concat(swatches, ' ')
 end
 
 function K:ApplyTheme(classHealth, themeName)

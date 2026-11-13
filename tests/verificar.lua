@@ -15,7 +15,13 @@ end
 function E:GetName() return 'ElvUI' end
 function E:GetLocale() return 'esES' end
 for _, file in ipairs({ 'Profile', 'Global', 'Private' }) do
-	assert(loadfile('_ref/ElvUI/Game/Shared/Defaults/'..file..'.lua'))()
+	local path = '_ref/ElvUI/Game/Shared/Defaults/'..file..'.lua'
+	local chunk = loadfile(path)
+	-- Los worktrees no copian _ref; usar la referencia compartida del repo principal.
+	-- KNUUI_REF_ROOT: carpeta que contiene _ref (con barra al final).
+	if not chunk and os.getenv('KNUUI_REF_ROOT') then chunk = loadfile(os.getenv('KNUUI_REF_ROOT')..path) end
+	assert(chunk, 'falta ' .. path .. ' (correr desde la carpeta que tiene _ref o definir KNUUI_REF_ROOT)')
+	chunk()
 end
 
 local function Check(db, schema, path)
@@ -78,7 +84,12 @@ function ReloadUI() reloads = reloads + 1 end
 SlashCmdList = {}
 local loaded = {}
 C_Timer = { NewTicker = function() return {} end, After = function(_, callback) callback() end }
-C_AddOns = { IsAddOnLoaded = function(name) return loaded[name] end }
+C_AddOns = {
+ IsAddOnLoaded = function(name) return loaded[name] end,
+ GetAddOnMetadata = function(name, field)
+  assert(name == 'KnuUI' and field == 'Version'); return 'prueba-version'
+ end,
+}
 function hooksecurefunc(object, method, callback)
  if type(object) == 'string' then object, method, callback = _G, object, method end
  local original = object[method]
@@ -209,6 +220,8 @@ Fresh()
 -- Cargar los archivos en el orden real del TOC también detecta nombres obsoletos.
 format = format or string.format
 GetLocale = GetLocale or function() return 'esES' end
+date = date or os.date
+debugstack = debugstack or function() return '' end
 local ns = {} -- tabla compartida entre archivos (Locales/Locales.lua define ns.L)
 for line in io.lines('addons/KnuUI/KnuUI.toc') do
  local file = line:match('^([%w_/%-]+%.lua)%s*$')
@@ -240,16 +253,41 @@ options()
 -- Menú en pestañas: cada grupo tiene descripción y todos los controles tienen nombre.
 local menu = E.Options.args.KnuUI
 assert(menu.childGroups == 'tab')
-for _, key in ipairs({ 'general', 'layout', 'look', 'addons', 'camera' }) do
+for _, key in ipairs({ 'general', 'layout', 'look', 'features', 'builds', 'addons', 'camera', 'offhand' }) do
  local group = menu.args[key]
  assert(group and group.type == 'group', key)
  for name, item in pairs(group.args) do
   assert(item.type and item.name ~= nil and item.order, key..'.'..name)
-  if item.type == 'toggle' or item.type == 'select' or item.type == 'execute' then assert(item.width, key..'.'..name..' sin ancho') end
+  if item.type == 'toggle' or item.type == 'select' or item.type == 'execute' or item.type == 'multiselect' then
+   assert(item.width and item.desc, key..'.'..name..' sin ancho o ayuda')
+   local desc = type(item.desc) == 'function' and item.desc() or item.desc
+   assert(type(desc) == 'string' and #desc > 0, key..'.'..name..' sin descripción')
+  end
  end
 end
 assert(menu.args.layout.args.reapply.type == 'execute' and menu.args.look.args.theme.type == 'select')
 assert(menu.args.layout.args.compactRight.disabled() == not E.db.KnuUITanks)
+-- Conjunto congelado antes de reorganizar: ninguna clave anterior puede desaparecer.
+do
+ local keys = { KnuUI = true }
+ local function Collect(node)
+  for key, item in pairs(node.args or {}) do keys[key] = true; Collect(item) end
+ end
+ Collect(menu)
+ for _, key in ipairs(assert(loadfile('addons/KnuUI/tests/opciones-claves.lua'))()) do
+  assert(keys[key], 'Opción perdida: '..key)
+ end
+ assert(menu.args.features.order == 32 and menu.args.features.name == 'Funciones')
+ for _, key in ipairs({ 'lootMonitor', 'lootSelf', 'lootGroup', 'rankUpgrade', 'flightTimer', 'raidMarkers', 'detailsFade', 'panels' }) do
+  assert(menu.args.features.args[key] and not menu.args.look.args[key], key)
+ end
+ for key, label in pairs({ lootHead = 'Botín', combatHead = 'Combate', travelHead = 'Viajes', panelsHead = 'Paneles' }) do
+  assert(menu.args.features.args[key].type == 'header' and menu.args.features.args[key].name == label)
+ end
+ assert(menu.args.general.args.reapply == menu.args.layout.args.reapply)
+ assert(menu.args.general.args.diag == menu.args.offhand.args.diag)
+ assert(menu.args.look.args.theme.name == 'Paleta' and menu.args.look.args.theme.sorting == module.themeOrder)
+end
 SlashCmdList.KNUUI('')
 assert(not popup and reloads == 0 and not E.db.datatexts.panels.KnuUI_Data)
 SlashCmdList.KNUUI(' aplicar ')
@@ -312,6 +350,7 @@ local function Validate()
  base.KnuUIDetailsFade = true
  base.KnuUIFlightTimer = true
  base.KnuUIRankUpgrade = true
+ base.KnuUICC = { preset = 'full', blocks = {}, custom = {} } -- Workspace.lua (centro de comando)
  base.datatexts.panels.KnuUI_Data = { enable = true, battleground = false }
  for i = 1, 8 do base.datatexts.panels.KnuUI_Data[i] = '' end
  base.datatexts.panels.ForeverUI_Data = { enable = true }
@@ -636,6 +675,10 @@ auction.border = nil
 auction:Hide(); auction:Show(); deferred[1](); deferred = {}
 assert(not auction.border)
 E.db.KnuUIAddonSkinsOff.Auctionator = nil
+
+assert(loadfile('addons/KnuUI/tests/addon-skins.lua'))(E, module, loaded, Widget, skinCallsByHelper,
+ function(value) combat = value end,
+ function() local queue = deferred; deferred = {}; for _, callback in ipairs(queue) do callback() end end)
 
 -- ThreatClassic2: barras hijas y fondo real, también después de sus eventos.
 local threat = CreateFrame('Frame', 'ThreatClassic2BarFrame')
@@ -1007,4 +1050,215 @@ do
  module.IsLoaded, _G.DynamicCam = baseLoaded, nil
 end
 
-print('OK: TOC, defaults, secciones, compatibilidad, paneles, Details, motor de skins, carga tardía, DBT, toggles, roles, fade, combate, marcas, vuelos, cámara, transparencia, botín, rangos, accesos fijos y cámara sutil.')
+-- Builds: sólo claves propias ya usadas o claves presentes en los defaults reales de ElvUI.
+do
+ local schema = E:CopyTable({}, P)
+ local own = {
+  KnuUIRole = 'Roles.lua', KnuUITanks = 'Tanks.lua', KnuUICompactLeft = 'Tanks.lua', KnuUICompactRight = 'Tanks.lua',
+  KnuUIRaidMarkers = 'RaidMarkers.lua', KnuUICombatGlow = 'Extras.lua', KnuUIDetailsFade = 'Fade.lua',
+  KnuUILootMonitor = 'LootMonitor.lua', KnuUILootSelfQuality = 'LootMonitor.lua', KnuUILootGroupQuality = 'LootMonitor.lua',
+ }
+ for key, file in pairs(own) do
+  local source = assert(io.open('addons/KnuUI/'..file, 'r'))
+  local text = source:read('*a'); source:close()
+  assert(text:find(key, 1, true), 'clave propia sin uso existente: '..key)
+  schema[key] = true
+ end
+ local classes, countBuilds = {}, 0
+ E.Forever, combat = true, false
+ for _, id in ipairs(module.buildOrder) do
+  local b = assert(module.builds[id])
+  countBuilds = countBuilds + 1; classes[b.class] = true
+  Check(b.settings, schema, 'builds.'..id)
+  E.myclass = b.class
+  E.db.KnuUIBuild = nil; E.db.KnuUIRole = b.role
+  assert(module:SuggestedBuild() == id and module:SelectedBuild() == id)
+  local choices = menu.args.builds.args.preset.values()
+  assert(choices[id] and #b.desc > 0)
+  for choice in pairs(choices) do assert(module.builds[choice].class == E.myclass) end
+  assert(module:ApplyBuild(id) and E.db.KnuUIBuild == id and E.private.KnuUIRole == b.role)
+  for key, value in pairs(b.settings) do
+   if type(value) ~= 'table' then assert(E.db[key] == value, id..'.'..key) end
+  end
+  assert(E.db.actionbar.barPet.enabled == b.settings.actionbar.barPet.enabled)
+  assert(E.db.actionbar.stanceBar.enabled == b.settings.actionbar.stanceBar.enabled)
+  assert(E.db.actionbar.totemBar.enable == b.settings.actionbar.totemBar.enable)
+  assert(E.db.unitframe.units.player.classbar.enable == b.settings.unitframe.units.player.classbar.enable)
+  assert(E.db.nameplates.threat.indicator == (b.role == 'tank'))
+ end
+ local countClasses = 0; for _ in pairs(classes) do countClasses = countClasses + 1 end
+ assert(countClasses == 9 and countBuilds == 18)
+ E.myclass = 'PALADIN'
+ assert(module:ApplyBuild('PALADIN_tank'))
+ assert(module:ApplyBuild('PALADIN_mdps'))
+ assert(E.db.unitframe.units.player.health.orientation == 'HORIZONTAL' and not E.db.chat.separateSizes)
+ assert(E.global.datatexts.customPanels.KnuUI_Data.width == 1100)
+ combat = true
+ assert(not module:ApplyBuild('PALADIN_healer') and E.db.KnuUIRole == 'mdps')
+ combat = false
+ assert(not module:ApplyBuild('HUNTER_rdps') and not module:ApplyBuild('inexistente'))
+ menu.args.builds.args.preset.set(nil, 'PALADIN_healer')
+ assert(E.db.KnuUIBuild == 'PALADIN_healer' and E.db.KnuUIRole == 'mdps') -- elegir no aplica
+ local before = reloads
+ -- La acción rápida recomienda según el rol, aunque el select tenga otra build.
+ menu.args.general.args.recommended.func()
+ assert(popup == 'KNUUI_BUILD' and module.pendingBuild == module:SuggestedBuild() and reloads == before)
+ E.PopupDialogs.KNUUI_BUILD.OnCancel()
+ assert(not module.pendingBuild)
+ menu.args.general.args.recommended.func()
+ local suggested = module.pendingBuild
+ E.PopupDialogs.KNUUI_BUILD.OnAccept()
+ assert(E.db.KnuUIBuild == suggested and reloads == before + 1)
+ menu.args.builds.args.preset.set(nil, 'PALADIN_healer')
+ before = reloads
+ menu.args.builds.args.apply.func()
+ assert(popup == 'KNUUI_BUILD' and reloads == before)
+ -- Captura la elección confirmada, aunque cambie el select mientras el diálogo está abierto.
+ menu.args.builds.args.preset.set(nil, 'PALADIN_tank')
+ E.PopupDialogs.KNUUI_BUILD.OnAccept()
+ assert(E.db.KnuUIRole == 'healer' and E.db.KnuUIBuild == 'PALADIN_healer' and reloads == before + 1)
+ E.myclass = 'MAGE'; E.db.KnuUIRole = 'tank'; E.db.KnuUIBuild = 'PALADIN_tank'
+ assert(module:SelectedBuild() == 'MAGE_rdps')
+ E.myclass = 'INEXISTENTE'
+ assert(not module:SelectedBuild() and menu.args.builds.args.apply.disabled())
+ assert(menu.args.general.args.recommended.disabled())
+ E.myclass = 'PALADIN'
+end
+
+-- Offhand: sin API, con partes ausentes y con el contrato completo del PLAN.md.
+do
+ local names = { 'CC_IsActive', 'CC_GetState', 'CC_Presets', 'CC_ApplyPreset', 'CC_SetBlock', 'CC_Unlock', 'CC_Reset', 'OffhandStatus', 'DiagSnapshot' }
+ local saved, oldOffhand = {}, _G.Offhand
+ for _, name in ipairs(names) do saved[name] = module[name]; module[name] = nil end
+ _G.Offhand = nil
+ local off = menu.args.offhand.args
+ local general = menu.args.general.args
+ local function Dashboard()
+  for key, option in pairs(general) do
+   if option.type == 'description' and type(option.name) == 'function' then
+    local ok, value = pcall(option.name)
+    assert(ok and type(value) == 'string' and #value > 0, 'Estado inválido: '..key)
+   end
+  end
+ end
+ Dashboard()
+ assert(general.version.name():find('prueba-version', 1, true))
+ assert(general.offhand.name():find(ns.L['Inactive'], 1, true))
+ local oldRole, oldPrivateRole, oldTheme, oldSkins = E.db.KnuUIRole, E.private.KnuUIRole, E.db.KnuUITheme, E.db.KnuUIAddonSkins
+ E.db.KnuUIRole, E.private.KnuUIRole = nil, 'healer'
+ assert(general.role.name():find(module.roleNames.healer, 1, true))
+ E.db.KnuUITheme, E.db.KnuUIAddonSkins = 'nord', false
+ assert(general.theme.name():find(module.themes.nord.label, 1, true))
+ assert(general.skins.name():find(ns.L['Disabled'], 1, true))
+ assert(menu.args.look.args.selectedPreview.name() == module:ThemePreview('nord'))
+ local preview = menu.args.look.args.selectedPreview.name()
+ local _, swatches = preview:gsub('|TInterface\\Buttons\\WHITE8X8:12:18:0:0:8:8:0:8:0:8:%d+:%d+:%d+|t', '')
+ assert(swatches == 6)
+ local dim = module.themes.nord.accentDim
+ assert(preview:find(format(':%d:%d:%d|t', math.floor(dim.r * 255 + 0.5), math.floor(dim.g * 255 + 0.5), math.floor(dim.b * 255 + 0.5)), 1, true))
+ E.db.KnuUIRole, E.private.KnuUIRole, E.db.KnuUITheme, E.db.KnuUIAddonSkins = oldRole, oldPrivateRole, oldTheme, oldSkins
+ assert(not off.fit and off.status.name():find(ns.L['Command center loads with Offhand'], 1, true))
+ local function Probe()
+  for _, option in pairs(off) do
+   if type(option.name) == 'function' then assert(pcall(option.name)) end
+   if type(option.desc) == 'function' then assert(pcall(option.desc)) end
+   if option.values and type(option.values) == 'function' then assert(pcall(option.values)) end
+   if option.get then assert(pcall(option.get)) end
+   if option.disabled then assert(option.disabled()) end
+   if option.set then assert(pcall(option.set, nil, option.type == 'toggle' and true or 'workspace')) end
+   if option.func then assert(pcall(option.func)) end
+  end
+ end
+ Probe()
+ module.CC_GetState = function() return { blocks = {} } end
+ module.CC_IsActive = function() return true end
+ Probe() -- estado disponible, mutadores ausentes
+ Dashboard()
+ local calls, state = {}, { orientation = 'horizontal', edge = 'top', preset = 'test', blocks = {} }
+ module.CC_GetState = function() return state end
+ module.CC_Presets = function() return { { id = 'test', label = 'prueba', desc = 'descripción' } } end
+ module.CC_ApplyPreset = function(_, id) calls.preset = id end
+ module.CC_SetBlock = function(_, id, dest) state.blocks[id] = { dest = dest, custom = true } end
+ module.CC_Unlock = function(_, value) calls.unlock = value end
+ module.CC_Reset = function() calls.reset = true end
+ module.OffhandStatus = function() return 'estado' end
+ module.DiagSnapshot = function(_, reason) calls.diag = reason end
+ Dashboard()
+ assert(general.offhand.name():find('prueba', 1, true) and general.offhand.name():find('horizontal', 1, true))
+ state.orientation = 'vertical'
+ assert(general.offhand.name():find('vertical', 1, true))
+ E.global.KnuUIDiagOn = true; general.diag.func(); assert(calls.diag == 'manual')
+ assert(off.status.name():find('estado', 1, true) and off.preset.values().test == 'prueba')
+ off.preset.set(nil, 'test'); assert(calls.preset == 'test')
+ for _, block in ipairs({ 'guide', 'chat', 'details', 'data', 'map', 'bags' }) do
+  off[block].set(nil, 'workspace'); assert(off[block].get() == 'workspace')
+  off[block].set(nil, 'game'); assert(state.blocks[block].dest == 'game')
+ end
+ off.unlock.set(nil, true); assert(calls.unlock and off.unlock.get())
+ off.reset.func(); assert(calls.reset and not off.unlock.get())
+ off.diag.func(); assert(calls.diag == 'manual')
+ combat = true; calls.reset, calls.preset = nil, nil
+ off.reset.func(); off.preset.set(nil, 'test')
+ assert(off.reset.disabled() and not calls.reset and not calls.preset)
+ combat = false
+ -- Cada API faltante mantiene el menú usable, aun si las demás ya cargaron.
+ for _, name in ipairs(names) do
+  local value = module[name]; module[name] = nil
+  Dashboard()
+  assert(pcall(off.status.name) and pcall(off.preset.get) and pcall(off.preset.values))
+  for _, key in ipairs({ 'preset', 'guide', 'unlock', 'reset', 'diag' }) do
+   local option = off[key]
+   assert(pcall(option.disabled) and pcall(option.desc))
+   if option.set then assert(pcall(option.set, nil, key == 'unlock' and true or 'game')) end
+   if option.func then assert(pcall(option.func)) end
+  end
+  module[name] = value
+ end
+ module.CC_IsActive = function() return false end
+ calls.reset, calls.preset = nil, nil
+ off.reset.func(); off.preset.set(nil, 'test')
+ assert(off.reset.disabled() and off.guide.disabled() and not calls.reset and not calls.preset)
+ _G.Offhand = { Options = { Open = function(self) assert(self == _G.Offhand.Options); calls.options = true end },
+  Wizard = { Open = function(self) assert(self == _G.Offhand.Wizard); calls.wizard = true end },
+  GatherOffScreenUI = function(self) assert(self == _G.Offhand); calls.gather = true end }
+ off.options.func(); off.wizard.func(); off.gather.func()
+ assert(calls.options and calls.wizard and calls.gather)
+ _G.Offhand.Options.Open = function() error('API ajena incompatible') end
+ assert(pcall(off.options.func)) -- el error de otro addon queda contenido
+ _G.Offhand = oldOffhand
+ for _, name in ipairs(names) do module[name] = saved[name] end
+end
+
+-- Acento de clase dinámico y muestras para todos los temas, sin compartir la tabla de ElvUI.
+do
+ local original = E.ClassColor
+ local color = { r = 0.3, g = 0.6, b = 0.9 }
+ E.ClassColor = function(_, class, rgb) assert(class == E.myclass and rgb); return color end
+ module:GetTheme()
+ assert(module.themes.class.accent.r == color.r and module.themes.class.accent ~= color)
+ color.r = 0.8; module:GetTheme(); assert(module.themes.class.accent.r == 0.8)
+ for key in pairs(module.themes) do
+  assert(module:ThemePreview(key):find('WHITE8X8', 1, true))
+  for _, field in ipairs(fields) do
+   local c = module.themes[key][field]
+   for _, component in ipairs({ 'r', 'g', 'b', 'a' }) do
+    assert(type(c[component]) == 'number' and c[component] >= 0 and c[component] <= 1, key..'.'..field..'.'..component)
+   end
+  end
+ end
+ assert(#module.themeOrder == 17)
+ E.ClassColor = original
+end
+
+-- Ninguna ayuda o etiqueta del frente B queda sin traducción esES (los nombres de paletas son propios).
+do
+ for _, file in ipairs({ 'Builds.lua', 'Installer.lua', 'Theme.lua' }) do
+  local source = assert(io.open('addons/KnuUI/'..file, 'r'))
+  local text = source:read('*a'); source:close()
+  for key in text:gmatch('L%["(.-)"%]') do
+   assert(rawget(ns.L, key), file..': falta traducción de '..key)
+  end
+ end
+end
+
+print('OK: batería completa Lua 5.1; temas, builds por clase/rol, opciones y API Offhand ausente/parcial/completa.')

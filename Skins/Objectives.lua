@@ -49,7 +49,20 @@ local function Style()
 	-- hecho desde un addon contamina el rastreador y ShouldShowMawBuffs falla al leer auras secretas
 	-- (Blizzard_MawBuffs.lua:4), también dentro del Modo edición.
 	if E.db.KnuUIHideTracker == nil then E.db.KnuUIHideTracker = true end
-	if E.db.KnuUIHideTracker and K:IsLoaded('WoWPro') then
+	-- Pedido del user (2026-11-13): "Todos los objetivos" no tiene que existir en ningún modo, con o sin
+	-- WoW-Pro u Offhand. Se sostiene en 0: DynamicCam (LibHideUI) le devolvía la opacidad al terminar un
+	-- fundido de la interfaz (visto en el juego). Sólo SetAlpha/EnableMouse, nunca Hide ni SetCollapsed.
+	if E.db.KnuUIHideTracker then
+		if not frame.KnuAlphaHooked then
+			frame.KnuAlphaHooked = true
+			local busy
+			hooksecurefunc(frame, 'SetAlpha', function(self, a)
+				if busy or not E.db.KnuUIHideTracker or a == 0 then return end
+				busy = true
+				self:SetAlpha(0)
+				busy = false
+			end)
+		end
 		frame:SetAlpha(0)
 		frame:EnableMouse(false)
 		local mini = frame.Header and frame.Header.MinimizeButton

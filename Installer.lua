@@ -195,9 +195,100 @@ local function Options()
 	local function NoColumns() return not E.db.KnuUITanks end
 	local function SetCompact(key)
 		return function(_, value)
+			if not K:CanApply() then return end
 			E.db[key] = value
 			if E.db.KnuUITanks and K:ApplyTanks(true) then Reload() end
 		end
+	end
+	local function Reason(text, disabled, reason)
+		return function() return text..(disabled() and '\n\n'..reason or '') end
+	end
+	local function CCState()
+		if K.CC_GetState then return K:CC_GetState() or {} end
+		return {}
+	end
+	local function CCPresets()
+		if K.CC_Presets then return K:CC_Presets() or {} end
+		return {}
+	end
+	local function CCDisabled(method)
+		return not K[method] or (method == 'CC_ApplyPreset' and not K.CC_Presets)
+			or not K.CC_GetState or not K.CC_IsActive or not K:CC_IsActive() or InCombatLockdown()
+	end
+	local ccReason = L["Command center loads with Offhand. Enable spanning over two monitors and leave combat to change blocks. Missing API methods stay disabled."]
+	local unlocked = false
+	local function OffhandMethod(owner, method)
+		local addon = _G.Offhand
+		local object = addon
+		if owner then object = addon and addon[owner] end
+		return object and type(object[method]) == 'function' and object or nil
+	end
+	local function OffhandButton(order, name, owner, method)
+		local disabled = function() return not OffhandMethod(owner, method) or InCombatLockdown() end
+		return { order = order, type = 'execute', width = 'double', name = name,
+			desc = Reason(L["Open the selected Offhand tool. Requires the loaded addon API and leaving combat."], disabled, ccReason),
+			disabled = disabled, func = function()
+				local object = OffhandMethod(owner, method)
+				if object and K:CanApply() then
+					local ok, err = pcall(object[method], object)
+					if not ok then E:Print(format(L["KnuUI: %s failed: %s"], name, tostring(err))) end
+				end
+			end }
+	end
+	local offhand = {
+		desc = Desc(1, L["Offhand spans the game window over two monitors. KnuUI keeps ElvUI on the game monitor with the same size and 1 px borders as on a single screen."]),
+		status = Desc(2, function()
+			local lines = {}
+			if K.OffhandStatus then lines[#lines + 1] = K:OffhandStatus() end
+			if K.CC_GetState and K.CC_IsActive then
+				local state = CCState()
+				lines[#lines + 1] = format(L["Command center: %s · %s · %s"], K:CC_IsActive() and L["Active"] or L["Inactive"], L[state.orientation or 'Unknown'], L[state.edge or 'Unknown'])
+			else lines[#lines + 1] = L["Command center loads with Offhand"] end
+			return table.concat(lines, '\n')
+		end),
+		presetHead = Head(3, L["Workspace preset"]),
+		preset = { order = 4, type = 'select', width = 'double', name = L["Workspace preset"],
+			desc = function()
+				local text = L["Assign blocks with a command center preset."]
+				for _, preset in ipairs(CCPresets()) do
+					if preset.id == CCState().preset then text = text..'\n'..L[preset.desc or ''] end
+				end
+				return text..(CCDisabled('CC_ApplyPreset') and '\n\n'..ccReason or '')
+			end,
+			values = function() local v = {} for _, p in ipairs(CCPresets()) do v[p.id] = L[p.label] end return v end,
+			get = function() return CCState().preset end,
+			disabled = function() return CCDisabled('CC_ApplyPreset') end,
+			set = function(_, value) if not CCDisabled('CC_ApplyPreset') and K:CanApply() then K:CC_ApplyPreset(value) end end },
+		blocksHead = Head(10, L["Block destination"]),
+		toolsHead = Head(30, L["Workspace tools"]),
+		unlock = { order = 31, type = 'toggle', width = 'full', name = L["Unlock workspace blocks"],
+			desc = Reason(L["Allow dragging command center blocks; turn off to lock them again."], function() return CCDisabled('CC_Unlock') end, ccReason),
+			disabled = function() return CCDisabled('CC_Unlock') end,
+			get = function() return unlocked end,
+			set = function(_, value) if not CCDisabled('CC_Unlock') and K:CanApply() then K:CC_Unlock(value); unlocked = value end end },
+		reset = { order = 32, type = 'execute', width = 'double', name = L["Reset workspace"],
+			desc = Reason(L["Restore command center block assignments and positions."], function() return CCDisabled('CC_Reset') end, ccReason),
+			disabled = function() return CCDisabled('CC_Reset') end, confirm = true,
+			confirmText = L["Reset command center assignments and positions?"],
+			func = function() if not CCDisabled('CC_Reset') and K:CanApply() then K:CC_Reset(); unlocked = false end end },
+		options = OffhandButton(33, L["Open Offhand options"], 'Options', 'Open'),
+		wizard = OffhandButton(34, L["Open Offhand wizard"], 'Wizard', 'Open'),
+		gather = OffhandButton(35, L["Gather off-screen windows"], nil, 'GatherOffScreenUI'),
+		diagHead = Head(40, L["Diagnostics"]),
+		diag = { order = 41, type = 'execute', width = 'double', name = L["Take a diagnostic snapshot (/knudiag)"],
+			desc = Reason(L["Saves the size and position of every KnuUI block to KnuUI's SavedVariables on the next reload."], function() return not K.DiagSnapshot end, L["Diagnostic API is not loaded."]),
+			disabled = function() return not K.DiagSnapshot end,
+			func = function() if K.DiagSnapshot then if E.global.KnuUIDiagOn then K:DiagSnapshot('manual') else K:DiagEnable(true) end; E:Print(L["Diagnostic snapshot taken; /reload writes it to disk."]) end end },
+	}
+	local blockLabels = { L["Guide"], L["Chat"], 'Details!', L["Data"], L["Map"], L["Bags"] }
+	for i, id in ipairs({ 'guide', 'chat', 'details', 'data', 'map', 'bags' }) do
+		local block = id -- captura propia para Lua 5.1
+		offhand[block] = { order = 10 + i, type = 'select', width = 'double', name = blockLabels[i],
+			desc = Reason(L["Choose the game monitor or the adjacent workspace for this block."], function() return CCDisabled('CC_SetBlock') end, ccReason),
+			values = { game = L["Game monitor"], workspace = L["Workspace"] }, sorting = { 'game', 'workspace' },
+			disabled = function() return CCDisabled('CC_SetBlock') end,
+			get = function() local blocks = CCState().blocks or {}; return blocks[block] and blocks[block].dest or 'game' end,
+			set = function(_, value) if not CCDisabled('CC_SetBlock') and K:CanApply() then K:CC_SetBlock(block, value) end end }
 	end
 
 	E.Options.args.KnuUI = {
@@ -246,7 +337,7 @@ local function Options()
 				order = 30, type = 'group', name = L["Appearance"],
 				args = {
 					desc = Desc(1, L["Colours, decoration and visual effects."]),
-					theme = { order = 2, type = 'select', width = 'double', name = L["Theme"],
+					theme = { order = 2, type = 'select', width = 'double', name = L["Palette"],
 						values = function() local v = {} for key, theme in pairs(K.themes) do v[key] = theme.label end return v end,
 						sorting = K.themeOrder,
 						get = function() return E.db.KnuUITheme or 'knunet' end,
@@ -286,6 +377,23 @@ local function Options()
 						func = function() if K:ApplyIntegratedPanels() then Reload() end end },
 				},
 			},
+			builds = {
+				order = 35, type = 'group', name = L["Builds"], args = {
+					header = Head(1, L["Recommended interface builds"]),
+					desc = Desc(2, L["Recommendations for your class and role, not talent builds. Selection alone does not apply changes. Applying replaces layout, nameplates and the listed settings in this ElvUI profile."]),
+					preset = { order = 3, type = 'select', width = 'double', name = L["Recommended build"],
+						desc = L["Defaults to your class and selected role. Only builds for your current class are listed."],
+						values = function() local v = {} for id, b in pairs(K.builds) do if b.class == E.myclass then v[id] = b.label end end return v end,
+						sorting = function() local v = {} for _, id in ipairs(K.buildOrder) do if K.builds[id].class == E.myclass then v[#v + 1] = id end end return v end,
+						get = function() return K:SelectedBuild() end,
+						set = function(_, id) if K.builds[id] and K.builds[id].class == E.myclass then E.db.KnuUIBuild = id end end },
+					changes = Desc(4, function() local b = K.builds[K:SelectedBuild()]; return b and b.desc or L["No recommended build for this class."] end),
+					apply = { order = 5, type = 'execute', width = 'double', name = L["Apply build"],
+						desc = function() return L["Confirm to apply the selected interface build and reload. Leave combat first."]..(not K:SelectedBuild() and '\n'..L["No recommended build for this class."] or '') end,
+						disabled = function() return not K:SelectedBuild() or InCombatLockdown() end,
+						func = function() K.pendingBuild = K:SelectedBuild(); if K.pendingBuild then E:StaticPopup_Show('KNUUI_BUILD') end end },
+				},
+			},
 			addons = {
 				order = 40, type = 'group', name = L["Addons"],
 				args = {
@@ -314,11 +422,12 @@ local function Options()
 						get = function() return E.db.KnuUISkinDBM end, set = function(_, value) E.db.KnuUISkinDBM = value; Reload() end },
 					trackerHead = Head(10, L["Quest tracker"]),
 					tracker = { order = 11, type = 'select', width = 'double', name = L["Quest tracker"],
-						values = { show = L["Always show"], hide = L["Hide when WoW-Pro is loaded"] },
+						values = { show = L["Always show"], hide = L["Always hidden"] },
 						get = function() return E.db.KnuUIHideTracker and 'hide' or 'show' end,
 						set = function(_, value) if K:ApplyTracker(value == 'hide') then Reload() end end },
 				},
 			},
+			offhand = { order = 60, type = 'group', name = 'Offhand', args = offhand },
 			camera = {
 				order = 50, type = 'group', name = L["Camera"],
 				args = {
@@ -338,9 +447,136 @@ local function Options()
 			},
 		},
 	}
+	-- Ayudas breves junto a cada control; las dependencias explican cómo habilitarlo.
+	local args = E.Options.args.KnuUI.args
+	local help = {
+		install = L["Open the step-by-step installer without applying settings."],
+		role = L["Rebuild the base layout with the selected role overlay; reload to see it."],
+		columns = L["Switch between the base player frame and vertical health and mana columns."],
+		nameplates = L["Restore KnuUI cast bars, auras and quest indicators on nameplates."],
+		theme = L["Choose a palette. Preview shows accent, highlight, dim accent, text, background and border."],
+		classHealth = L["Use each unit's class colour for health instead of the palette health colour."],
+		decor = L["Show themed corners, stripes and shadows around KnuUI panels."],
+		combatGlow = L["Show a coloured glow at the screen edges during combat."],
+		detailsFade = L["Fade Details outside combat; the eye button can keep it visible. Requires Details."],
+		lootMonitor = L["Display recent personal and group loot above the right panel."],
+		rankUpgrade = L["Replace learned spell ranks on action bars outside combat."],
+		flightTimer = L["Show route duration after learning a complete flight."],
+		panels = L["Restore the themed chat and Details panels; reload to see changes."],
+		addonSkins = L["Apply KnuUI colours and borders to supported addons after reloading."],
+		wowpro = L["Apply the KnuUI appearance to WoW-Pro after reloading. Requires WoW-Pro."],
+		tracker = L["Choose whether WoW-Pro replaces the Blizzard quest tracker."],
+		preset = L["Apply a DynamicCam preset to its KnuUI profile. Requires DynamicCam."],
+		cinema = L["Hide the interface and orbit the camera until combat starts; run again to stop."],
+	}
+	for _, group in pairs(args) do
+		if group.args then
+			for key, item in pairs(group.args) do
+				if item.type ~= 'description' and item.type ~= 'header' and not item.desc then item.desc = help[key] end
+			end
+		end
+	end
+	args.general.args.header = Head(1.5, L["Installation"])
+	args.look.args.coloursHead = Head(1.5, L["Palette and decoration"])
+	args.look.args.effectsHead = Head(4.5, L["Combat and panels"])
+	args.look.args.lootHead = Head(5.56, L["Loot and travel"])
+	args.addons.args.header = Head(1.2, L["Launcher and skins"])
+	args.camera.args.header = Head(1.5, L["Camera settings"])
+	args.layout.args.compactLeft.desc = Reason(L["Frees 129 px for the left chat; the data bar shrinks the same."], NoColumns, L["Requires health and mana columns."])
+	args.layout.args.compactRight.desc = Reason(L["Frees 129 px for Details; the data bar shrinks the same."], NoColumns, L["Requires health and mana columns."])
+	for _, key in ipairs({ 'lootSelf', 'lootGroup' }) do
+		args.look.args[key].desc = Reason(L["Minimum item quality shown in the loot monitor."], args.look.args[key].disabled, L["Enable the loot monitor first."])
+	end
+	local function NeedsAddon(group, key, addon)
+		local item = args[group].args[key]
+		local disabled = function() return not K:IsLoaded(addon) end
+		local text = item.desc
+		item.disabled = disabled
+		item.desc = Reason(text, disabled, format(L["Requires loaded addon: %s."], addon))
+	end
+	NeedsAddon('look', 'detailsFade', 'Details')
+	NeedsAddon('addons', 'wowpro', 'WoWPro')
+	NeedsAddon('addons', 'dbm', 'DBM-Core')
+	NeedsAddon('camera', 'preset', 'DynamicCam')
+	-- Se trasladan las mismas tablas: getters, setters y dependencias quedan intactos.
+	local features = {
+		lootHead = args.look.args.lootHead,
+		combatHead = Head(10, L["Combat"]),
+		travelHead = Head(20, L["Travel"]),
+		panelsHead = Head(30, L["Panels"]),
+	}
+	features.lootHead.order, features.lootHead.name = 1, L["Loot"]
+	args.look.args.lootHead = nil
+	for key, order in pairs({ lootMonitor = 2, lootSelf = 3, lootGroup = 4,
+		raidMarkers = 11, rankUpgrade = 12, flightTimer = 21, detailsFade = 31, panels = 32 }) do
+		features[key] = args.look.args[key]
+		features[key].order = order
+		args.look.args[key] = nil
+	end
+	args.features = { order = 32, type = 'group', name = L["Features"], args = features }
+	args.look.args.effectsHead.name = L["Combat glow"]
+	args.look.args.selectedPreview = Desc(2.5, function() return K:ThemePreview(E.db.KnuUITheme or 'knunet') end)
+
+	-- AceConfig evalúa name al mostrar el panel: no se guarda una foto del estado.
+	local general = args.general.args
+	general.statusHead = Head(0.1, L["Current status"])
+	general.version = Desc(0.2, function()
+		return format(L["KnuUI version: %s"], C_AddOns.GetAddOnMetadata('KnuUI', 'Version') or L["Unknown"])
+	end)
+	general.role = Desc(0.3, function()
+		local role = E.db.KnuUIRole or E.private.KnuUIRole
+		return format(L["Current role: %s"], K.roleNames[role] or L["Unknown"])
+	end)
+	general.build = Desc(0.4, function()
+		local build = K.builds[K:SelectedBuild()]
+		return format(L["Selected build: %s"], build and build.label or L["No recommended build for this class."])
+	end)
+	general.theme = Desc(0.5, function()
+		local theme = K.themes[E.db.KnuUITheme or 'knunet'] or K.themes.knunet
+		return format(L["Current palette: %s"], theme.label)
+	end)
+	general.offhand = Desc(0.6, function()
+		local text = format(L["Offhand: %s"], K.CC_IsActive and K:CC_IsActive() and L["Active"] or L["Inactive"])
+		if K.CC_GetState then
+			local state = CCState()
+			local label = L["Unknown"]
+			for _, preset in ipairs(CCPresets()) do
+				if preset.id == state.preset then label = L[preset.label]; break end
+			end
+			text = text..'\n'..format(L["Workspace preset: %s · Orientation: %s"], label, L[state.orientation or 'Unknown'])
+		end
+		return text
+	end)
+	general.skins = Desc(0.7, function()
+		return format(L["Addon skins: %s"], E.db.KnuUIAddonSkins ~= false and L["Enabled"] or L["Disabled"])
+	end)
+	general.header.name = L["Quick actions"]
+	general.reapply = args.layout.args.reapply
+	general.recommended = { order = 22, type = 'execute', width = 'double', name = L["Apply recommended build"],
+		desc = L["Confirm to apply the recommended interface build for your class and role and reload. Leave combat first."],
+		disabled = function() return not K:SuggestedBuild() or InCombatLockdown() end,
+		func = function() K.pendingBuild = K:SuggestedBuild(); if K.pendingBuild then E:StaticPopup_Show('KNUUI_BUILD') end end }
+	general.diag = offhand.diag
+
+	args.look.args.previewHead = Head(7, L["Palette previews"])
+	for i, key in ipairs(K.themeOrder) do
+		local themeKey = key
+		args.look.args['preview_'..key] = Desc(7 + i / 100, function() return K:ThemePreview(themeKey) end)
+	end
 end
 
 function K:SetupInstaller()
+	E.PopupDialogs.KNUUI_BUILD = {
+		text = L["Apply the selected interface build to this profile and reload?"],
+		button1 = L["Apply and reload"], button2 = L["Cancel"],
+		OnAccept = function()
+			local id = K.pendingBuild
+			K.pendingBuild = nil
+			if id and K:ApplyBuild(id) then ReloadUI() end
+		end,
+		OnCancel = function() K.pendingBuild = nil end,
+		timeout = 0, whileDead = true, hideOnEscape = true,
+	}
 	-- Popup: _ref/ElvUI/Game/Shared/General/StaticPopups.lua (PopupDialogs/OnAccept).
 	E.PopupDialogs.KNUUI_APPLY = {
 		text = L["Do you want to apply the layout, theme, chat/data and compatible addon settings to the current profile and reload?"],

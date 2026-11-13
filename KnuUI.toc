@@ -5,22 +5,25 @@
 ## Notes-esMX: Diseño compacto y tema ámbar para ElvUI en WoW Forever. Abrí el asistente con /knu.
 ## IconTexture: Interface\AddOns\KnuUI\media\icono
 ## Author: Alejandro Benzoni (KnuPwns)
-## Version: 3.4.3
+## Version: 3.5.0
 ## X-License: MIT
 ## X-Curse-Project-ID: 1793253
 ## X-Website: https://knunet.com
 ## X-Category: Interface Enhancements
 ## Dependencies: ElvUI
-## OptionalDeps: Details, Baganator, DBM-Core, DBM-StatusBarTimers, Questie, WoWPro, TomTom, DynamicCam, GearQuestForever, Auctionator, BugSack, Leatrix_Plus, Pawn, WhatsTraining, ThreatClassic2, GTFO, RareScanner, WIM, PallyPower
+## SavedVariables: KnuUIDiag
+## OptionalDeps: Details, Baganator, DBM-Core, DBM-StatusBarTimers, Questie, WoWPro, TomTom, DynamicCam, GearQuestForever, Auctionator, BugSack, Leatrix_Plus, Pawn, WhatsTraining, ThreatClassic2, GTFO, RareScanner, WIM, PallyPower, Offhand
 
 Locales/Locales.lua
 Core.lua
+Diag.lua
 Layout.lua
 Theme.lua
 Motion.lua
 Nameplates.lua
 Tanks.lua
 Roles.lua
+Builds.lua
 Extras.lua
 RaidMarkers.lua
 Flight.lua
@@ -29,6 +32,8 @@ LootMonitor.lua
 Ranks.lua
 PawnSpec.lua
 TomTomRoute.lua
+Offhand.lua
+Workspace.lua
 Compat.lua
 Camera.lua
 Afk.lua
@@ -49,6 +54,10 @@ Skins/AddOns/WIM.lua
 Skins/AddOns/PallyPower.lua
 Skins/AddOns/OpenMap.lua
 Skins/AddOns/ShortestPathForever.lua
+Skins/AddOns/OffhandUI.lua
+Skins/AddOns/MaxDps.lua
+Skins/AddOns/GatherMate2.lua
+Skins/AddOns/HandyNotes.lua
 Skins/Details.lua
 Skins/Panels.lua
 Buttons.lua
