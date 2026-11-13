@@ -64,7 +64,7 @@ function E:GetModule(name)
  if name == 'ActionBars' then return actionbars end
  if name == 'DataTexts' then return { PanelPool = { InUse = { KnuUI_Data = _G.KnuTestData } } } end
  if name == 'Skins' then return skins end
- if name == 'AFK' or name == 'Layout' or name == 'Chat' or name == 'Minimap' or name == 'UnitFrames' then return {} end
+ if name == 'AFK' or name == 'Layout' or name == 'Chat' or name == 'Minimap' or name == 'UnitFrames' or name == 'Distributor' then return {} end
  assert(name == 'PluginInstaller'); return pi
 end
 E.Libs = { EP = { RegisterPlugin = function(_, name, callback)

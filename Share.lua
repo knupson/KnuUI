@@ -13,8 +13,9 @@ local D = E:GetModule('Distributor')
 local PREFIX = '!KNU1!'
 local GLOBAL_KEYS = { 'KnuUICameraPreset', 'KnuUICombatZoom', 'KnuUICombatZoomV', 'KnuUIClock', 'KnuUISPFQuiet', 'KnuUIFlights' }
 local Enc = C_EncodingUtil
-local COMPRESS = Enum.CompressionMethod and Enum.CompressionMethod.Deflate or 0
-local LEVEL = Enum.CompressionLevel and Enum.CompressionLevel.Default or 0
+local Enums = _G.Enum or {}
+local COMPRESS = Enums.CompressionMethod and Enums.CompressionMethod.Deflate or 0
+local LEVEL = Enums.CompressionLevel and Enums.CompressionLevel.Default or 0
 
 function K:ExportString()
 	if not (Enc and Enc.SerializeCBOR) then return nil, L["This client cannot encode the text."] end
