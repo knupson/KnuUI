@@ -1,4 +1,4 @@
--- Ejecutar desde la raíz: luajit addons/KnuUI/tools/render/tests.lua <SavedVariables>
+-- Desde la raíz: luajit addons/KnuUI/tools/render/tests.lua [SavedVariables]
 local dir='addons/KnuUI/tools/render/'
 local loader=dofile(dir..'loader.lua')
 local geometry=dofile(dir..'geometry.lua')
@@ -52,7 +52,35 @@ eq(rects[1].width,30); eq(rects[1].height,20); eq(rects[1].moverWidth,10)
 eq(rects[1].approximate,true); eq(rects[2].unknown,true)
 eq(#geometry.intersections(rects),0)
 
-local path=assert(arg[1],'Indicá el archivo SavedVariables de prueba')
+-- Escala automática, escala guardada y resolución inválida.
+local canvas=geometry.canvas('3840x2160')
+near(canvas.scale,0.4); near(canvas.height,1920); near(canvas.width,10240/3)
+near(canvas.mult,8/9)
+canvas=geometry.canvas('1280x720', '0.64')
+near(canvas.height,1200); near(canvas.width,6400/3); eq(canvas.automatic,false)
+near(geometry.canvas('640x480').scale,1.15)
+eq(pcall(geometry.canvas,'0x1080'),false)
+eq(pcall(geometry.canvas,'1920x1080basura'),false)
+eq(pcall(geometry.canvas,'1920x1080',0),false)
+local small={left=0,bottom=0,width=100,height=80}
+local positioned=geometry.resolve(nodes,{frameA='a'},small)
+eq(positioned('a').left,-8); eq(positioned('a').bottom,32)
+local shifted=geometry.rectangles({a={enabled=true,width=10,height=5,
+ position='TOPRIGHT,ElvUIParent,TOPRIGHT,0,0'}},{},small)
+eq(shifted[1].left,90); eq(shifted[1].bottom,75)
+eq(#geometry.outside({rect(-1,-1,102,82)},small),0)
+local out=geometry.outside({rect(-2,-3,106,87)},small)
+eq(#out,4); eq(out[1].width,2); eq(out[2].width,4)
+eq(out[3].height,3); eq(out[4].height,4)
+local marker=rect(99,0,20,20); marker.unknown=true
+out=geometry.outside({marker},small)
+eq(#out,1); eq(out[1].uncertain,true); eq(marker.outside,true)
+
+local path=arg[1]
+if not path then
+ print('Pruebas: '..checks..' verificaciones correctas; integración omitida: falta SavedVariables real.')
+ return
+end
 local before=loader.read(path)
 -- Personaje opcional como segundo argumento (sin él, sólo si hay uno solo en el archivo).
 local c=loader.load('.',path,arg[2])

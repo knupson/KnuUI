@@ -4,6 +4,19 @@ local points = {
  CENTER={.5,.5}, RIGHT={1,.5}, TOPLEFT={0,1}, TOP={.5,1}, TOPRIGHT={1,1},
 }
 M.points = points
+function M.canvas(res, scale)
+ local w, h = (res or '1920x1080'):match('^(%d+)[xX](%d+)$')
+ w, h = tonumber(w), tonumber(h)
+ assert(w and h and w > 0 and h > 0, 'Resolución inválida: '..tostring(res))
+ -- PixelPerfect.lua:92-100; Install.lua:1386 (escala automática).
+ local automatic = scale == nil
+ scale = automatic and math.max(0.4, math.min(1.15, 768/h)) or tonumber(scale)
+ assert(scale and scale > 0 and scale < math.huge, 'UIScale inválida')
+ -- PixelPerfect.lua:59-81: UIParent escalado; E.UIParent usa GetScreenHeight.
+ local height = 768/scale
+ return {left=0,bottom=0,width=height*w/h,height=height,scale=scale,
+  physicalWidth=w,physicalHeight=h,automatic=automatic,mult=(768/h)/scale}
+end
 function M.parse(s)
  if type(s) ~= 'string' then return nil, 'posición ausente' end
  -- General/Movers.lua:42-45 también acepta el separador antiguo ASCII 31.
@@ -14,8 +27,8 @@ function M.parse(s)
  end
  return {p, ref, rp, tonumber(x), tonumber(y)}
 end
-function M.resolve(nodes, aliases)
- local done = {UIParent={left=0,bottom=0,width=1920,height=1080}}
+function M.resolve(nodes, aliases, canvas)
+ local done = {UIParent=canvas or M.canvas()}
  done.ElvUIParent = done.UIParent
  local visiting = {}
  local function get(name)
@@ -39,8 +52,8 @@ function M.resolve(nodes, aliases)
  return get
 end
 -- Misma geometría para el CLI y las pruebas con tablas en memoria.
-function M.rectangles(nodes, aliases)
- local get = M.resolve(nodes, aliases)
+function M.rectangles(nodes, aliases, canvas)
+ local get = M.resolve(nodes, aliases, canvas)
  local rects, skipped, keys = {}, {}, {}
  for name in pairs(nodes) do keys[#keys+1] = name end
  table.sort(keys)
@@ -86,6 +99,27 @@ function M.intersections(rects)
      uncertain=a.unknown or b.unknown or a.approximate or b.approximate or false}
    end
   end
+ end
+ return result
+end
+-- Un registro por borde; ancho y alto indican la franja que sobresale.
+function M.outside(rects, canvas)
+ canvas = canvas or M.canvas()
+ local result = {}
+ for _, r in ipairs(rects) do
+   local edges = {
+    {'izquierda', -r.left, r.height},
+    {'derecha', r.left+r.width-canvas.width, r.height},
+    {'abajo', r.width, -r.bottom},
+    {'arriba', r.width, r.bottom+r.height-canvas.height},
+   }
+   for i, edge in ipairs(edges) do
+    if (i <= 2 and edge[2] or edge[3]) > 1 then
+     r.outside = true
+     result[#result+1] = {a=r.name,b='pantalla:'..edge[1],width=edge[2],height=edge[3],
+      uncertain=r.unknown or r.approximate or false}
+    end
+   end
  end
  return result
 end

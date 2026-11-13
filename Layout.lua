@@ -109,8 +109,29 @@ local function UnitLayout(unit, width, height, small)
 	if db.castbar then db.castbar.enable = false end
 end
 
+-- El diseño está medido en 1920x1080 unidades. En pantallas de menos de 1080 de alto la escala automática
+-- de ElvUI (768/alto, PixelPerfect.lua:92-94) achica ElvUIParent y los bloques se pisaban (test
+-- render-roles, 1280x720 a 1600x900). Ahí se usa la escala de 1080 (768/1080): todo entra, más chico.
+-- En 16:10 y 5:4 hace falta además el ancho: ElvUIParent mide (768/escala)·aspecto, así que la escala no
+-- puede pasar de 768·aspecto/1920 (1280x800 quedaba en 1728 de ancho y los chats pisaban las barras).
+-- Devuelve nil cuando la escala automática ya da al menos 1920x1080.
+function K:LayoutScale(width, height)
+	width, height = tonumber(width), tonumber(height)
+	if not (width and height and width > 0 and height > 0) then return end
+	local auto = math.max(0.4, math.min(1.15, 768 / height)) -- E:PixelBestSize (PixelPerfect.lua:92-94)
+	local aspect = width / height
+	if 768 / auto >= 1080 and 768 / auto * aspect >= 1920 then return end
+	return math.min(768 / 1080, 768 * aspect / 1920)
+end
+
 function K:ApplyLayout()
 	if not self:CanApply() then return false end
+	local pw, ph = GetPhysicalScreenSize and GetPhysicalScreenSize()
+	local scale = self:LayoutScale(pw, ph)
+	if scale and E.global.general then
+		E.global.general.UIScale = scale
+		if E.UIScale then pcall(E.UIScale, E) end
+	end
 	-- S&L dejó experiencia y reputación verticales al costado de sus chats viejos.
 	Set(E.db.databars.experience, {
 		enable = true, orientation = 'HORIZONTAL', width = 406, height = 8, mouseover = false,
@@ -291,8 +312,8 @@ function K:ApplyChat()
 	-- Panel: Defaults/Global.lua; Modules/DataTexts/DataTexts.lua:448.
 	-- Registros: Modules/DataTexts/{Durability,Gold,Bags,Friends,Guild,System,Strength,Crit,Time,Coordinates}.lua.
 	Set(E.db.chat, {
-		panelWidth = 400, panelHeight = 180, separateSizes = false,
-		panelWidthRight = 400, panelHeightRight = 180,
+		panelWidth = 401, panelHeight = 180, separateSizes = false,
+		panelWidthRight = 401, panelHeightRight = 180, -- 401: 4 px entre chats, barras y bordes (Tanks.lua)
 		-- Abajo del chat queda fuera de la pantalla (el chat está a 4 px del borde).
 		editBoxPosition = 'ABOVE_CHAT',
 	})
@@ -304,7 +325,7 @@ function K:ApplyChat()
 	-- DataTexts.lua completa los campos restantes desde G.datatexts.newPanelInfo.
 	E.global.datatexts.customPanels.KnuUI_Data = E.global.datatexts.customPanels.KnuUI_Data or {}
 	Set(E.global.datatexts.customPanels.KnuUI_Data, {
-		width = 1100, height = 22, numPoints = 8, growth = 'HORIZONTAL',
+		width = 1102, height = 22, numPoints = 8, growth = 'HORIZONTAL',
 		backdrop = true, border = true, panelTransparency = false, mouseover = false,
 	})
 	E.db.datatexts.panels.KnuUI_Data = E.db.datatexts.panels.KnuUI_Data or {}

@@ -1,5 +1,16 @@
 # KnuUI changelog
 
+## 3.5.3 (2026-11-13)
+
+- Even spacing on the bottom row with health/mana columns: 4 px between chats, side blocks, columns and
+  centre bars, and 4 px to the screen edges (gaps used to range from 2 to 7.5 px). Chats are 401 wide and
+  the data bar 1102 so everything closes exactly at 1920. Existing profiles are moved once, only for the
+  blocks that were still at KnuUI's previous positions.
+- Screens smaller than 1920x1080 units (1280x720, 1366x768, 1600x900, 16:10 and 5:4 screens): applying
+  the layout sets the UI scale that gives 1920x1080 units, so nothing overlaps (everything looks smaller).
+  With ElvUI's automatic scale chats, bars and frames overlapped on those screens.
+- The layout test now covers 14 resolutions and checks the bottom-row spacing.
+
 ## 3.5.2 (2026-11-13)
 
 - Default layout (without health/mana columns): action bars 5 and 6 are now two 2x6 blocks at the bottom

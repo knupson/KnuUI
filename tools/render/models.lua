@@ -5,7 +5,7 @@ function M.build(c, root, loader)
  local nodes, aliases, handled = {}, {}, {}
  local pixel = private.general.pixelPerfect
  local border, spacing = pixel and 1 or 2, pixel and 0 or 1
- -- General/Initialize.lua:726-728. E:Scale se toma identidad por el lienzo pedido.
+ -- General/Initialize.lua:726-728. No se simula el redondeo de E:Scale.
  local function add(name, w, h, position, enabled, note, approximate)
   handled[name] = true
   nodes[name] = {name=name,width=w,height=h,position=(db.movers or {})[name] or position,

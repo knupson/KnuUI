@@ -334,7 +334,7 @@ local function Validate()
  assert(E.db.movers.Ajeno == 'posición ajena')
  assert(E.db.unitframe.statusbar == 'Melli' and E.db.unitframe.font == 'Expressway')
  assert(E.db.unitframe.units.player.customTexts.Ajeno.text_format == '[name]')
- assert(E.db.chat.panelWidth == 400 and E.db.chat.panelHeight == 180)
+ assert(E.db.chat.panelWidth == 401 and E.db.chat.panelHeight == 180)
  assert(not E.db.datatexts.panels.LeftChatDataPanel.enable)
  assert(not E.db.datatexts.panels.RightChatDataPanel.enable)
  assert(not E.db.datatexts.panels.ForeverUI_Data.enable)
@@ -756,14 +756,14 @@ E.global.datatexts.customPanels.KnuUI_Data = E.global.datatexts.customPanels.Knu
 assert(module:ApplyTanks(true))
 local ab = E.db.actionbar
 assert(ab.bar4.buttonsPerRow == 3 and ab.bar4.buttons == 12 and not ab.bar6.enabled and ab.bar5.enabled)
-assert(E.db.movers.ElvAB_4 == 'BOTTOM,ElvUIParent,BOTTOM,356,28')
-assert(E.db.chat.separateSizes and E.db.chat.panelWidth == 400 and E.db.chat.panelWidthRight == 529)
-assert(E.global.datatexts.customPanels.KnuUI_Data.width == 971)
-assert(E.db.movers.DTPanelKnuUI_DataMover == 'BOTTOM,ElvUIParent,BOTTOM,-65,2')
+assert(E.db.movers.ElvAB_4 == 'BOTTOMLEFT,ElvUIParent,BOTTOM,295,28')
+assert(E.db.chat.separateSizes and E.db.chat.panelWidth == 401 and E.db.chat.panelWidthRight == 530)
+assert(E.global.datatexts.customPanels.KnuUI_Data.width == 973)
+assert(E.db.movers.DTPanelKnuUI_DataMover == 'BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,409,2')
 Check(E.db.actionbar, P.actionbar, 'E.db.actionbar'); Check(E.db.chat, P.chat, 'E.db.chat')
 assert(module:ApplyTanks(false))
-assert(not E.db.chat.separateSizes and E.db.chat.panelWidthRight == 400 and E.global.datatexts.customPanels.KnuUI_Data.width == 1100)
-assert(E.db.movers.DTPanelKnuUI_DataMover == 'BOTTOM,ElvUIParent,BOTTOM,0,2')
+assert(not E.db.chat.separateSizes and E.db.chat.panelWidthRight == 401 and E.global.datatexts.customPanels.KnuUI_Data.width == 1102)
+assert(E.db.movers.DTPanelKnuUI_DataMover == 'BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,409,2')
 E.db.KnuUICompactRight = nil
 
 -- Temas: todos tienen los 12 colores que usa KnuUI, figuran en el orden del menú y se aplican.
@@ -1100,7 +1100,7 @@ do
  assert(module:ApplyBuild('PALADIN_tank'))
  assert(module:ApplyBuild('PALADIN_mdps'))
  assert(E.db.unitframe.units.player.health.orientation == 'HORIZONTAL' and not E.db.chat.separateSizes)
- assert(E.global.datatexts.customPanels.KnuUI_Data.width == 1100)
+ assert(E.global.datatexts.customPanels.KnuUI_Data.width == 1102)
  combat = true
  assert(not module:ApplyBuild('PALADIN_healer') and E.db.KnuUIRole == 'mdps')
  combat = false

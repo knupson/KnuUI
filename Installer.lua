@@ -151,8 +151,8 @@ local installer = {
 		end,
 		function()
 			Page(L["Chat and data, hand-tuned"],
-				L["400×180 chats, edit box above, and panels with the same background and tabs."],
-				L["Central 1100×22 bar with eight data points; time and coordinates on the minimap."],
+				L["401×180 chats, edit box above, and panels with the same background and tabs."],
+				L["Central 1102×22 bar with eight data points; time and coordinates on the minimap."],
 				L["Replaces the previous data panels, including ForeverUI_Data."])
 			Button(1, L["Apply chat and data"], Saved(L["Apply chat and data"], function() return K:ApplyChat() end))
 			Button(2, L["Integrated panels"], Saved(L["Integrated panels"], function() return K:ApplyIntegratedPanels() end))

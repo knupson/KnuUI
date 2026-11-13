@@ -10,18 +10,22 @@ local K = E:GetModule('KnuUI')
 -- actualiza igual que oUF (oUF/elements/power.lua:261-264), válido con valores secretos.
 
 local W, H = 66, 154 -- misma altura que los chats: y 28-182 (techo de chats en 184)
-local X = 256 -- centro de cada columna respecto del centro de pantalla
--- Distribución en modo tanques (x en px; chats terminan en 404 y empiezan en 1516):
--- [3+5: 410-668] [vida: 671-737] [barras 1-2: 739-1181] [maná: 1183-1249] [4+6: 1252-1510]
--- (columnas de 66: 2-3 px de separación a cada lado, como el espaciado de los botones)
+local X = 258 -- centro de cada columna respecto del centro de pantalla
+-- Distribución en modo tanques, 4 px entre bloques y 4 a los bordes (pedido del user 2026-11-13: "todo tiene
+-- que tener la misma distancia"), chats de 401 para que cierre justo en 1920:
+-- [chat: 4-405] [3+5: 409-665] [vida: 669-735] [barras 1-2: 739-1181] [maná: 1185-1251] [4+6: 1255-1511] [chat: 1515-1916]
+local GAP = 4
+local CHAT = 401 -- ancho de cada chat sin bloques compactos
+local DATA = 1102 -- barra de datos entre los dos chats: 1920 - 2·(4 + 401 + 4)
+local SIDE = 295 -- borde interno de los bloques laterales respecto del centro: 960 - 665
 -- Bloques laterales: 6×4 botones de 41×37 (256×154) = dos barras de 12.
 local BARS = {
 	-- Bloques laterales 6×4 (24 botones por lado) en el mismo espacio: botones de 41×37
 	-- (6·41+5·2 = 256 de ancho; 4·37+3·2 = 154 de alto). Dos barras de 12 por lado (6×2 cada una).
-	bar3 = { buttons = 12, perRow = 6, size = 41, height = 37, mover = 'BOTTOM,ElvUIParent,BOTTOM,-422,106' },  -- y 106-182
-	bar5 = { buttons = 12, perRow = 6, size = 41, height = 37, mover = 'BOTTOM,ElvUIParent,BOTTOM,-422,28' },   -- y 28-104
-	bar4 = { buttons = 12, perRow = 6, size = 41, height = 37, mover = 'BOTTOM,ElvUIParent,BOTTOM,420,106' },
-	bar6 = { buttons = 12, perRow = 6, size = 41, height = 37, mover = 'BOTTOM,ElvUIParent,BOTTOM,420,28' },
+	bar3 = { buttons = 12, perRow = 6, size = 41, height = 37, mover = 'BOTTOMRIGHT,ElvUIParent,BOTTOM,-295,106' },  -- x 409-665, y 106-182
+	bar5 = { buttons = 12, perRow = 6, size = 41, height = 37, mover = 'BOTTOMRIGHT,ElvUIParent,BOTTOM,-295,28' },   -- y 28-104
+	bar4 = { buttons = 12, perRow = 6, size = 41, height = 37, mover = 'BOTTOMLEFT,ElvUIParent,BOTTOM,295,106' },  -- x 1255-1511
+	bar6 = { buttons = 12, perRow = 6, size = 41, height = 37, mover = 'BOTTOMLEFT,ElvUIParent,BOTTOM,295,28' },
 	-- Barras centrales más grandes: 12 de 35 px = 442 de ancho (739-1181).
 	bar1 = { buttons = 12, perRow = 12, size = 35, mover = 'BOTTOM,ElvUIParent,BOTTOM,0,65' },  -- y 65-100
 	bar2 = { buttons = 12, perRow = 12, size = 35, mover = 'BOTTOM,ElvUIParent,BOTTOM,0,28' },  -- y 28-63
@@ -34,11 +38,11 @@ local tank
 -- (chat o Details) y la barra de datos de abajo se achica y se corre lo mismo.
 local FREED = 256 - 127
 local SIDES = {
-	left = { key = 'KnuUICompactLeft', bar = 'bar3', extra = 'bar5', mover = 'BOTTOM,ElvUIParent,BOTTOM,-356,28' }, -- x 541-668
-	right = { key = 'KnuUICompactRight', bar = 'bar4', extra = 'bar6', mover = 'BOTTOM,ElvUIParent,BOTTOM,356,28' }, -- x 1252-1379
+	left = { key = 'KnuUICompactLeft', bar = 'bar3', extra = 'bar5', mover = 'BOTTOMRIGHT,ElvUIParent,BOTTOM,-295,28' }, -- x 538-665
+	right = { key = 'KnuUICompactRight', bar = 'bar4', extra = 'bar6', mover = 'BOTTOMLEFT,ElvUIParent,BOTTOM,295,28' }, -- x 1255-1382
 }
 
--- Anchos de chat y barra de datos según los bloques. Sin modo columnas vuelve a 400 / 1100.
+-- Anchos de chat y barra de datos según los bloques. Sin modo columnas vuelve a 401 / 1102.
 function K:ApplySideBlocks()
 	local left = E.db.KnuUITanks and E.db.KnuUICompactLeft and FREED or 0
 	local right = E.db.KnuUITanks and E.db.KnuUICompactRight and FREED or 0
@@ -57,11 +61,12 @@ function K:ApplySideBlocks()
 	end
 	-- Chat: Profile.lua (E.db.chat.separateSizes, panelWidthRight); Dock.lua:316 usa el derecho.
 	self.Set(E.db.chat, {
-		separateSizes = left ~= right, panelWidth = 400 + left, panelWidthRight = 400 + right,
+		separateSizes = left ~= right, panelWidth = CHAT + left, panelWidthRight = CHAT + right,
 	})
 	local data = E.global.datatexts.customPanels.KnuUI_Data
-	if data then data.width = 1100 - left - right end
-	E.db.movers.DTPanelKnuUI_DataMover = format('BOTTOM,ElvUIParent,BOTTOM,%d,2', math.floor((left - right) / 2))
+	if data then data.width = DATA - left - right end
+	-- Anclada por la izquierda: con un bloque compacto el centro caía en medio píxel (129/2).
+	E.db.movers.DTPanelKnuUI_DataMover = format('BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,%d,2', 4 + CHAT + GAP + left)
 end
 
 local function PowerColor()
@@ -97,7 +102,7 @@ local function CreateTank()
 	text:FontTemplate(nil, 13, 'OUTLINE')
 	text:SetPoint('TOP', bar, 'TOP', 0, -4)
 	tank.text = text
-	tank:SetPoint('BOTTOM', E.UIParent, 'BOTTOM', X, 28) -- pegado a las barras centrales (x 1183-1249 en 1920)
+	tank:SetPoint('BOTTOM', E.UIParent, 'BOTTOM', X, 28) -- pegado a las barras centrales (x 1185-1251 en 1920)
 	E:CreateMover(tank, 'KnuUI_ManaTankMover', L["KnuUI: mana tank"], nil, nil, nil, 'ALL,GENERAL')
 	tank:RegisterUnitEvent('UNIT_POWER_FREQUENT', 'player')
 	tank:RegisterUnitEvent('UNIT_MAXPOWER', 'player')
@@ -114,7 +119,7 @@ function K:SetupTanks()
 	if data and E.db.datatexts and E.db.datatexts.panels and E.db.datatexts.panels.KnuUI_Data then
 		local left = E.db.KnuUITanks and E.db.KnuUICompactLeft and FREED or 0
 		local right = E.db.KnuUITanks and E.db.KnuUICompactRight and FREED or 0
-		local width = 1100 - left - right
+		local width = DATA - left - right
 		if data.width ~= width then
 			data.width = width
 			-- Aplicar ya si ElvUI armó la barra (DataTexts.lua:710, como Workspace.lua RelayoutPanels).
@@ -143,6 +148,29 @@ function K:SetupTanks()
 		if E.SetMoverPoints and _G.KnuUI_ManaTankMover then pcall(E.SetMoverPoints, E, 'KnuUI_ManaTankMover') end
 		if E.SetMoverPoints and _G.ElvUF_PlayerMover then pcall(E.SetMoverPoints, E, 'ElvUF_PlayerMover') end
 	end
+	-- Separación pareja de 4 (2026-11-13): perfiles con las posiciones anteriores de KnuUI pasan una vez a las
+	-- nuevas. Sólo se toca lo que sigue donde lo había puesto KnuUI; lo movido a mano queda como está.
+	if E.db.KnuUITanksGap ~= GAP and not InCombatLockdown() then
+		E.db.KnuUITanksGap = GAP
+		local old = {
+			ElvUF_PlayerMover = { 'BOTTOM,ElvUIParent,BOTTOM,-256,28', 'BOTTOM,ElvUIParent,BOTTOM,'..(-X)..',28' },
+			KnuUI_ManaTankMover = { 'BOTTOM,ElvUIParent,BOTTOM,256,28', 'BOTTOM,ElvUIParent,BOTTOM,'..X..',28' },
+			ElvAB_3 = { 'BOTTOM,ElvUIParent,BOTTOM,-422,106', BARS.bar3.mover },
+			ElvAB_5 = { 'BOTTOM,ElvUIParent,BOTTOM,-422,28', BARS.bar5.mover },
+			ElvAB_4 = { 'BOTTOM,ElvUIParent,BOTTOM,420,106', BARS.bar4.mover },
+			ElvAB_6 = { 'BOTTOM,ElvUIParent,BOTTOM,420,28', BARS.bar6.mover },
+		}
+		if E.db.KnuUICompactLeft then old.ElvAB_3 = { 'BOTTOM,ElvUIParent,BOTTOM,-356,28', SIDES.left.mover } end
+		if E.db.KnuUICompactRight then old.ElvAB_4 = { 'BOTTOM,ElvUIParent,BOTTOM,356,28', SIDES.right.mover } end
+		for name, pair in pairs(old) do
+			if E.db.movers[name] == pair[1] then
+				E.db.movers[name] = pair[2]
+				if E.SetMoverPoints and _G[name] then pcall(E.SetMoverPoints, E, name) end
+			end
+		end
+		pcall(self.ApplySideBlocks, self) -- chats de 401 y barra de datos entre ellos
+		if E.SetMoverPoints and _G.DTPanelKnuUI_DataMover then pcall(E.SetMoverPoints, E, 'DTPanelKnuUI_DataMover') end
+	end
 	local t = self:GetTheme()
 	-- Mismo borde que la columna de vida y los botones: el de ElvUI (E.media.bordercolor). El
 	-- t.border del tema Knunet intenso es marrón anaranjado y se veía distinto de la vida.
@@ -165,8 +193,8 @@ function K:ApplyTanks(enable)
 			health = { orientation = 'VERTICAL', position = 'TOP', xOffset = 0, yOffset = -4, text_format = '[perhp<%]' },
 		})
 		self.Set(E.db.movers, {
-			ElvUF_PlayerMover = 'BOTTOM,ElvUIParent,BOTTOM,'..(-X)..',28', -- vida: x 671-737
-			KnuUI_ManaTankMover = 'BOTTOM,ElvUIParent,BOTTOM,'..X..',28', -- maná: x 1183-1249
+			ElvUF_PlayerMover = 'BOTTOM,ElvUIParent,BOTTOM,'..(-X)..',28', -- vida: x 669-735
+			KnuUI_ManaTankMover = 'BOTTOM,ElvUIParent,BOTTOM,'..X..',28', -- maná: x 1185-1251
 			ExperienceBarMover = 'BOTTOM,ElvUIParent,BOTTOM,0,104', -- 442×8, y 104-112
 			ShiftAB = 'BOTTOM,ElvUIParent,BOTTOM,0,116', -- y 116-140
 			ElvUF_PlayerCastbarMover = 'BOTTOM,ElvUIParent,BOTTOM,14,146', -- y 146-174
@@ -199,7 +227,7 @@ function K:ApplyTanks(enable)
 	else
 		player.health.orientation = 'HORIZONTAL'
 		self:ApplyLayout() -- vuelve al marco 240×54 y a las posiciones del boceto v4
-		self:ApplySideBlocks() -- chats de 400 y barra de datos de 1100 otra vez
+		self:ApplySideBlocks() -- chats de 401 y barra de datos de 1102 otra vez
 	end
 	return true
 end

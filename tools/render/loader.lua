@@ -57,6 +57,7 @@ function M.load(root, path, char, profile)
  end
  if not privateKey then warnings[#warnings+1] = 'Sin perfil privado del personaje: se usan defaults V.' end
  return {db = E.db, global = E.global, private = E.private, profile = profile,
+  uiScale = db.global and db.global.general and db.global.general.UIScale,
   character = char, theme = theme, warnings = warnings}
 end
 return M

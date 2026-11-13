@@ -250,8 +250,8 @@ L["Decoration: %s"] = "Decoración: %s"
 
 -- Installer.lua: page 4
 L["Chat and data, hand-tuned"] = "Chat y datos a mano"
-L["400×180 chats, edit box above, and panels with the same background and tabs."] = "Chats de 400×180, edición arriba y paneles con el mismo fondo y pestañas."
-L["Central 1100×22 bar with eight data points; time and coordinates on the minimap."] = "Barra central de 1100×22 con ocho datos; hora y coordenadas en minimapa."
+L["401×180 chats, edit box above, and panels with the same background and tabs."] = "Chats de 401×180, edición arriba y paneles con el mismo fondo y pestañas."
+L["Central 1102×22 bar with eight data points; time and coordinates on the minimap."] = "Barra central de 1102×22 con ocho datos; hora y coordenadas en minimapa."
 L["Replaces the previous data panels, including ForeverUI_Data."] = "Reemplaza los paneles de datos anteriores, incluido ForeverUI_Data."
 L["Apply chat and data"] = "Aplicar chat y datos"
 L["Integrated panels"] = "Paneles integrados"
