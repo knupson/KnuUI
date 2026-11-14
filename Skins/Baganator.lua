@@ -1,4 +1,6 @@
 local E = unpack(ElvUI)
+local _, ns = ...
+local L = ns.L
 local K = E:GetModule('KnuUI')
 
 -- Baganator: el título de la ventana ("Bolsas de ...") queda tapado por los botones de la
@@ -53,6 +55,14 @@ local function FixTitle(frame)
 	title:SetWordWrap(false)
 	if title.FontTemplate then pcall(title.FontTemplate, title, 'Expressway', 13, 'OUTLINE') end
 	title:SetTextColor(t.accent.r, t.accent.g, t.accent.b)
+	-- Sólo "Bolsas" (pedido del user 2026-11-13): Baganator pone "Bolsas de <personaje>" con SetTitle
+	-- (ItemViewCommon/BackpackView.lua:204) y no entraba entre los botones.
+	if type(frame.SetTitle) == 'function' then
+		hooksecurefunc(frame, 'SetTitle', function(f, text)
+			if text and text ~= '' then f:GetTitleText():SetText(L["Bags"]) end
+		end)
+	end
+	if (title:GetText() or '') ~= '' then title:SetText(L["Bags"]) end
 	Place(frame)
 	-- Los botones se acomodan al abrir y al cambiar de ancho: se vuelve a medir en el cuadro siguiente.
 	frame:HookScript('OnShow', function(f) C_Timer.After(0, function() pcall(Place, f) end) end)

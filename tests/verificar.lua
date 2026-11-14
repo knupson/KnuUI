@@ -364,6 +364,10 @@ local function Validate()
  base.datatexts.panels.ForeverUI_Data = { enable = true }
  base.datatexts.panels.Darth_Panel_1 = { enable = true }
  base.unitframe.units.player.customTexts.Ajeno = { text_format = '' }
+ -- Base del autor (Base.lua): sus claves son válidas por definición; el modo por defecto lo fija ApplyAll.
+ local function Merge(dst, src) for k, v in pairs(src) do if type(v) == 'table' then dst[k] = type(dst[k]) == 'table' and dst[k] or {}; Merge(dst[k], v) else dst[k] = v end end end
+ Merge(base, module.Base or {})
+ base.KnuUITanks = true; base.KnuUICompactRight = true; base.KnuUITanksGap = 4; base.KnuUITanksWidth = 66
  Check(E.db, base, 'E.db')
  local global = E:CopyTable({}, G)
  global.datatexts.customPanels.KnuUI_Data = G.datatexts.newPanelInfo
@@ -382,6 +386,8 @@ local function Validate()
  end
 end
 
+-- Este bloque valida el diseño sin columnas: se pide explícitamente (sin elegir, ApplyAll usa columnas).
+E.db.KnuUITanks, E.db.KnuUICompactRight = false, false
 E.PopupDialogs.KNUUI_APPLY.OnAccept()
 assert(reloads == 1 and E.db.KnuUILayoutVersion == module.version)
 Validate()
@@ -1269,4 +1275,5 @@ do
  end
 end
 
+assert(loadfile('addons/KnuUI/tests/cooldown-viewer.lua'))()
 print('OK: batería completa Lua 5.1; temas, builds por clase/rol, opciones y API Offhand ausente/parcial/completa.')

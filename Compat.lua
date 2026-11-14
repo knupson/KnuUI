@@ -78,6 +78,9 @@ function K:ApplyAddon(entry)
 end
 
 function K:ApplyAddons()
+	-- ElvUI/Game/Shared/Skins/CooldownManager.lua:8; Defaults/Private.lua:108.
+	-- Sólo al aplicar la configuración de addons, junto con Core.lua:84.
+	E.private.skins.blizzard.cooldownManager = true
 	for _, entry in ipairs(self.addons) do
 		-- Mover rastreadores (WoW-Pro, Questie) sólo con su botón: el user ya los tiene ubicados.
 		if not entry.manual and self:IsLoaded(entry.id) then self:ApplyAddon(entry) end

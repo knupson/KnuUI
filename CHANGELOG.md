@@ -1,5 +1,16 @@
 # KnuUI changelog
 
+## 3.5.5 (2026-11-13)
+
+- "Apply all" now starts from the author's own setup and then applies your role and class on top: action
+  bar, aura, chat, tooltip, nameplate and unit frame fonts and options, the intense amber palette,
+  decoration, combat glow, raid markers always visible and the author's frame positions. Default mode:
+  health/mana columns with the compact right block.
+- Blizzard's Cooldown Manager (Forever's Cooldown Viewer) gets the KnuUI look: cropped icons with the thin
+  theme border, Expressway timers and counts, Melli bars. Purely visual: the viewers stay where Edit Mode
+  puts them. Option in ElvUI > KnuUI > Addons; "Apply all" also turns on ElvUI's skin for its settings.
+- Baganator: the bag window title just says "Bags".
+
 ## 3.5.4 (2026-11-13)
 
 - Shortest Path Forever's "Use Hearthstone" prompt (shown when a teleport is the faster route) is now a

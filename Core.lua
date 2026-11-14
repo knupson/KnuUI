@@ -48,15 +48,39 @@ function K:CleanupLegacy()
 	if E.db.movers then E.db.movers.DTPanelForeverUI_DataMover = nil end
 end
 
+-- Base del autor (Base.lua, generada por tools/base/generar.lua): sus elecciones sobre lo que arma KnuUI.
+-- Sólo se copian hojas (nunca se borran tablas del perfil).
+function K:ApplyBase()
+	local function Copy(src, dst)
+		for k, v in pairs(src) do
+			if type(v) == 'table' then
+				if type(dst[k]) ~= 'table' then dst[k] = {} end
+				Copy(v, dst[k])
+			else
+				dst[k] = v
+			end
+		end
+	end
+	if type(self.Base) == 'table' then Copy(self.Base, E.db) end
+end
+
+-- Orden (pedido del user 2026-11-13: su configuración es la base global y de ahí salen rol y clase):
+-- diseño de KnuUI -> base del autor -> modo columnas y bloques compactos -> rol.
 function K:ApplyAll()
 	if not self:CanApply() then return end
+	-- El modo del autor es el de todos por defecto: columnas de vida y maná, bloque derecho compacto.
+	if E.db.KnuUITanks == nil then E.db.KnuUITanks = true end
+	if E.db.KnuUICompactRight == nil and E.db.KnuUICompactLeft == nil then E.db.KnuUICompactRight = true end
 	self:ApplyLayout()
-	self:ApplyTheme()
 	self:ApplyChat()
 	self:ApplyNameplates()
 	self:ApplyTracker()
 	self:ApplyCamera() -- una sola vez; después se fuerza desde las opciones
-	if E.db.KnuUITanks then self:ApplyTanks(true) end -- modo de prueba elegido
+	-- La paleta de la base primero y después la base: los colores que el autor ajustó sobre la paleta quedan.
+	if type(self.Base) == 'table' and self.Base.KnuUITheme then E.db.KnuUITheme = self.Base.KnuUITheme end
+	self:ApplyTheme()
+	self:ApplyBase()
+	if E.db.KnuUITanks then self:ApplyTanks(true) else self:ApplyRoleOverlay() end -- ApplyTanks ya aplica el rol
 	self:ApplyAddons()
 	E.db.KnuUILayoutVersion = self.version
 	ReloadUI()

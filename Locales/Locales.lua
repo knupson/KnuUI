@@ -10,6 +10,8 @@ local locale = GetLocale and GetLocale() or 'enUS'
 if locale ~= 'esES' and locale ~= 'esMX' then return end
 
 -- Core.lua
+L["Cooldown Viewer skin"] = "Skin del administrador de tiempos de reutilización"
+L["Style Blizzard cooldown icons and buff bars. Changes take effect after reloading the UI."] = "Aplica el estilo KnuUI a los iconos y las barras de beneficios de Blizzard. Los cambios se aplican después de recargar la interfaz."
 L["KnuUI requires World of Warcraft: Forever."] = "KnuUI requiere World of Warcraft: Forever."
 L["Leave combat before applying KnuUI."] = "Salí de combate antes de aplicar KnuUI."
 L["KnuUI: %s failed: %s"] = "KnuUI: falló %s: %s"
