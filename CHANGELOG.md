@@ -1,5 +1,13 @@
 # KnuUI changelog
 
+## 3.5.8 (2026-11-13)
+
+- Cooldown Manager moved off the character: the essential, utility and buff icon viewers now sit above the
+  left action block, over columns 2 to 5 (the first and sixth stay free), each sized (icon size in 10 % steps
+  and padding) to the width of four block buttons. Buff icons use the utility size, since their count changes.
+  Focus and pet frames move 4 px above them, at the block edges; the buff bar sits above the left chat.
+  If you learn new abilities the manager tracks, /knu enfriamientos (/knu cooldowns) refits them.
+
 ## 3.5.7 (2026-11-13)
 
 - Cooldown Manager skin: icon borders are now four 1 px lines anchored to the icon instead of a Blizzard

@@ -100,25 +100,83 @@ function K:ApplyCooldownLayout()
 		end
 	end
 
-	local healer = E.db.KnuUIRole == 'healer'
-	-- Tanks.lua:202-205: objetivo hasta y=268. Sus auras (perfil: buffs TOPLEFT +2 y debuffs +32, ícono 28, una
-	-- fila de 8; ElvUI Defaults/Profile.lua:1642-1643) ocupan y 270-328: la columna arranca 4 más arriba, y=332.
-	-- Roles.lua:73-103: grupo x=-213..213, y=340 (columnas) o 204; crece RIGHT_UP.
-	-- Healer: borde derecho de la columna en x=-217; nunca invade el grupo central.
-	local point, x, y = healer and 'BOTTOMRIGHT' or 'BOTTOM', healer and -217 or 0, 332
-	local barX = 212 -- borde izquierdo, 4 px después del objetivo del objetivo.
+	-- Encima del centro tapaba al personaje (visto en el juego 2026-11-13). Lugar elegido por el user, medido con
+	-- tools/render en su perfil: arriba del bloque derecho, entre el objetivo del objetivo (termina en x 1168,
+	-- Tanks.lua) y el monitor de botín (empieza en x 1512, LootMonitor.lua), desde y 188 (chats hasta 184). El
+	-- grupo del Healer termina en x 1173 (Roles.lua:73-103: x -213..213), así que la zona arranca en 1177 para
+	-- todos los roles. Centrada en el hueco se veía corrida (user 2026-11-13): borde izquierdo alineado con el
+	-- bloque derecho de abajo (x 1255 = centro + 295, Tanks.lua SIDE) y 4 por encima de su borde (182 + 4 = 186).
+	-- Arriba del bloque izquierdo, de borde a borde (pedido del user 2026-11-13): el bloque va de x 409 a 665
+	-- (Tanks.lua: 4 + 401 + 4 = 409, ancho 256). Para cada visor se elige, con la cantidad de íconos de ahora, el
+	-- tamaño (50-200 % de a 10, EditModeSettingDisplayInfo.lua:928-935) y el relleno (0-14) que dejan la fila
+	-- VISIBLE lo más cerca de 256 sin pasarse. Cuentas de Blizzard: cada ícono mide base·tamaño/100
+	-- (CooldownViewer.lua:2008, iconScale) y entre íconos va relleno - 4 (:2015-2017, :2061); el skin achica cada
+	-- ícono 2 por lado (Skins/CooldownViewer.lua), así que lo visible es el ancho del visor menos 4. El valor
+	-- guardado del tamaño es el índice del deslizador, (tamaño - 50) / 10 (con 100 % guardado 5 el cálculo
+	-- directo daba alto 2, /knu visores 2026-11-13); el del relleno, el valor mismo (mínimo 0, paso 1).
+	-- Si cambia la cantidad de íconos, /knu enfriamientos vuelve a ajustar.
+	-- Ancho de 4 casillas del bloque izquierdo (pedido del user 2026-11-13): 4 · 41 + 3 · 2 = 170 (Tanks.lua BARS:
+	-- botones de 41 con 2 de separación), desde su borde izquierdo x 409. Medido en el juego (/knu visores): el
+	-- tamaño guardado es el índice del deslizador (170 % dio 85 de alto) y el relleno difiere de relleno - 4 en
+	-- 0,5 a 1 px (261 de ancho en vez de 259): se acepta esa diferencia.
+	-- Sobre las casillas 2 a 5 (user 2026-11-13: la 1 y la 6 libres arriba): 409 + 41 + 2 = 452.
+	local LEFT, WIDTH = -508, 170 -- 452 - 960
+	local keys = Enum.EditModeCooldownViewerSetting
+	local function Set(info, setting, value)
+		for _, s in ipairs(info.settings or {}) do
+			if s.setting == setting then s.value = value; return end
+		end
+		info.settings = info.settings or {}
+		table.insert(info.settings, { setting = setting, value = value })
+	end
+	local function Fit(base, n)
+		local best
+		for pct = 50, 200, 10 do
+			for pad = 0, 14 do
+				local visible = n * base * pct / 100 + (n - 1) * (pad - 4) - 4
+				if visible <= WIDTH then
+					-- Primero el ancho (hasta 1 px de diferencia cuenta como alineado); después la separación más
+					-- cercana a 2 px, la de las casillas del bloque (visible = relleno - 4 + 4 = relleno).
+					local score = math.max(0, WIDTH - visible - 1) * 100 + math.abs(pad - 2)
+					if not best or score < best.score then best = { score = score, pct = pct, pad = pad, edge = base * pct / 100 } end
+				end
+			end
+		end
+		return best
+	end
+	local y = 186
+	local fits = {}
 	for i = 1, 3 do
 		local info = systems[order[i]]
-		info.anchorInfo = { point = point, relativeTo = 'UIParent', relativePoint = 'BOTTOM', offsetX = x, offsetY = y }
+		local viewer = _G[NAMES[i]]
+		local base = ({ 50, 30, 40 })[i]
+		local n = math.max(viewer.GetItemCount and viewer:GetItemCount() or 0, 1)
+		-- Buffs: su cantidad cambia con las auras activas; ajustarlo al ancho con la del momento lo llevó al 200 %
+		-- (80 de alto, /knu visores 2026-11-13). Usa el tamaño y el relleno de utilidad.
+		local fit = i == 3 and fits[2] and { pct = fits[2].pct, pad = fits[2].pad, edge = base * fits[2].pct / 100 } or Fit(base, n)
+		fits[i] = fit
+		if fit and keys and keys.IconSize and keys.IconPadding then
+			Set(info, keys.IconSize, (fit.pct - 50) / 10)
+			Set(info, keys.IconPadding, fit.pad)
+		end
+		info.anchorInfo = { point = 'BOTTOMLEFT', relativeTo = 'UIParent', relativePoint = 'BOTTOM', offsetX = LEFT - 2, offsetY = y - 2 }
 		-- EditModeManager.lua:340-363: soltar segundo anclaje y gestión predeterminada.
 		info.anchorInfo2, info.isInDefaultPosition = nil, false
-		if sizes[i].height > 0 then y = y + sizes[i].height + 4 end
-		if not healer then barX = math.max(barX, sizes[i].width / 2 + 4) end
+		y = y + (fit and fit.edge or sizes[i].height) - 4 + 4 -- alto visible (lado - 4) más 4 de separación
 	end
-	-- BuffBar crece a la derecha desde x>=212, y=208: fuera del objetivo y de la columna.
-	-- En Healer x=217 deja además 4 px respecto del grupo (borde derecho x=213).
+	-- Foco y mascota (estaban en x 504-744, y 226-250, dentro de esta zona): 4 por encima de la columna, foco
+	-- en el borde izquierdo del bloque y mascota en el derecho.
+	E.db.movers = E.db.movers or {}
+	-- En los bordes del bloque (x 409 y 665): sobre las 4 casillas del gestor no entran los dos (115 + 115 > 170).
+	E.db.movers.ElvUF_FocusMover = string.format('BOTTOMLEFT,ElvUIParent,BOTTOM,%d,%d', -551, y)
+	E.db.movers.ElvUF_PetMover = string.format('BOTTOMRIGHT,ElvUIParent,BOTTOM,%d,%d', -295, y)
+	for _, name in ipairs({ 'ElvUF_FocusMover', 'ElvUF_PetMover' }) do
+		if E.SetMoverPoints and _G[name] then pcall(E.SetMoverPoints, E, name) end
+	end
+	-- Barra de buffs arriba del chat izquierdo, a 4 del borde: y 210 deja libre la caja de escritura del chat,
+	-- que aparece encima del chat (editBoxPosition ABOVE_CHAT, Layout.lua) al escribir.
 	local bar = systems[indices.BuffBar]
-	bar.anchorInfo = { point = 'BOTTOMLEFT', relativeTo = 'UIParent', relativePoint = 'BOTTOM', offsetX = healer and 217 or barX, offsetY = 208 }
+	bar.anchorInfo = { point = 'BOTTOMLEFT', relativeTo = 'UIParent', relativePoint = 'BOTTOMLEFT', offsetX = 4, offsetY = 210 }
 	bar.anchorInfo2, bar.isInDefaultPosition = nil, false
 	-- EditModeManager.lua:1657; EditModeManagerDocumentation.lua:110,183-189: activeLayout viaja en SaveLayouts.
 	local ok, err = pcall(C_EditMode.SaveLayouts, layouts)

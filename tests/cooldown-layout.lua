@@ -61,18 +61,43 @@ local function Run(custom, reuse, healer, disabled, combat, columns, resized)
 	for i = 1, 3 do assert(Equal(result.layouts[i], presets[i])) end
 	local active = result.layouts[4]
 	assert(active.layoutName == (custom and 'Personal' or 'KnuUI') and active.layoutType == 2 and active.interfaceStyle == 8)
+	local expectedY
 	for i, system in ipairs(active.systems) do
 		if i >= 2 and i <= 5 then
-			assert(Equal(system.settings, before.systems[i].settings))
+			-- Tamaño (11) y relleno (12) pueden cambiar en los tres visores de ícono; el resto de los ajustes, no.
+			for k, setting in ipairs(system.settings) do
+				if not (i <= 4 and (setting.setting == 11 or setting.setting == 12)) then assert(Equal(setting, before.systems[i].settings[k])) end
+			end
 			assert(not system.anchorInfo2 and system.isInDefaultPosition == false)
 			local anchor = system.anchorInfo
-			assert(anchor.relativeTo == 'UIParent' and anchor.relativePoint == 'BOTTOM')
+			assert(anchor.relativeTo == 'UIParent' and (anchor.relativePoint == 'BOTTOM' or i == 5))
 			if i <= 4 then
-				assert(anchor.point == (healer and 'BOTTOMRIGHT' or 'BOTTOM') and anchor.offsetX == (healer and -217 or 0))
-				assert(anchor.offsetY == (resized and { 332, 398.5, 440 } or { 332, 386, 420 })[i - 1])
-			else assert(anchor.point == 'BOTTOMLEFT' and anchor.offsetX == (healer and 217 or 212) and anchor.offsetY == 208) end
+				-- Arriba del bloque izquierdo, ancho de 4 casillas: lo visible va de x 409 a 578-579.
+				assert(anchor.point == 'BOTTOMLEFT' and anchor.offsetX == -510) -- casillas 2 a 5: x 452 - 2
+				local vals = {}
+				for _, setting in ipairs(system.settings) do vals[setting.setting] = setting.value end
+				local pct, pad = vals[11] * 10 + 50, vals[12]
+				local base, n = ({ 50, 30, 40 })[i - 1], resized and 25 or 2
+				local minVisible = n * base * 0.5 + (n - 1) * (0 - 4) - 4
+				if i == 4 then minVisible = -1 end -- buffs: copia tamaño y relleno de utilidad
+				local edge
+				if minVisible > 256 then
+					-- Demasiados íconos para el ancho aun al mínimo: no se tocan tamaño ni relleno.
+					assert(vals[11] == 100 or vals[11] == 80)
+					edge = nil
+				else
+					local visible = n * base * pct / 100 + (n - 1) * (pad - 4) - 4
+					-- Ajustado al ancho, salvo que ni al máximo (200 %, relleno 14) llegue: entonces queda al máximo.
+					if i ~= 4 then assert(visible <= 170 and (visible >= 169 or (pct == 200 and pad == 14)), 'ancho visible ' .. visible) end
+					edge = base * pct / 100
+				end
+				expectedY = expectedY or 184
+				assert(anchor.offsetY == expectedY, 'y ' .. anchor.offsetY .. ' esperado ' .. expectedY)
+				expectedY = expectedY + (edge or ({ 50, 30, 40 })[i - 1] * (resized and 1.25 or 1))
+			else assert(anchor.point == 'BOTTOMLEFT' and anchor.relativePoint == 'BOTTOMLEFT' and anchor.offsetX == 4 and anchor.offsetY == 210) end
 			local unchanged = Copy(system)
 			unchanged.anchorInfo, unchanged.anchorInfo2, unchanged.isInDefaultPosition = before.systems[i].anchorInfo, before.systems[i].anchorInfo2, before.systems[i].isInDefaultPosition
+			unchanged.settings = before.systems[i].settings -- ya comparados arriba, ajuste por ajuste
 			assert(Equal(unchanged, before.systems[i]))
 		else assert(Equal(system, before.systems[i])) end
 	end
