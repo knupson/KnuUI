@@ -23,6 +23,11 @@ local function Run(disabled)
 		function r:GetMaskTexture() return self.mask end
 		function r:RemoveMaskTexture(mask) assert(mask == self.mask); self.mask = nil end
 		function r:SetAllPoints(anchor) self.anchor = anchor end
+		function r:IsShown() return self.hidden ~= true end
+		function r:GetTexture() return self.tex or 'icono' end
+		function r:SetShown(v) self.hidden = not v end
+		function r:ClearAllPoints() assert(not combat and not self.protected); self.points = {} end
+		function r:SetPoint(...) assert(not combat and not self.protected); self.points = self.points or {}; table.insert(self.points, { ... }) end
 		function r:SetBackdrop(value) assert(value.edgeSize == 1); self.backdrop = value end
 		function r:SetBackdropBorderColor(...) self.border = { ... } end
 		function r:SetColorTexture(...) self.color = { ... } end

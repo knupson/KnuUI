@@ -81,6 +81,8 @@ function K:ApplyAll()
 	self:ApplyTheme()
 	self:ApplyBase()
 	if E.db.KnuUITanks then self:ApplyTanks(true) else self:ApplyRoleOverlay() end -- ApplyTanks ya aplica el rol
+	local why = self:ApplyCooldownLayout()
+	if why then E:Print('KnuUI: gestor de enfriamientos sin ubicar: ' .. why) end
 	self:ApplyAddons()
 	E.db.KnuUILayoutVersion = self.version
 	ReloadUI()
@@ -106,7 +108,7 @@ function K:Initialize()
 	self:SetupInstaller()
 	self:SetupAFK()
 	if E.Forever then
-		for _, setup in ipairs({ 'SetupAddonSkins', 'SetupButtons', 'SetupDock', 'SetupWoWProSkin', 'SetupTanks', 'SetupTracker', 'SetupDecor', 'SetupPanels', 'SetupWoWProES', 'SetupTomTomSkin', 'SetupBaganatorSkin', 'SetupExtras', 'SetupBNToast', 'SetupRaidMarkers', 'SetupFlightTimer', 'SetupCombatZoom', 'SetupPanelFade', 'SetupLootMonitor', 'SetupRankUpgrade', 'SetupPawnSpec', 'SetupTomTomRoute', 'SetupOffhand', 'SetupWorkspace', 'SetupMinimapZoom' }) do
+		for _, setup in ipairs({ 'SetupAddonSkins', 'SetupButtons', 'SetupDock', 'SetupWoWProSkin', 'SetupTanks', 'SetupTracker', 'SetupDecor', 'SetupPanels', 'SetupWoWProES', 'SetupTomTomSkin', 'SetupBaganatorSkin', 'SetupExtras', 'SetupBNToast', 'SetupRaidMarkers', 'SetupFlightTimer', 'SetupCombatZoom', 'SetupPanelFade', 'SetupLootMonitor', 'SetupRankUpgrade', 'SetupPawnSpec', 'SetupTomTomRoute', 'SetupOffhand', 'SetupWorkspace', 'SetupMinimapZoom', 'SetupUIPanels' }) do
 			local ok, err = pcall(self[setup], self)
 			if not ok then E:Print(format(L["KnuUI: %s failed: %s"], setup, tostring(err))) end
 		end

@@ -24,6 +24,7 @@ Motion.lua
 Nameplates.lua
 Tanks.lua
 Roles.lua
+CooldownLayout.lua
 Builds.lua
 Extras.lua
 RaidMarkers.lua
@@ -65,6 +66,7 @@ Buttons.lua
 MinimapButtons.lua
 MinimapZoom.lua
 Share.lua
+UIPanels.lua
 Decor.lua
 Skins/WoWPro.lua
 Skins/WoWProES.lua

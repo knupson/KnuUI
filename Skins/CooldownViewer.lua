@@ -44,12 +44,31 @@ local function Icon(owner, texture)
 			end
 		end
 		texture:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+		-- Blizzard dibuja el ícono más grande que su casilla y tapa el sobrante con la máscara redonda; sin la
+		-- máscara los íconos se pisaban (visto en el juego 2026-11-13). 2 px adentro por lado: 4 entre íconos.
+		texture:ClearAllPoints()
+		texture:SetPoint('TOPLEFT', owner, 'TOPLEFT', 2, -2)
+		texture:SetPoint('BOTTOMRIGHT', owner, 'BOTTOMRIGHT', -2, 2)
 		styled[texture] = true
 	end
 	for _, region in ipairs({ owner:GetRegions() }) do
 		if Safe(region) and region.GetAtlas and region:GetAtlas() == 'UI-HUD-CoolDownManager-IconOverlay' then Hide(region) end
 	end
 	Border(owner, texture)
+	-- Casillas de auras no activas (visor de buffs): Blizzard las deja sin ícono y el borde quedaba como un
+	-- botón vacío (visto en el juego 2026-11-13). El borde se ve sólo cuando hay ícono.
+	local border = styled[owner]
+	if type(border) == 'table' and border.SetShown and not border.KnuFollow then
+		border.KnuFollow = true
+		local function Sync()
+			local tex = texture.GetTexture and texture:GetTexture()
+			border:SetShown(texture:IsShown() and tex ~= nil and tex ~= '')
+		end
+		for _, method in ipairs({ 'Show', 'Hide', 'SetShown', 'SetTexture', 'SetAtlas' }) do
+			if texture[method] then hooksecurefunc(texture, method, Sync) end
+		end
+		Sync()
+	end
 end
 
 local function StyleItem(item)

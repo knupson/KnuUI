@@ -1276,4 +1276,5 @@ do
 end
 
 assert(loadfile('addons/KnuUI/tests/cooldown-viewer.lua'))()
+assert(loadfile('addons/KnuUI/tests/cooldown-layout.lua'))()
 print('OK: batería completa Lua 5.1; temas, builds por clase/rol, opciones y API Offhand ausente/parcial/completa.')

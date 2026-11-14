@@ -491,6 +491,10 @@ local function Options()
 						desc = L["Style Blizzard cooldown icons and buff bars. Changes take effect after reloading the UI."],
 						get = function() return E.db.KnuUISkinCooldownViewer ~= false end,
 						set = function(_, value) E.db.KnuUISkinCooldownViewer = value; Reload() end },
+					cooldownLayout = { order = 6, type = 'toggle', width = 'full', name = L["Cooldown Viewer layout"],
+						desc = L["Place Blizzard cooldown viewers when applying KnuUI. Disable to keep your Edit Mode positions."],
+						get = function() return E.db.KnuUICooldownLayout ~= false end,
+						set = function(_, value) if K:CanApply() then E.db.KnuUICooldownLayout = value end end },
 					tracker = { order = 11, type = 'select', width = 'double', name = L["Quest tracker"],
 						values = { show = L["Always show"], hide = L["Always hidden"] },
 						get = function() return E.db.KnuUIHideTracker and 'hide' or 'show' end,
@@ -659,6 +663,8 @@ function K:SetupInstaller()
 		local command = (message or ''):match('^%s*(.-)%s*$'):lower()
 		if command == 'aplicar' or command == 'apply' then Confirm()
 		elseif command == 'cine' or command == 'cinema' then K:ToggleCinema()
+		elseif command == 'enfriamientos' or command == 'cooldowns' then K:CooldownLayoutCommand()
+		elseif command == 'visores' then K:CooldownViewersReport()
 		elseif command == 'export' or command == 'exportar' then K:OpenShare('export')
 		elseif command == 'import' or command == 'importar' then K:OpenShare('import')
 		else K:OpenInstaller() end

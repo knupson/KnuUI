@@ -1,5 +1,17 @@
 # KnuUI changelog
 
+## 3.5.6 (2026-11-13)
+
+- Cooldown Manager placed in the KnuUI layout: "Apply all" saves the viewers' positions in your Edit Mode
+  layout (a "KnuUI" copy if you were on a Blizzard preset): essential, utility and buff icons in a centred
+  column above the target's buffs and debuffs, 4 px apart, using each viewer's real size; the buff bar to the
+  right of the target. Healer gets the column to the left of the central group. Option in Addons.
+  /knu enfriamientos (or /knu cooldowns) places only the viewers; /knu visores prints where each one is.
+- Cooldown Manager skin: icons no longer overlap each other (2 px inside their slot now that Blizzard's round
+  mask is removed) and empty buff slots show no border.
+- Blizzard panels (character, spellbook, talents, friends...) and OpenMap's world map open 4 px below the
+  WoW-Pro guide, aligned with its left edge, instead of on top of it (out of combat only).
+
 ## 3.5.5 (2026-11-13)
 
 - "Apply all" now starts from the author's own setup and then applies your role and class on top: action
