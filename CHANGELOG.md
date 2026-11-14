@@ -1,5 +1,12 @@
 # KnuUI changelog
 
+## 3.5.7 (2026-11-13)
+
+- Cooldown Manager skin: icon borders are now four 1 px lines anchored to the icon instead of a Blizzard
+  backdrop, which recalculated with the viewers' sizes and raised "attempt to perform arithmetic on a secret
+  number value" errors in combat.
+- The version shown in the addon list is correct again (3.5.6 showed 3.5.5).
+
 ## 3.5.6 (2026-11-13)
 
 - Cooldown Manager placed in the KnuUI layout: "Apply all" saves the viewers' positions in your Edit Mode

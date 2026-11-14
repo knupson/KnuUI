@@ -1,6 +1,6 @@
 -- Ejecutar desde la raíz con LuaJIT; también se incluye en verificar.lua.
 local function Run(disabled)
-	local hooks, queue, combat, borders = {}, {}, false, 0
+	local hooks, queue, combat, borders, lines = {}, {}, false, 0, 0
 	local theme = { border = { r = .2, g = .3, b = .4 }, accent = { r = 1, g = .6, b = .1 }, backdrop = { r = .1, g = .1, b = .1, a = 1 } }
 	local K, E = {}, { db = { KnuUISkinCooldownViewer = disabled }, media = { blankTex = 'blank' }, Libs = {} }
 	function E:GetModule() return K end
@@ -31,7 +31,15 @@ local function Run(disabled)
 		function r:SetBackdrop(value) assert(value.edgeSize == 1); self.backdrop = value end
 		function r:SetBackdropBorderColor(...) self.border = { ... } end
 		function r:SetColorTexture(...) self.color = { ... } end
-		function r:CreateTexture() self.bg = Region(); return self.bg end
+		-- Bordes: cuatro líneas OVERLAY por ícono (sin BackdropTemplate); cada cuatro cuenta como un borde.
+		function r:CreateTexture(_, layer)
+			assert(not combat and not self.protected)
+			local t = Region()
+			if layer == 'OVERLAY' then lines = lines + 1; if lines % 4 == 0 then borders = borders + 1 end else self.bg = t end
+			return t
+		end
+		function r:SetHeight(v) self.h = v end
+		function r:SetWidth(v) self.w = v end
 		function r:GetStatusBarTexture() return self.texture end
 		function r:SetStatusBarTexture(value) self.texture.file = value end
 		function r:SetStatusBarColor(...) self.color = { ... } end

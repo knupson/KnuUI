@@ -20,11 +20,25 @@ end
 local function Border(parent, anchor, background)
 	if not Safe(parent) or not Safe(anchor) or styled[parent] then return end
 	local t = K:GetTheme()
-	-- Sólo el marco decorativo propio recibe anclas; nunca el viewer de Edit Mode.
-	local border = CreateFrame('Frame', nil, parent, 'BackdropTemplate')
-	border:SetAllPoints(anchor)
-	border:SetBackdrop({ edgeFile = E.media.blankTex, edgeSize = 1 })
-	border:SetBackdropBorderColor(t.border.r, t.border.g, t.border.b, 1)
+	-- Cuatro líneas de 1 px ancladas al ícono, sin BackdropTemplate: su OnSizeChanged hace cuentas con el ancho y
+	-- el alto, que en el gestor pueden ser secretos en combate ("attempt to perform arithmetic on local 'width'
+	-- (a secret number value...)", Blizzard_SharedXML/Backdrop.lua:226, visto en el juego 2026-11-13). Las
+	-- anclas no hacen aritmética en Lua. Sólo el marco decorativo propio recibe anclas; nunca el viewer.
+	local lines = {}
+	local function Line(p1, p2, horizontal)
+		local l = parent:CreateTexture(nil, 'OVERLAY', nil, 7)
+		l:SetColorTexture(t.border.r, t.border.g, t.border.b, 1)
+		l:SetPoint(p1, anchor, p1)
+		l:SetPoint(p2, anchor, p2)
+		if horizontal then l:SetHeight(1) else l:SetWidth(1) end
+		lines[#lines + 1] = l
+	end
+	Line('TOPLEFT', 'TOPRIGHT', true)
+	Line('BOTTOMLEFT', 'BOTTOMRIGHT', true)
+	Line('TOPLEFT', 'BOTTOMLEFT', false)
+	Line('TOPRIGHT', 'BOTTOMRIGHT', false)
+	local border = { lines = lines }
+	function border:SetShown(shown) for _, l in ipairs(self.lines) do l:SetShown(shown) end end
 	if background then
 		local bg = parent:CreateTexture(nil, 'BACKGROUND')
 		bg:SetAllPoints(parent)
