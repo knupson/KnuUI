@@ -165,8 +165,49 @@ end
 -- donde Skins/WoWPro.lua pone la guía.
 -- Las listas de jugadores se abren hacia abajo, debajo de su casilla: el mouse baja directo sin
 -- cruzar otra clase (al entrar a otra clase PallyPower cierra la lista abierta, PallyPower.lua:2484, 2502).
-local pending, Arrange_retries
-local function Arrange()
+local pending, Arrange
+
+-- Dónde tiene que estar anclada la franja: zona del centro de comando, la guía visible o la esquina.
+local function Expected()
+	local guide = _G.WoWPro and _G.WoWPro.MainFrame
+	return (guide and guide.KnuCC and _G.KnuUI_CC_pally) or (guide and guide:IsShown() and guide) or E.UIParent
+end
+
+local function Later() C_Timer.After(0, function() pcall(Arrange) end) end
+
+-- Todo por eventos, sin revisar por tiempo (pedido del user 2026-11-16):
+-- 1. La guía aparece o se va (OnShow/OnHide de su ventana).
+-- 2. WoW-Pro crea su ventana después que PallyPower (carga en orden alfabético, y la crea recién al
+--    abrir una guía: WoWPro_Frames.lua:1033, :2461-2463): se engancha WoWPro:CreateMainFrame.
+-- 3. Alguien mueve la franja a otro lado: PallyPower la vuelve a centrar con sus coordenadas
+--    guardadas (PallyPower.lua:311, :402). Los SetPoint propios ya apuntan al lugar correcto y no
+--    disparan nada.
+local function HookGuide()
+	local WP = _G.WoWPro
+	if not WP then return end
+	if type(WP.CreateMainFrame) == 'function' and not WP.KnuPallyCreateHooked then
+		WP.KnuPallyCreateHooked = true
+		hooksecurefunc(WP, 'CreateMainFrame', Later)
+	end
+	local guide = WP.MainFrame
+	if guide and not guide.KnuPallyHooked then
+		guide.KnuPallyHooked = true
+		guide:HookScript('OnShow', Later)
+		guide:HookScript('OnHide', Later)
+	end
+end
+
+local function HookHeader()
+	local header = _G.PallyPowerFrame
+	if not header or header.KnuPallyHooked then return end
+	header.KnuPallyHooked = true
+	hooksecurefunc(header, 'SetPoint', function(self)
+		local _, relativeTo = self:GetPoint()
+		if relativeTo ~= Expected() then Later() end
+	end)
+end
+
+function Arrange()
 	local PP, header = _G.PallyPower, _G.PallyPowerFrame
 	if not (PP and header and PP.classButtons) then return end
 	if InCombatLockdown() then pending = true return end
@@ -193,21 +234,7 @@ local function Arrange()
 	end
 
 	local guide = _G.WoWPro and _G.WoWPro.MainFrame
-	-- La guía puede mostrarse después del primer acomodo (al entrar, o al abrirla): sin esto la
-	-- franja quedaba en la esquina, debajo de la guía. Se reacomoda cada vez que la guía aparece o se va.
-	if guide and not guide.KnuPallyHooked then
-		guide.KnuPallyHooked = true
-		guide:HookScript('OnShow', function() C_Timer.After(0, function() pcall(Arrange) end) end)
-		guide:HookScript('OnHide', function() C_Timer.After(0, function() pcall(Arrange) end) end)
-	end
-	-- Si WoW-Pro todavía no creó su ventana, no hay a qué engancharse: la franja quedaba en la esquina,
-	-- detrás de la guía (visto en el juego 2026-11-13, sin Offhand). Se reintenta unas veces.
-	if not (guide and guide:IsShown()) then
-		Arrange_retries = (Arrange_retries or 0) + 1
-		if Arrange_retries <= 15 then C_Timer.After(2, function() pcall(Arrange) end) end
-	else
-		Arrange_retries = 0
-	end
+	HookGuide()
 	header:ClearAllPoints()
 	local ccZone = guide and guide.KnuCC and _G.KnuUI_CC_pally
 	-- Con el centro de comando las casillas llenan casi todo el ancho del bloque de Tiny Threat (pedidos del
@@ -379,12 +406,19 @@ K:RegisterSkin('PallyPower', function()
 	local events = CreateFrame('Frame')
 	events:RegisterEvent('PLAYER_REGEN_ENABLED')
 	events:RegisterEvent('PLAYER_ENTERING_WORLD')
-	events:SetScript('OnEvent', function(_, event)
+	events:RegisterEvent('ADDON_LOADED')
+	events:SetScript('OnEvent', function(_, event, name)
+		if event == 'ADDON_LOADED' then
+			if name == 'WoWPro' then pcall(HookGuide); Later() end
+			return
+		end
 		if event == 'PLAYER_ENTERING_WORLD' or pending then
 			C_Timer.After(1, function() pcall(Arrange) end)
 		end
 	end)
 	StyleBar()
+	pcall(HookHeader)
+	pcall(HookGuide)
 	pcall(Arrange)
 	-- Ventana de asignaciones (PallyPower_Vanilla.xml: PallyPowerBlessingsFrame, fondo de tooltip).
 	-- Sólo el marco exterior: adentro hay botones de bendición con íconos propios.

@@ -43,6 +43,7 @@ local function CreateBar()
 	bar.text:SetPoint('LEFT', 6, 0)
 	bar.text:SetPoint('RIGHT', -44, 0)
 	bar.text:SetJustifyH('LEFT')
+	bar.text:SetWordWrap(false)
 	bar.time = bar:CreateFontString(nil, 'OVERLAY')
 	bar.time:SetPoint('RIGHT', -6, 0)
 	for _, text in ipairs({ bar.text, bar.time }) do text:FontTemplate('Expressway', 12, 'OUTLINE') end
@@ -53,28 +54,102 @@ end
 -- Al volar, DynamicCam (situación "Taxi") puede esconder toda la interfaz con UIParent:Hide()
 -- (DynamicCam/Core.lua:510-518). Mientras dura el vuelo la barra cuelga de WorldFrame, que no se
 -- esconde, en el mismo lugar y tamaño de pantalla; al terminar vuelve a su mover.
+-- Lugar base de la barra (su mover, o el punto fijo sobre WorldFrame durante el vuelo), corrido dy
+-- hacia abajo. ElvUI la ancla por TOP a su mover (ElvUI/Game/Shared/General/Movers.lua:73-75).
+local function Base(dy)
+	bar:ClearAllPoints()
+	if bar.detached then
+		bar:SetPoint('CENTER', WorldFrame, 'BOTTOMLEFT', bar.detached.x, bar.detached.y - dy)
+	elseif bar.mover then
+		bar:SetPoint('TOP', bar.mover, 'TOP', 0, -dy)
+	else
+		bar:SetPoint('TOP', E.UIParent, 'TOP', 0, -120 - dy)
+	end
+end
+
+local function ScreenRect(f)
+	if not (f and f.IsVisible and f:IsVisible() and f.GetRect) then return end
+	local l, b, w, h = f:GetRect()
+	if not (l and w and w > 0) then return end
+	local s = f:GetEffectiveScale()
+	return l * s, b * s, (l + w) * s, (b + h) * s
+end
+
+-- La flecha de TomTom y sus textos (título, distancia, tiempo, con el recuadro de Skins/TomTom.lua)
+-- pueden quedar donde está la barra: el user la mueve o aprieta Esc y la interfaz vuelve en pleno
+-- vuelo. Si se superponen, la barra baja hasta quedar 6 px debajo de lo más bajo que pisa. Sólo por
+-- eventos (pedido del user 2026-11-16, nada por tiempo): al mostrarla, cuando la flecha aparece, se
+-- va, se mueve o su recuadro cambia de alto, y cuando vuelve la interfaz (Esc con DynamicCam).
+local GAP = 6
+local function Avoid()
+	if not bar then return end
+	Base(0)
+	local l, b, r, t = ScreenRect(bar)
+	if not l then return end
+	local arrow = _G.TomTomCrazyArrow
+	if not arrow then return end
+	local regions = {}
+	for _, f in ipairs({ arrow, arrow.KnuPanel, arrow.title, arrow.status, arrow.tta }) do
+		local fl, fb, fr, ft = ScreenRect(f)
+		if fl and fl < r and fr > l then regions[#regions + 1] = { fb, ft } end
+	end
+	-- Al bajar puede caer sobre otra parte (el recuadro de textos va debajo de la flecha): se repite
+	-- hasta que el lugar quede libre. Cuentas en píxeles de pantalla, sin releer la barra.
+	local scale, shift = bar:GetEffectiveScale(), 0
+	for _ = 1, #regions + 1 do
+		local low
+		for _, region in ipairs(regions) do
+			if region[1] < t - shift and region[2] > b - shift then low = math.min(low or region[1], region[1]) end
+		end
+		if not low then break end
+		shift = t - low + GAP * scale
+	end
+	if shift > 0 then Base(shift / scale) end
+end
+
+local function Recheck() if bar and bar:IsShown() then pcall(Avoid) end end
+
+local function HookAvoid()
+	local arrow = _G.TomTomCrazyArrow
+	if arrow and not arrow.KnuFlightHooked then
+		arrow.KnuFlightHooked = true
+		arrow:HookScript('OnShow', Recheck)
+		arrow:HookScript('OnHide', Recheck)
+		-- Al arrastrarla TomTom no pasa por SetPoint (crazy_arrow.lua:204-216).
+		arrow:HookScript('OnDragStop', Recheck)
+		hooksecurefunc(arrow, 'SetPoint', Recheck)
+	end
+	local panel = arrow and arrow.KnuPanel
+	if panel and not panel.KnuFlightHooked then
+		panel.KnuFlightHooked = true
+		panel:HookScript('OnSizeChanged', Recheck)
+	end
+	if not UIParent.KnuFlightHooked then
+		UIParent.KnuFlightHooked = true
+		UIParent:HookScript('OnShow', Recheck)
+	end
+end
+
 local function Detach()
 	if not bar or bar.detached then return end
+	Base(0)
 	local x, y = bar:GetCenter()
 	if not x then return end
 	local s, ws = bar:GetEffectiveScale(), WorldFrame:GetEffectiveScale()
-	bar.detached = { bar:GetPoint() }
 	bar:SetParent(WorldFrame)
 	bar:SetScale(s / ws)
 	bar:SetFrameStrata('HIGH')
-	bar:ClearAllPoints()
 	-- Con la escala nueva la barra conserva su escala efectiva, así que el centro queda en las mismas unidades.
-	bar:SetPoint('CENTER', WorldFrame, 'BOTTOMLEFT', x, y)
+	bar.detached = { x = x, y = y }
+	Avoid()
 end
 
 local function Attach()
 	if not bar or not bar.detached then return end
-	local point = bar.detached
 	bar.detached = nil
 	bar:SetParent(E.UIParent)
 	bar:SetScale(1)
-	bar:ClearAllPoints()
-	if point[1] then bar:SetPoint(point[1], point[2], point[3], point[4], point[5]) end
+	Base(0)
 end
 
 local function Style()
@@ -134,9 +209,14 @@ local function Start(slot)
 	if not bar then CreateBar(); Style() end
 	bar:SetMinMaxValues(0, flight.total or 1)
 	bar.text:SetText(flight.total and Place(to) or format(L["%s (learning)"], Place(to) or ''))
+	-- Una sola línea: si el destino no entra en 240, la barra se ensancha (6 + texto + 44 del reloj).
+	local measure = bar.text.GetUnboundedStringWidth or bar.text.GetStringWidth
+	bar:SetWidth(math.max(240, math.ceil(measure(bar.text) + 54)))
 	bar:SetAlpha(0)
 	bar:Show()
+	pcall(HookAvoid)
 	pcall(Detach)
+	pcall(Avoid)
 	if K.FadeTo then K:FadeTo(bar, 1) else bar:SetAlpha(1) end
 	bar:SetScript('OnUpdate', OnUpdate)
 end

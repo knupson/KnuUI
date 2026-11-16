@@ -1,5 +1,13 @@
 # KnuUI changelog
 
+## 3.6.1 (2026-11-16)
+
+- The flight timer keeps long destination names on one line and widens the bar to fit them.
+- When the TomTom arrow or its text box overlaps the flight timer, the bar moves 6 px below them. It checks
+  again when the arrow appears, moves, is dragged or changes size, and when the interface comes back.
+- The PallyPower strip stays to the right of the WoW-Pro guide instead of ending up behind it. It re-anchors
+  when the guide is created, shown or hidden, and when PallyPower puts its bar back at its saved position.
+
 ## 3.6.0 (2026-11-15)
 
 - Embeds KnuLib-1.0: KnuMail, KnuSonda and other Knu addons follow the active KnuUI theme live.

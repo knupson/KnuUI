@@ -162,6 +162,7 @@ local function Widget()
  function w:GetBackdropBorderColor() return unpack(self.border or {}) end
  function w:RegisterForClicks() end
  function w:SetWordWrap() end
+ function w:GetStringWidth() return #(self.text or '') * 7 end
  function w:EnableMouse() end
  function w:GetTexture() return self.texture end
  function w:SetAllPoints() end
@@ -921,6 +922,26 @@ do
  assert(bar.moverName == 'KnuUI_FlightTimerMover' and bar.shown == false)
  assert(E.global.KnuUIFlights['Ventormenta, Elwynn>Villa Oscura, Bosque del Ocaso'] == 80)
  TakeTaxiNode(2); assert(bar.max == 80 and bar.text.text == 'Villa Oscura' and bar.shown)
+ assert(bar.width == 240) -- nombre corto: ancho base
+ local oldName = TaxiNodeName
+ TaxiNodeName = function(i) return i == 1 and oldName(1) or 'Refugio Roca del Sol de las Tierras Lejanas, Zona' end
+ TakeTaxiNode(2); assert(bar.width == math.ceil(#'Refugio Roca del Sol de las Tierras Lejanas (aprendiendo)' * 7 + 54))
+ TaxiNodeName = oldName; TakeTaxiNode(2); assert(bar.width == 240)
+ -- Flecha de TomTom pisando la barra: la barra baja 6 px debajo de lo más bajo que pisa (Flight.lua, Avoid).
+ local function Rect(l, b, w, h) return function() return l, b, w, h end end
+ local function Visible() return true end
+ bar.GetRect, bar.IsVisible = Rect(840, 942, 240, 18), Visible
+ TomTomCrazyArrow = { GetRect = Rect(930, 990, 56, 42), IsVisible = Visible, GetEffectiveScale = function() return 1 end,
+  KnuPanel = { GetRect = Rect(900, 950, 120, 40), IsVisible = Visible, GetEffectiveScale = function() return 1 end } }
+ TakeTaxiNode(2); assert(bar.point[1] == 'TOP' and bar.point[5] == -120 - 16, 'barra no bajó debajo de TomTom')
+ TomTomCrazyArrow.KnuPanel.GetRect = Rect(300, 950, 120, 40) -- flecha a un costado: no se mueve
+ TakeTaxiNode(2); assert(bar.point[5] == -120, 'barra se movió sin superposición')
+ -- Flecha pisa la barra y, al bajar, la barra caería sobre el recuadro de textos (debajo de la flecha):
+ -- tiene que seguir bajando hasta quedar libre (hallazgo de la revisión de Codex 2026-11-16).
+ TomTomCrazyArrow.GetRect = Rect(930, 950, 56, 42)
+ TomTomCrazyArrow.KnuPanel.GetRect = Rect(900, 910, 120, 30)
+ TakeTaxiNode(2); assert(bar.point[5] == -120 - 56, 'barra quedó sobre el recuadro de TomTom: '..tostring(bar.point[5]))
+ TomTomCrazyArrow, bar.GetRect, bar.IsVisible = nil, nil, nil
  onTaxi = true; now = now + 1; bar.OnUpdate(); now = now + 30; bar.OnUpdate()
  assert(bar.value == 30 and bar.time.text == '0:50')
  onTaxi = false; bar.OnUpdate()
