@@ -435,3 +435,11 @@ L["Confirm to apply the recommended interface build for your class and role and 
 L["Choose a palette. Preview shows accent, highlight, dim accent, text, background and border."] = "Elegí una paleta. La muestra incluye acento, resaltado, acento tenue, texto, fondo y borde."
 L["Diagnostic on from the next reload (/reload). /knudiag off turns it off."] = "Diagnóstico prendido desde la próxima recarga (/reload). /knudiag off lo apaga."
 L["Diagnostic off from the next reload."] = "Diagnóstico apagado desde la próxima recarga."
+
+-- Installer.lua: ayuda de /knu (KnuLib)
+L["Apply KnuUI to this profile"] = "Aplicar KnuUI a este perfil"
+L["Cinema mode"] = "Modo cine"
+L["Place the cooldown manager"] = "Ubicar el gestor de enfriamientos"
+L["Report cooldown viewer sizes"] = "Informar tamaños de los visores de enfriamientos"
+L["Export the KnuUI profile"] = "Exportar el perfil de KnuUI"
+L["Import a KnuUI profile"] = "Importar un perfil de KnuUI"

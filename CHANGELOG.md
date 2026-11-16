@@ -1,5 +1,17 @@
 # KnuUI changelog
 
+## 3.6.0 (2026-11-15)
+
+- Embeds KnuLib-1.0: KnuMail, KnuSonda and other Knu addons follow the active KnuUI theme live.
+- Common /knu command shared with the other Knu addons: /knu alone opens the installer, /knu help lists
+  every subcommand (apply, cinema, cooldowns, viewers, export, import). /fui keeps working.
+- Loot roll bars are larger (full bar, 325x32, 26 px buttons, 13 pt names) and sit to the right of the
+  WoW-Pro guide, moving with it when the guide is resized, shown or hidden.
+- Fixed the blocked action on level-up (C_UnitAuras.SetHiddenGroupBuffs): KnuUI no longer calls the
+  Cooldown Manager's GetItemCount, which tainted its layout data.
+- Cooldown Manager icons keep fixed sizes over the left action block and refit by themselves when the
+  number of tracked icons changes.
+
 ## 3.5.8 (2026-11-13)
 
 - Cooldown Manager moved off the character: the essential, utility and buff icon viewers now sit above the

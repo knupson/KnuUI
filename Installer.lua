@@ -658,16 +658,41 @@ function K:SetupInstaller()
 		OnAccept = function() K:ApplyAll() end,
 		timeout = 0, whileDead = true, hideOnEscape = true,
 	}
-	SLASH_KNUUI1, SLASH_KNUUI2 = '/knu', '/fui'
-	SlashCmdList.KNUUI = function(message)
+	-- /knu es común a los addons Knu (KnuLib-1.0 minor 3, Libs/KnuLib/README.md «Comando /knu»): KnuUI registra
+	-- ahí sus subcomandos y el instalador como default. /fui queda propio de KnuUI con el mismo despacho.
+	local commands = {
+		{ 'aplicar', Confirm, L["Apply KnuUI to this profile"], { 'apply' } },
+		{ 'cine', function() K:ToggleCinema() end, L["Cinema mode"], { 'cinema' } },
+		{ 'enfriamientos', function() K:CooldownLayoutCommand() end, L["Place the cooldown manager"], { 'cooldowns' } },
+		{ 'visores', function() K:CooldownViewersReport() end, L["Report cooldown viewer sizes"], { 'viewers' } },
+		{ 'exportar', function() K:OpenShare('export') end, L["Export the KnuUI profile"], { 'export' } },
+		{ 'importar', function() K:OpenShare('import') end, L["Import a KnuUI profile"], { 'import' } },
+	}
+	local function Handle(message)
 		local command = (message or ''):match('^%s*(.-)%s*$'):lower()
-		if command == 'aplicar' or command == 'apply' then Confirm()
-		elseif command == 'cine' or command == 'cinema' then K:ToggleCinema()
-		elseif command == 'enfriamientos' or command == 'cooldowns' then K:CooldownLayoutCommand()
-		elseif command == 'visores' then K:CooldownViewersReport()
-		elseif command == 'export' or command == 'exportar' then K:OpenShare('export')
-		elseif command == 'import' or command == 'importar' then K:OpenShare('import')
-		else K:OpenInstaller() end
+		for _, c in ipairs(commands) do
+			if command == c[1] or command == c[4][1] then return c[2]() end
+		end
+		K:OpenInstaller()
+	end
+	SLASH_KNUUI1 = '/fui'
+	SlashCmdList.KNUUI = Handle
+	-- Se registra en PLAYER_LOGIN: si primero cargó una copia minor 2 de otro addon, la API recién existe cuando
+	-- cargan todas (README de KnuLib). Si KnuUI se inicializa después del login, ya cargaron.
+	local function Register()
+		local KL = LibStub and LibStub('KnuLib-1.0', true)
+		if not (KL and KL.RegisterCommand and KL.SetDefaultCommand) then return end
+		for _, c in ipairs(commands) do
+			local fn = c[2]
+			KL:RegisterCommand(c[1], function() fn() end, c[3], c[4])
+		end
+		KL:SetDefaultCommand(function() K:OpenInstaller() end)
+	end
+	if IsLoggedIn and IsLoggedIn() then Register()
+	else
+		local f = CreateFrame('Frame')
+		f:RegisterEvent('PLAYER_LOGIN')
+		f:SetScript('OnEvent', function(self) self:UnregisterAllEvents(); Register() end)
 	end
 	E.Libs.EP:RegisterPlugin(self.addonName, Options)
 end

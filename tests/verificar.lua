@@ -235,7 +235,16 @@ if ... == 'render-harness' then
   E.private = E:CopyTable({}, V)
  end }
 end
+-- /knu común (KnuLib minor 3): se registra en el login; acá con una KnuLib falsa que anota lo registrado.
+local knuCommands, knuDefault = {}, nil
+IsLoggedIn = function() return true end
+LibStub = function(name)
+ if name == 'KnuLib-1.0' then return {
+  RegisterCommand = function(_, n, h, help, aliases) knuCommands[n] = { h = h, help = help, aliases = aliases } end,
+  SetDefaultCommand = function(_, h) knuDefault = h end } end
+end
 module:Initialize()
+LibStub = nil
 assert(installer and #installer.Pages == 7 and #installer.StepTitles == 7)
 assert(installer.tutorialImage == [[Interface\AddOns\KnuUI\media\logo]])
 assert(installer.tutorialImageSize[1] == 256 and installer.tutorialImageSize[2] == 128)
@@ -300,6 +309,16 @@ SlashCmdList.KNUUI('')
 assert(not popup and reloads == 0 and not E.db.datatexts.panels.KnuUI_Data)
 SlashCmdList.KNUUI(' aplicar ')
 assert(popup == 'KNUUI_APPLY' and reloads == 0)
+-- /fui es propio y ya no reclama /knu; /knu va por KnuLib con los mismos subcomandos y el instalador por defecto.
+assert(SLASH_KNUUI1 == '/fui' and SLASH_KNUUI2 == nil)
+for name, alias in pairs({ aplicar = 'apply', cine = 'cinema', enfriamientos = 'cooldowns', visores = 'viewers', exportar = 'export', importar = 'import' }) do
+ assert(knuCommands[name] and knuCommands[name].aliases[1] == alias and knuCommands[name].help ~= name, name)
+end
+assert(knuCommands.aplicar.help == 'Aplicar KnuUI a este perfil')
+popup = nil; knuDefault('')
+assert(not popup and reloads == 0)
+knuCommands.aplicar.h('')
+assert(popup == 'KNUUI_APPLY' and reloads == 0)
 
 -- Cada sección conserva las otras; no recarga por su cuenta.
 local chatWidth = E.db.chat.panelWidth
@@ -350,6 +369,8 @@ local function Validate()
  base.KnuUIDecor = true
  base.KnuUICombatGlow = true
  base.KnuUIAlertsPlaced = true
+ base.KnuUILootRollFix = true
+ base.KnuUIAlertPoint = "TOPLEFT,ElvUIParent,TOPLEFT,368,-150"
  base.KnuUIBNETPlaced = true
  base.KnuUIBlizzardPlaced = true
  base.KnuUITomTomPlaced = true

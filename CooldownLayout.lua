@@ -3,6 +3,19 @@ local K = E:GetModule('KnuUI')
 
 local NAMES = { 'EssentialCooldownViewer', 'UtilityCooldownViewer', 'BuffIconCooldownViewer', 'BuffBarCooldownViewer' }
 
+-- Cantidad de íconos contando los marcos activos del visor, sin llamar a viewer:GetItemCount().
+-- GetItemCount pasa por GetCooldownIDs → CheckBuildDisplayData del gestor (CooldownViewer.lua:1992-2000, 2078-2081;
+-- CooldownViewerSettingsDataProvider.lua:100-171, 237-251): llamado desde KnuUI reconstruía esos datos en código de
+-- addon y, al subir de nivel, SetHiddenGroupBuffs quedaba bloqueado (ADDON_ACTION_BLOCKED, visto en el juego 2026-11-14).
+-- RefreshLayout adquiere exactamente GetItemCount marcos (CooldownViewer.lua:2037-2043), así que el conteo coincide.
+local function ItemCount(viewer)
+	local pool, n = viewer and viewer.itemFramePool, 0
+	if pool and pool.EnumerateActive then
+		for _ in pool:EnumerateActive() do n = n + 1 end
+	end
+	return math.max(n, 1)
+end
+
 local function Size(info, viewer, index)
 	-- CooldownViewer.xml:21,90,159: ítems cuadrados de 50,30,40; se conserva su configuración.
 	-- CooldownViewer.lua:1993-2003,2045-2065,2299-2301: cantidad, stride y padding del GridLayout.
@@ -16,7 +29,7 @@ local function Size(info, viewer, index)
 	if not scale or not padding or not stride or stride < 1 then return end
 	-- Al menos un ícono: con la cantidad del momento un visor podía dar alto 0 y la columna se aplastaba (los
 	-- buffs quedaron al costado de los principales, visto en el juego 2026-11-13).
-	local count = math.max(viewer:GetItemCount() or 0, 1)
+	local count = ItemCount(viewer)
 	if index == 3 then stride = count end
 	local along, across = math.min(count, stride), math.ceil(count / stride)
 	local columns, rows = horizontal and along or across, horizontal and across or along
@@ -100,27 +113,21 @@ function K:ApplyCooldownLayout()
 		end
 	end
 
-	-- Encima del centro tapaba al personaje (visto en el juego 2026-11-13). Lugar elegido por el user, medido con
-	-- tools/render en su perfil: arriba del bloque derecho, entre el objetivo del objetivo (termina en x 1168,
-	-- Tanks.lua) y el monitor de botín (empieza en x 1512, LootMonitor.lua), desde y 188 (chats hasta 184). El
-	-- grupo del Healer termina en x 1173 (Roles.lua:73-103: x -213..213), así que la zona arranca en 1177 para
-	-- todos los roles. Centrada en el hueco se veía corrida (user 2026-11-13): borde izquierdo alineado con el
-	-- bloque derecho de abajo (x 1255 = centro + 295, Tanks.lua SIDE) y 4 por encima de su borde (182 + 4 = 186).
-	-- Arriba del bloque izquierdo, de borde a borde (pedido del user 2026-11-13): el bloque va de x 409 a 665
-	-- (Tanks.lua: 4 + 401 + 4 = 409, ancho 256). Para cada visor se elige, con la cantidad de íconos de ahora, el
-	-- tamaño (50-200 % de a 10, EditModeSettingDisplayInfo.lua:928-935) y el relleno (0-14) que dejan la fila
-	-- VISIBLE lo más cerca de 256 sin pasarse. Cuentas de Blizzard: cada ícono mide base·tamaño/100
-	-- (CooldownViewer.lua:2008, iconScale) y entre íconos va relleno - 4 (:2015-2017, :2061); el skin achica cada
-	-- ícono 2 por lado (Skins/CooldownViewer.lua), así que lo visible es el ancho del visor menos 4. El valor
-	-- guardado del tamaño es el índice del deslizador, (tamaño - 50) / 10 (con 100 % guardado 5 el cálculo
-	-- directo daba alto 2, /knu visores 2026-11-13); el del relleno, el valor mismo (mínimo 0, paso 1).
-	-- Si cambia la cantidad de íconos, /knu enfriamientos vuelve a ajustar.
-	-- Ancho de 4 casillas del bloque izquierdo (pedido del user 2026-11-13): 4 · 41 + 3 · 2 = 170 (Tanks.lua BARS:
-	-- botones de 41 con 2 de separación), desde su borde izquierdo x 409. Medido en el juego (/knu visores): el
-	-- tamaño guardado es el índice del deslizador (170 % dio 85 de alto) y el relleno difiere de relleno - 4 en
-	-- 0,5 a 1 px (261 de ancho en vez de 259): se acepta esa diferencia.
-	-- Sobre las casillas 2 a 5 (user 2026-11-13: la 1 y la 6 libres arriba): 409 + 41 + 2 = 452.
-	local LEFT, WIDTH = -508, 170 -- 452 - 960
+	-- Diseño A (elegido por el user 2026-11-14 entre dos bocetos, después de revisar cómo lo hacen otras interfaces
+	-- y una auditoría de Codex): tamaños fijos de mayor a menor, como BetterCooldownManager, EllesmereUI y
+	-- SkironCooldownManager (42/36/32, 47/41/40), sin achicar nunca; con más íconos, otra fila hacia arriba.
+	-- Principales del mismo ancho que las casillas del bloque izquierdo (41, Tanks.lua BARS) con su separación de
+	-- 2: cada ícono cae sobre una casilla, 6 por fila (x 409-665). Utilidad 35 y buffs 32, 7 por fila.
+	-- Cuentas de Blizzard: lado = base · tamaño / 100 (CooldownViewer.lua:2008); entre íconos, relleno - 4
+	-- (:2015-2017, :2061); el skin dibuja el ícono 2 adentro por lado (visible = lado - 4, separación visible =
+	-- relleno). Guardado (EditModeSettingDisplayInfo.lua): tamaño como (porcentaje - 50) / 10 (:928-935, :8-13;
+	-- confirmado en el juego: 170 % dio 85), íconos por fila y relleno tal cual (:906-912, :940-946, :1558-1564).
+	local SPEC = {
+		{ base = 50, pct = 90, pad = 2, limit = 6 },  -- principales: lado 45, visible 41
+		{ base = 30, pct = 130, pad = 2, limit = 7 }, -- utilidad: lado 39, visible 35
+		{ base = 40, pct = 90, pad = 2, limit = 7 },  -- buffs: lado 36, visible 32
+	}
+	local LEFT = -551 -- x 409 (borde izquierdo del bloque) - 960
 	local keys = Enum.EditModeCooldownViewerSetting
 	local function Set(info, setting, value)
 		for _, s in ipairs(info.settings or {}) do
@@ -129,40 +136,24 @@ function K:ApplyCooldownLayout()
 		info.settings = info.settings or {}
 		table.insert(info.settings, { setting = setting, value = value })
 	end
-	local function Fit(base, n)
-		local best
-		for pct = 50, 200, 10 do
-			for pad = 0, 14 do
-				local visible = n * base * pct / 100 + (n - 1) * (pad - 4) - 4
-				if visible <= WIDTH then
-					-- Primero el ancho (hasta 1 px de diferencia cuenta como alineado); después la separación más
-					-- cercana a 2 px, la de las casillas del bloque (visible = relleno - 4 + 4 = relleno).
-					local score = math.max(0, WIDTH - visible - 1) * 100 + math.abs(pad - 2)
-					if not best or score < best.score then best = { score = score, pct = pct, pad = pad, edge = base * pct / 100 } end
-				end
-			end
-		end
-		return best
-	end
-	local y = 186
-	local fits = {}
+	local y = 186 -- 4 por encima del bloque (182)
 	for i = 1, 3 do
-		local info = systems[order[i]]
+		local info, spec = systems[order[i]], SPEC[i]
 		local viewer = _G[NAMES[i]]
-		local base = ({ 50, 30, 40 })[i]
-		local n = math.max(viewer.GetItemCount and viewer:GetItemCount() or 0, 1)
-		-- Buffs: su cantidad cambia con las auras activas; ajustarlo al ancho con la del momento lo llevó al 200 %
-		-- (80 de alto, /knu visores 2026-11-13). Usa el tamaño y el relleno de utilidad.
-		local fit = i == 3 and fits[2] and { pct = fits[2].pct, pad = fits[2].pad, edge = base * fits[2].pct / 100 } or Fit(base, n)
-		fits[i] = fit
-		if fit and keys and keys.IconSize and keys.IconPadding then
-			Set(info, keys.IconSize, (fit.pct - 50) / 10)
-			Set(info, keys.IconPadding, fit.pad)
+		local n = ItemCount(viewer)
+		if i <= 2 then E.db.KnuUICooldownFit = E.db.KnuUICooldownFit or {}; E.db.KnuUICooldownFit[i] = n end -- reajuste solo
+		if keys and keys.IconSize and keys.IconPadding and keys.IconLimit then
+			Set(info, keys.IconSize, (spec.pct - 50) / 10)
+			Set(info, keys.IconPadding, spec.pad)
+			Set(info, keys.IconLimit, spec.limit)
 		end
+		local edge = spec.base * spec.pct / 100
+		local rows = math.ceil(n / spec.limit)
+		local frameH = rows * edge + (rows - 1) * (spec.pad - 4)
 		info.anchorInfo = { point = 'BOTTOMLEFT', relativeTo = 'UIParent', relativePoint = 'BOTTOM', offsetX = LEFT - 2, offsetY = y - 2 }
 		-- EditModeManager.lua:340-363: soltar segundo anclaje y gestión predeterminada.
 		info.anchorInfo2, info.isInDefaultPosition = nil, false
-		y = y + (fit and fit.edge or sizes[i].height) - 4 + 4 -- alto visible (lado - 4) más 4 de separación
+		y = y + (frameH - 4) + 4 -- alto visible más 4 de separación
 	end
 	-- Foco y mascota (estaban en x 504-744, y 226-250, dentro de esta zona): 4 por encima de la columna, foco
 	-- en el borde izquierdo del bloque y mascota en el derecho.
@@ -212,4 +203,56 @@ function K:CooldownViewersReport()
 	end
 	local layouts = C_EditMode and C_EditMode.GetLayouts and C_EditMode.GetLayouts()
 	if layouts then E:Print('Disposición activa: ' .. tostring(layouts.activeLayout)) end
+end
+
+-- Reajuste solo (pedido del user 2026-11-14): al cambiar la cantidad de íconos de los principales o de
+-- utilidad (aprender una habilidad, cambiar de talentos), la fila dejaba de ocupar las casillas 2 a 5. Blizzard
+-- rearma los íconos en RefreshLayout cuando cambia la cantidad (CooldownViewer.lua:2018-2030): ahí, fuera de
+-- combate y con la ubicación automática prendida, se recalcula y se guarda. No se sabe si el Modo edición lo
+-- aplica sin recargar (EditModeManager.lua:193-197 lo hace con EDIT_MODE_LAYOUTS_UPDATED, no verificado que
+-- SaveLayouts lo dispare), así que se avisa una vez que se ve al recargar.
+local pending
+local function CheckCounts()
+	pending = nil
+	if E.db.KnuUICooldownLayout == false or InCombatLockdown() then return end
+	local fit = E.db.KnuUICooldownFit
+	if type(fit) ~= 'table' then return end -- nunca se ubicó con KnuUI: no se toca lo que puso el jugador
+	local changed
+	for i = 1, 2 do
+		local viewer = _G[NAMES[i]]
+		local n = viewer and ItemCount(viewer)
+		if n and fit[i] and n ~= fit[i] then changed = true end
+	end
+	if not changed then return end
+	local why = K:ApplyCooldownLayout()
+	if why then
+		E:Print('KnuUI: gestor de enfriamientos sin reajustar: ' .. why)
+	else
+		E:Print('KnuUI: cambió la cantidad de íconos del gestor de enfriamientos; ya está reajustado y se ve al recargar (/reload).')
+	end
+end
+
+local function Watch()
+	for i = 1, 2 do
+		local viewer = _G[NAMES[i]]
+		if viewer and not viewer.KnuFitHooked and viewer.RefreshLayout then
+			viewer.KnuFitHooked = true
+			hooksecurefunc(viewer, 'RefreshLayout', function()
+				if not pending then pending = true; C_Timer.After(2, CheckCounts) end
+			end)
+		end
+	end
+end
+
+function K:SetupCooldownAutoFit()
+	-- Después de un combate, por si cambió durante la pelea.
+	local r = CreateFrame('Frame')
+	r:RegisterEvent('PLAYER_REGEN_ENABLED')
+	r:SetScript('OnEvent', function() if not pending then pending = true; C_Timer.After(2, CheckCounts) end end)
+	if _G.EssentialCooldownViewer then Watch() return end
+	local f = CreateFrame('Frame')
+	f:RegisterEvent('ADDON_LOADED')
+	f:SetScript('OnEvent', function(self, _, name)
+		if name == 'Blizzard_CooldownViewer' then self:UnregisterAllEvents(); Watch() end
+	end)
 end

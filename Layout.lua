@@ -16,6 +16,10 @@ local Set = K.Set
 -- AlertFrame.lua:105, Misc/Loot.lua, Misc/QueueStatus.lua:158, ActionBars/ExtraAB.lua, General/Core.lua.
 -- Fuera: durabilidad y diálogo de NPC (ElvUI sólo los crea en Legacy), errores, vehículo y cartel de
 -- nivel (ElvUI no tiene mover). Barras de duración, rastreador y durabilidad: Modo edición de Blizzard.
+-- Tiradas de botín de ElvUI (Defaults/Profile.lua:276-292): barra entera con fondo (el estilo halfbar dejaba el
+-- nombre y los botones sobre el mundo, ilegibles) y botones de 26 px sobre una barra de 32.
+K.lootRoll = { style = 'fullbar', width = 325, height = 32, buttonSize = 26, spacing = 4, nameFontSize = 13 }
+
 K.blizzardMovers = {
 	-- Columna central, debajo de la flecha de TomTom (y 30-115).
 	TopCenterContainerMover = 'TOP,ElvUIParent,TOP,0,-122', -- estado de zona / campo de batalla
@@ -24,7 +28,11 @@ K.blizzardMovers = {
 	PowerBarContainerMover = 'TOP,ElvUIParent,TOP,0,-350', -- poder alternativo
 	LossControlMover = 'CENTER,ElvUIParent,CENTER,0,60', -- pérdida de control
 	-- Izquierda, al lado de WoW-Pro (x 8-258).
-	AlertFrameMover = 'TOPLEFT,ElvUIParent,TOPLEFT,270,-150', -- alertas, crecen hacia abajo
+	-- Alertas y tiradas de botín, crecen hacia abajo. ElvUI centra cada tirada bajo el contenedor de 180 px y le
+	-- cuelga el ícono a la izquierda (Misc/LootRoll.lua:447-450, 473-480; Blizzard/AlertFrame.lua:104-105): con x 270
+	-- el ícono caía en x 167-197, encima de la guía (visto en el juego 2026-11-14). Con x 368 y K.lootRoll el ícono
+	-- arranca en x 262, 4 px a la derecha de la guía, y la barra termina en x 620.
+	AlertFrameMover = 'TOPLEFT,ElvUIParent,TOPLEFT,368,-150',
 	GMMover = 'TOPLEFT,ElvUIParent,TOPLEFT,8,-310', -- debajo de la guía; arriba va la flecha de TomTom
 	LootFrameMover = 'TOPLEFT,ElvUIParent,TOPLEFT,270,-400',
 	-- Encima del chat izquierdo (y 4-184, caja de escribir encima).
@@ -302,6 +310,7 @@ function K:ApplyLayout()
 		end
 	end
 	for name, position in pairs(K.blizzardMovers) do E.db.movers[name] = position end
+	self.Set(E.db.general.lootRoll, self.lootRoll)
 	self:ApplyRoleOverlay() -- Roles.lua: Tank, MDPS, RDPS o Healer
 	self:CleanupLegacy()
 	return true

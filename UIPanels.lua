@@ -91,12 +91,51 @@ local function AdjustMap()
 	end
 end
 
+-- Tiradas de botín y alertas a la derecha de la guía, según su ancho real. ElvUI centra cada tirada bajo el
+-- contenedor de 180 px y le cuelga el ícono a la izquierda a E.Border (Misc/LootRoll.lua:447-450, 473-480;
+-- Blizzard/AlertFrame.lua:104-105). La guía se puede ensanchar (en el juego medía x 8-308, 2026-11-14) y un valor
+-- fijo la pisaba. Sólo se mueve si el mover sigue en una posición puesta por KnuUI.
+local ALERT_Y = -150
+local function OwnAlertPoint(point)
+	if point == nil or point == 'TOPLEFT,ElvUIParent,TOPLEFT,270,-150' or point == K.blizzardMovers.AlertFrameMover then return true end
+	return point == E.db.KnuUIAlertPoint
+end
+
+function K:FitLootRolls()
+	local movers, db = E.db.movers, E.db.general and E.db.general.lootRoll
+	if not (movers and db and E.UIParent) or not OwnAlertPoint(movers.AlertFrameMover) then return end
+	local g, left = _G.WoWPro and _G.WoWPro.MainFrame, nil
+	if g and g:IsShown() and g:GetRight() then
+		local v = Visible(g)
+		local right = v:GetRight() * v:GetEffectiveScale() / E.UIParent:GetEffectiveScale()
+		-- Borde izquierdo del contenedor para que el ícono arranque GAP px después de la guía.
+		left = math.ceil(right + GAP + (E.Border or 1) + (db.height or 30) + (db.width or 325) / 2 - 90)
+	end
+	local point = left and format('TOPLEFT,ElvUIParent,TOPLEFT,%d,%d', left, ALERT_Y) or K.blizzardMovers.AlertFrameMover
+	E.db.KnuUIAlertPoint = point
+	if movers.AlertFrameMover == point then return end
+	movers.AlertFrameMover = point
+	if E.SetMoverPoints then pcall(E.SetMoverPoints, E, 'AlertFrameMover') end
+end
+
 function K:SetupUIPanels()
 	local map = _G.WorldMapFrame
 	if map and not map.KnuPanelHook then
 		map.KnuPanelHook = true
 		map:HookScript('OnShow', function() C_Timer.After(0, function() pcall(AdjustMap) end) end)
 	end
+	local guide = _G.WoWPro and _G.WoWPro.MainFrame
+	if guide and not guide.KnuRollHook then
+		guide.KnuRollHook = true
+		local function Fit() C_Timer.After(0, function() pcall(K.FitLootRolls, K) end) end
+		for _, script in ipairs({ 'OnSizeChanged', 'OnShow', 'OnHide' }) do guide:HookScript(script, Fit) end
+	end
+	if not self.lootRollEvents then
+		self.lootRollEvents = CreateFrame('Frame')
+		self.lootRollEvents:RegisterEvent('START_LOOT_ROLL')
+		self.lootRollEvents:SetScript('OnEvent', function() pcall(K.FitLootRolls, K) end)
+	end
+	pcall(self.FitLootRolls, self)
 	if self.uiPanelsHooked then return end
 	self.uiPanelsHooked = true
 	-- Después de cada acomodo de Blizzard (mostrar, ocultar, reubicar), en el cuadro siguiente.

@@ -49,7 +49,8 @@ local function Run(custom, reuse, healer, disabled, combat, columns, resized)
 	for i, name in ipairs({ 'EssentialCooldownViewer', 'UtilityCooldownViewer', 'BuffIconCooldownViewer', 'BuffBarCooldownViewer' }) do
 		-- Tamaños medidos en el juego con /knu visores (2026-11-13): 146x50, 142x30, 81x40, 330x63.
 		local real = ({ { 146, 50 }, { 142, 30 }, { 81, 40 }, { 330, 63 } })[i]
-		env[name] = { GetScale = function() return resized and 1.25 or 1 end, GetItemCount = function() return resized and 25 or 2 end,
+		env[name] = { GetScale = function() return resized and 1.25 or 1 end, -- Sin GetItemCount: llamarlo desde KnuUI ensuciaba el gestor; el metatable de abajo falla si se usa.
+			itemFramePool = { EnumerateActive = function() local n, i = resized and 25 or 2, 0; return function() i = i + 1; if i <= n then return i end end end },
 			GetWidth = function() return real[1] end, GetHeight = function() return real[2] end }
 		setmetatable(env[name], { __index = function(_, method) error('No se permite tocar el viewer: '..method) end })
 	end
@@ -66,34 +67,23 @@ local function Run(custom, reuse, healer, disabled, combat, columns, resized)
 		if i >= 2 and i <= 5 then
 			-- Tamaño (11) y relleno (12) pueden cambiar en los tres visores de ícono; el resto de los ajustes, no.
 			for k, setting in ipairs(system.settings) do
-				if not (i <= 4 and (setting.setting == 11 or setting.setting == 12)) then assert(Equal(setting, before.systems[i].settings[k])) end
+				if not (i <= 4 and (setting.setting == 11 or setting.setting == 12 or setting.setting == 13)) then assert(Equal(setting, before.systems[i].settings[k])) end
 			end
 			assert(not system.anchorInfo2 and system.isInDefaultPosition == false)
 			local anchor = system.anchorInfo
 			assert(anchor.relativeTo == 'UIParent' and (anchor.relativePoint == 'BOTTOM' or i == 5))
 			if i <= 4 then
-				-- Arriba del bloque izquierdo, ancho de 4 casillas: lo visible va de x 409 a 578-579.
-				assert(anchor.point == 'BOTTOMLEFT' and anchor.offsetX == -510) -- casillas 2 a 5: x 452 - 2
+				-- Diseño A: tamaños fijos (90/130/90 %, relleno 2, 6/7/7 por fila) desde x 409, filas hacia arriba.
+				assert(anchor.point == 'BOTTOMLEFT' and anchor.offsetX == -553)
 				local vals = {}
 				for _, setting in ipairs(system.settings) do vals[setting.setting] = setting.value end
-				local pct, pad = vals[11] * 10 + 50, vals[12]
-				local base, n = ({ 50, 30, 40 })[i - 1], resized and 25 or 2
-				local minVisible = n * base * 0.5 + (n - 1) * (0 - 4) - 4
-				if i == 4 then minVisible = -1 end -- buffs: copia tamaño y relleno de utilidad
-				local edge
-				if minVisible > 256 then
-					-- Demasiados íconos para el ancho aun al mínimo: no se tocan tamaño ni relleno.
-					assert(vals[11] == 100 or vals[11] == 80)
-					edge = nil
-				else
-					local visible = n * base * pct / 100 + (n - 1) * (pad - 4) - 4
-					-- Ajustado al ancho, salvo que ni al máximo (200 %, relleno 14) llegue: entonces queda al máximo.
-					if i ~= 4 then assert(visible <= 170 and (visible >= 169 or (pct == 200 and pad == 14)), 'ancho visible ' .. visible) end
-					edge = base * pct / 100
-				end
+				local spec = ({ { 50, 90, 6 }, { 30, 130, 7 }, { 40, 90, 7 } })[i - 1]
+				assert(vals[11] == (spec[2] - 50) / 10 and vals[12] == 2 and vals[13] == spec[3])
+				local n = resized and 25 or 2
+				local edge, rows = spec[1] * spec[2] / 100, math.ceil(n / spec[3])
 				expectedY = expectedY or 184
 				assert(anchor.offsetY == expectedY, 'y ' .. anchor.offsetY .. ' esperado ' .. expectedY)
-				expectedY = expectedY + (edge or ({ 50, 30, 40 })[i - 1] * (resized and 1.25 or 1))
+				expectedY = expectedY + rows * edge + (rows - 1) * (2 - 4)
 			else assert(anchor.point == 'BOTTOMLEFT' and anchor.relativePoint == 'BOTTOMLEFT' and anchor.offsetX == 4 and anchor.offsetY == 210) end
 			local unchanged = Copy(system)
 			unchanged.anchorInfo, unchanged.anchorInfo2, unchanged.isInDefaultPosition = before.systems[i].anchorInfo, before.systems[i].anchorInfo2, before.systems[i].isInDefaultPosition

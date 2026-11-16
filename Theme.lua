@@ -222,5 +222,25 @@ function K:ApplyTheme(classHealth, themeName)
 	if self.StyleFadeButtons then self:StyleFadeButtons() end
 	if self.StyleMotionFrames then self:StyleMotionFrames() end
 	if self.ApplyIntegratedPanels then self:ApplyIntegratedPanels() end
+	self:RefreshKnuLib()
 	return true
+end
+
+-- KnuLib-1.0 (Libs\KnuLib) lleva el tema de KnuUI a KnuMail y KnuSonda; lo que dibuja ElvUI no pasa por acá.
+-- Su GetTheme usa la tabla que devuelva el proveedor y, si no es tabla, su propia clave (Libs/KnuLib/KnuLib.lua, lib:GetTheme).
+local function KnuLib()
+	if not LibStub then return end
+	local ok, KL = pcall(LibStub, 'KnuLib-1.0', true)
+	if not ok then return end
+	if KL and KL.SetThemeProvider and KL.RefreshTheme then return KL end
+end
+
+function K:SetupKnuLib()
+	local KL = KnuLib()
+	if KL then KL:SetThemeProvider(function() if E.db then return K:GetTheme() end end) end
+end
+
+function K:RefreshKnuLib()
+	local KL = KnuLib()
+	if KL then KL:RefreshTheme() end
 end

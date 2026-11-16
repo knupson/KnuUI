@@ -5,7 +5,7 @@
 ## Notes-esMX: Diseño compacto y tema ámbar para ElvUI en WoW Forever. Abrí el asistente con /knu.
 ## IconTexture: Interface\AddOns\KnuUI\media\icono
 ## Author: Alejandro Benzoni (KnuPwns)
-## Version: 3.5.8
+## Version: 3.6.0
 ## X-License: MIT
 ## X-Curse-Project-ID: 1793253
 ## X-Website: https://knunet.com
@@ -14,6 +14,7 @@
 ## SavedVariables: KnuUIDiag
 ## OptionalDeps: Details, Baganator, DBM-Core, DBM-StatusBarTimers, Questie, WoWPro, TomTom, DynamicCam, GearQuestForever, Auctionator, BugSack, Leatrix_Plus, Pawn, WhatsTraining, ThreatClassic2, GTFO, RareScanner, WIM, PallyPower, Offhand
 
+Libs\KnuLib\KnuLib.xml
 Locales/Locales.lua
 Core.lua
 Diag.lua
