@@ -27,12 +27,12 @@ K.blizzardMovers = {
 	EventToastMover = 'TOP,ElvUIParent,TOP,0,-270',
 	PowerBarContainerMover = 'TOP,ElvUIParent,TOP,0,-350', -- poder alternativo
 	LossControlMover = 'CENTER,ElvUIParent,CENTER,0,60', -- pérdida de control
-	-- Izquierda, al lado de WoW-Pro (x 8-258).
-	-- Alertas y tiradas de botín, crecen hacia abajo. ElvUI centra cada tirada bajo el contenedor de 180 px y le
-	-- cuelga el ícono a la izquierda (Misc/LootRoll.lua:447-450, 473-480; Blizzard/AlertFrame.lua:104-105): con x 270
-	-- el ícono caía en x 167-197, encima de la guía (visto en el juego 2026-11-14). Con x 368 y K.lootRoll el ícono
-	-- arranca en x 262, 4 px a la derecha de la guía, y la barra termina en x 620.
-	AlertFrameMover = 'TOPLEFT,ElvUIParent,TOPLEFT,368,-150',
+	-- Tiradas de botín y alertas al centro, justo arriba del marco de objetivo (pedido del user 2026-11-16: a la
+	-- vista, no pegadas a la guía). Contenedor de 180x20 en y 780-800 (1920x1080 desde arriba): su centro está en la
+	-- mitad de abajo, así que ElvUI las hace crecer hacia arriba (ElvUI/Game/Shared/Modules/Blizzard/AlertFrame.lua:15-19;
+	-- Misc/LootRoll.lua:443-451). Con K.lootRoll y el máximo de 5 (Defaults/Profile.lua:280) van de y 775 a y 595:
+	-- arriba del objetivo (y 812) y debajo de la barra de clase (y 586) y la placa propia (y 577).
+	AlertFrameMover = 'TOP,ElvUIParent,TOP,0,-780',
 	GMMover = 'TOPLEFT,ElvUIParent,TOPLEFT,8,-310', -- debajo de la guía; arriba va la flecha de TomTom
 	LootFrameMover = 'TOPLEFT,ElvUIParent,TOPLEFT,270,-400',
 	-- Encima del chat izquierdo (y 4-184, caja de escribir encima).

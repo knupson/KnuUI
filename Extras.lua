@@ -162,14 +162,10 @@ local function SetupAlerts()
 			if E.SetMoverPoints then pcall(E.SetMoverPoints, E, name) end
 		end
 	end
-	-- Tiradas encima de la guía (2026-11-14): una vez por perfil, sin pisar un mover que el jugador movió.
+	-- Tamaño legible de las tiradas, una vez por perfil. Dónde van lo decide sólo K:FitLootRolls (UIPanels.lua),
+	-- para que la migración del mover tenga un único camino.
 	if not E.db.KnuUILootRollFix then
 		E.db.KnuUILootRollFix = true
-		E.db.movers = E.db.movers or {}
-		if E.db.movers.AlertFrameMover == nil or E.db.movers.AlertFrameMover == 'TOPLEFT,ElvUIParent,TOPLEFT,270,-150' then
-			E.db.movers.AlertFrameMover = K.blizzardMovers.AlertFrameMover
-			if E.SetMoverPoints then pcall(E.SetMoverPoints, E, 'AlertFrameMover') end
-		end
 		if E.db.general and E.db.general.lootRoll then
 			K.Set(E.db.general.lootRoll, K.lootRoll)
 			local misc = E:GetModule('Misc', true)

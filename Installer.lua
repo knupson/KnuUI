@@ -658,7 +658,7 @@ function K:SetupInstaller()
 		OnAccept = function() K:ApplyAll() end,
 		timeout = 0, whileDead = true, hideOnEscape = true,
 	}
-	-- /knu es común a los addons Knu (KnuLib-1.0 minor 3, Libs/KnuLib/README.md «Comando /knu»): KnuUI registra
+	-- /knu es común a los addons Knu (KnuLib-1.0 minor 4, README de KnuLib «Comando /knu»): KnuUI registra
 	-- ahí sus subcomandos y el instalador como default. /fui queda propio de KnuUI con el mismo despacho.
 	local commands = {
 		{ 'aplicar', Confirm, L["Apply KnuUI to this profile"], { 'apply' } },

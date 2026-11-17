@@ -1,4 +1,4 @@
-﻿local MAJOR, MINOR = 'KnuLib-1.0', 3
+﻿local MAJOR, MINOR = 'KnuLib-1.0', 4
 local lib = LibStub:NewLibrary(MAJOR, MINOR); if not lib then return end
 
 -- en (opcional): textos en inglés para claves que no son texto (p. ej. cod = 'cash on delivery').
@@ -338,6 +338,7 @@ lib.legacySlash = lib.legacySlash or nil
 function lib:RegisterCommand(name, handler, help, aliases)
     assert(type(name) == 'string' and strtrim(name) ~= '', 'Se esperaba un nombre no vacío')
     assert(type(handler) == 'function', 'Se esperaba una función')
+    assert(help == nil or type(help) == 'string', 'Se esperaba un texto de ayuda o nil')
     assert(aliases == nil or type(aliases) == 'table', 'Se esperaba una tabla de alias')
     local normalized = {}
     for _, alias in ipairs(aliases or {}) do
@@ -345,17 +346,40 @@ function lib:RegisterCommand(name, handler, help, aliases)
         normalized[#normalized + 1] = string.lower(strtrim(alias))
     end
     name = string.lower(strtrim(name))
-    local previous = self.commands[name]
+    local previous, freed = self.commands[name], {}
     for _, alias in ipairs(previous and previous.aliases or {}) do
-        if self.commandAliases[alias] == name then self.commandAliases[alias] = nil end
+        if self.commandAliases[alias] == name then
+            self.commandAliases[alias] = nil
+            freed[#freed + 1] = alias
+        end
     end
     self.commandAliases[name] = nil -- Los nombres siempre ganan frente a los alias.
-    local command = { name = name, handler = handler, help = help, aliases = {} }
+    if help == '' then help = nil end
+    local command = { name = name, handler = handler, help = help, aliases = {}, wanted = normalized }
     self.commands[name] = command
+    -- Un alias es del primer comando que lo pidió; no se roba ni se repite.
     for _, alias in ipairs(normalized) do
-        if alias ~= '' and not self.commands[alias] then
+        if alias ~= '' and not self.commands[alias] and not self.commandAliases[alias] then
             self.commandAliases[alias] = name
             command.aliases[#command.aliases + 1] = alias
+        end
+    end
+    -- Los alias que este comando soltó pasan al primero (por nombre) que también los pidió
+    -- (en comandos heredados de minor 3, sin `wanted`, se usa su lista `aliases`).
+    local names = {}
+    for other in pairs(self.commands) do names[#names + 1] = other end
+    table.sort(names)
+    for _, alias in ipairs(freed) do
+        for _, other in ipairs(names) do
+            local candidate = self.commands[other]
+            if self.commandAliases[alias] or self.commands[alias] then break end
+            for _, wanted in ipairs(candidate.wanted or candidate.aliases or {}) do
+                if wanted == alias then
+                    self.commandAliases[alias] = other
+                    candidate.aliases[#candidate.aliases + 1] = alias
+                    break
+                end
+            end
         end
     end
 end
@@ -371,12 +395,16 @@ function lib:PrintCommands()
     table.sort(names)
     if #names == 0 then Print('No hay comandos registrados.') return end
     for _, name in ipairs(names) do
-        local command, aliases = self.commands[name], {}
+        local command, aliases, seen = self.commands[name], {}, {}
         for _, alias in ipairs(command.aliases) do
-            if self.commandAliases[alias] == name then aliases[#aliases + 1] = alias end
+            if self.commandAliases[alias] == name and not seen[alias] then
+                seen[alias] = true
+                aliases[#aliases + 1] = alias
+            end
         end
         local suffix = #aliases > 0 and (' (alias: ' .. table.concat(aliases, ', ') .. ')') or ''
-        Print('/knu ' .. name .. suffix .. (command.help and (' - ' .. command.help) or ''))
+        local help = type(command.help) == 'string' and command.help ~= '' and (' - ' .. command.help) or ''
+        Print('/knu ' .. name .. suffix .. help)
     end
 end
 

@@ -1,5 +1,16 @@
 # KnuUI changelog
 
+## 3.6.2 (2026-11-16)
+
+- Blizzard panels move only when they overlap the WoW-Pro guide. A panel goes under the guide if it fits there
+  whole, to the right of the guide if it fits there, and otherwise stays where Blizzard put it. The talents
+  window no longer opens half off screen. Panels follow the guide when it is resized, moved or hidden, and two
+  open panels move together.
+- Loot roll bars sit at the center of the screen, just above the target frame, and stack upward. Profiles that
+  still have the old KnuUI spot next to the guide are moved; a position you set with /moveui is kept.
+- Embeds KnuLib-1.0 minor 4: /knu help lists each alias once, and an alias stays with the first Knu addon that
+  registered it.
+
 ## 3.6.1 (2026-11-16)
 
 - The flight timer keeps long destination names on one line and widens the bar to fit them.

@@ -246,6 +246,30 @@ LibStub = function(name)
 end
 module:Initialize()
 LibStub = nil
+-- Tiradas: el orden real de inicio (sin KnuUILootRollFix) deja el mover en el lugar nuevo (revisión de Codex 2026-11-16).
+local ALERT = "TOP,ElvUIParent,TOP,0,-780"
+assert(module.blizzardMovers.AlertFrameMover == ALERT and E.db.movers.AlertFrameMover == ALERT, 'tiradas: inicio')
+assert(E.db.KnuUILootRollFix and E.db.KnuUIAlertPoint == nil)
+do
+ local set, post = 0, 0
+ local oldSet, oldPost = E.SetMoverPoints, E.PostAlertMove
+ E.SetMoverPoints = function() set = set + 1 end
+ E.PostAlertMove = function() post = post + 1 end
+ local function Case(current, dynamic)
+  E.db.movers.AlertFrameMover, E.db.KnuUIAlertPoint = current, dynamic
+  module:FitLootRolls()
+  return E.db.movers.AlertFrameMover
+ end
+ assert(Case(nil) == ALERT)
+ assert(Case("TOPLEFT,ElvUIParent,TOPLEFT,270,-150") == ALERT)
+ assert(Case("TOPLEFT,ElvUIParent,TOPLEFT,368,-150") == ALERT)
+ assert(Case("TOPLEFT,ElvUIParent,TOPLEFT,418,-150", "TOPLEFT,ElvUIParent,TOPLEFT,418,-150") == ALERT and E.db.KnuUIAlertPoint == nil)
+ assert(set == 4 and post == 4, 'tiradas: SetMoverPoints y PostAlertMove')
+ assert(Case("BOTTOM,ElvUIParent,BOTTOM,100,300") == "BOTTOM,ElvUIParent,BOTTOM,100,300", 'tiradas: mover del jugador')
+ assert(Case("BOTTOM,ElvUIParent,BOTTOM,100,300", "TOPLEFT,ElvUIParent,TOPLEFT,418,-150") == "BOTTOM,ElvUIParent,BOTTOM,100,300")
+ assert(Case(ALERT) == ALERT and set == 4 and post == 4, 'tiradas: idempotente')
+ E.SetMoverPoints, E.PostAlertMove = oldSet, oldPost
+end
 assert(installer and #installer.Pages == 7 and #installer.StepTitles == 7)
 assert(installer.tutorialImage == [[Interface\AddOns\KnuUI\media\logo]])
 assert(installer.tutorialImageSize[1] == 256 and installer.tutorialImageSize[2] == 128)
@@ -371,7 +395,6 @@ local function Validate()
  base.KnuUICombatGlow = true
  base.KnuUIAlertsPlaced = true
  base.KnuUILootRollFix = true
- base.KnuUIAlertPoint = "TOPLEFT,ElvUIParent,TOPLEFT,368,-150"
  base.KnuUIBNETPlaced = true
  base.KnuUIBlizzardPlaced = true
  base.KnuUITomTomPlaced = true
