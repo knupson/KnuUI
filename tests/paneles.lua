@@ -261,5 +261,55 @@ slots.left, slots.center = a, b
 g2:Fire('OnShow'); Flush()
 local al, at = Px(a); local bl, bt = Px(b)
 assert(Near(al, 100) and Near(at, 116) and Near(bl, 1000) and Near(bt, 116), 'guía en el hueco')
+slots.left, slots.center = nil, nil
+
+-- 17. Guía que WoW-Pro dejó en su punto de creación (TOPLEFT/UIParent/RIGHT -210,175) sin restaurar la posición
+-- guardada: KnuUI le pide a WoW-Pro que la restaure (AnchorSync), salvo en combate o con la restauración inhibida.
+local syncs, failNext = 0, false
+local function DefaultPoint() g2.pt = { 'TOPLEFT', UIParent, 'RIGHT', -210, 175 } end
+local function Saved() local p, rel, rp, x, y = g2:GetPoint(1); return p == 'TOPLEFT' and rel == UIParent and rp == 'TOPLEFT' and x == 8 and y == -8 end
+WoWProDB = { profile = { position = { 'TOPLEFT', nil, 'TOPLEFT', 8, -8 } } }
+WoWPro.InhibitAnchorStore = false
+function WoWPro.AnchorSync()
+	syncs = syncs + 1
+	local was = WoWPro.InhibitAnchorStore
+	WoWPro.InhibitAnchorStore = true
+	g2:ClearAllPoints()
+	if failNext then failNext = false; error('falla interna') end
+	g2:SetPoint('TOPLEFT', UIParent, 'TOPLEFT', 8, -8)
+	WoWPro.InhibitAnchorStore = was
+end
+function WoWPro.CustomizeFrames() end
+WoWPro:CreateFrames(); Flush() -- engancha CustomizeFrames
+-- a) Fuera de combate: después de CustomizeFrames se restaura.
+DefaultPoint(); WoWPro:CustomizeFrames(); Flush()
+assert(syncs == 1 and Saved(), 'guía restaurada: '..syncs)
+-- b) En combate no; al salir, sí.
+DefaultPoint(); combat = true; WoWPro:CustomizeFrames(); Flush()
+assert(syncs == 1, 'en combate no se restaura')
+combat = false; events.fn(events, 'PLAYER_REGEN_ENABLED'); Flush()
+assert(syncs == 2 and Saved(), 'restaurada al salir de combate')
+-- c) Con la restauración inhibida (redimensionando) no; el próximo aviso de la guía la restaura.
+DefaultPoint(); WoWPro.InhibitAnchorSync = true; g2:Fire('OnSizeChanged'); Flush()
+assert(syncs == 2, 'inhibida')
+WoWPro.InhibitAnchorSync = nil; g2:Fire('OnSizeChanged'); Flush()
+assert(syncs == 3 and Saved(), 'restaurada después de la inhibición')
+-- d) AnchorSync falla a mitad: la guía no queda sin ancla, InhibitAnchorStore vuelve, y se reintenta.
+DefaultPoint(); failNext = true; WoWPro:CustomizeFrames(); Flush()
+assert(syncs == 4 and g2:GetNumPoints() == 1 and WoWPro.InhibitAnchorStore == false, 'error interno')
+local p, _, rp = g2:GetPoint(1); assert(p == 'TOPLEFT' and rp == 'RIGHT')
+g2:Fire('OnShow'); Flush()
+assert(syncs == 5 and Saved(), 'reintento tras el error')
+-- e) En la posición guardada, arrastrada a otro lado o en una zona del centro de comando: nunca se toca.
+g2:Fire('OnShow'); Flush()
+g2.pt = { 'TOPLEFT', UIParent, 'TOPLEFT', 500, -300 }; g2:StopMovingOrSizing(); Flush()
+g2:SetPoint('TOPLEFT', {}, 'TOPLEFT', 0, 0); Flush()
+assert(syncs == 5, 'posiciones propias no se tocan')
+-- f) El centro de comando devuelve la guía al punto de creación (lo había capturado así): se restaura.
+g2:SetPoint('TOPLEFT', UIParent, 'RIGHT', -210, 175); Flush()
+assert(syncs == 6 and Saved(), 'después de devolverla el centro de comando')
+-- g) Sin datos de WoW-Pro: nada, sin error.
+WoWProDB = nil; DefaultPoint(); WoWPro:CustomizeFrames(); Flush()
+assert(syncs == 6)
 
 print('PANELES OK')

@@ -88,10 +88,45 @@ local function HookPanel(f)
 	f:HookScript('OnHide', function() Queue() end)
 end
 
+-- La guía es el ancla del resto del diseño. WoW-Pro la crea en TOPLEFT/UIParent/RIGHT -210,175
+-- (WoWPro_Frames.lua:1037) y restaura la posición guardada UNA vez por sesión (:868-872); si esa vez AnchorSync no
+-- hace nada (en combate o con InhibitAnchorSync, :705-707), queda en ese punto toda la sesión (visto en el juego
+-- 2026-11-17: debajo del minimapa). Ese punto sólo lo pone la creación: AnchorStore siempre ancla la esquina
+-- elegida a la misma esquina (:648-649) y el centro de comando usa sus zonas. Si la guía está ahí, se le pide a
+-- WoW-Pro que restaure lo guardado. El centro de comando, al devolverla (Workspace.lua RestoreGuide), pasa por
+-- SetPoint: lo engancha HookGuide y se revisa en la pasada siguiente.
+local fixingGuide = false
+
+local function AtCreationPoint(g)
+	if g:GetNumPoints() ~= 1 then return false end
+	local p, rel, rp, x, y = g:GetPoint(1)
+	return p == 'TOPLEFT' and rel == _G.UIParent and rp == 'RIGHT' and Near(x or 0, -210) and Near(y or 0, 175)
+end
+
+local function EnsureGuide()
+	local WP = _G.WoWPro
+	local g = type(WP) == 'table' and WP.MainFrame
+	local db = _G.WoWProDB
+	if not (g and type(WP.AnchorSync) == 'function' and type(db) == 'table' and type(db.profile) == 'table'
+		and db.profile.position) then return end
+	if not AtCreationPoint(g) or WP.InhibitAnchorSync then return end -- inhibida: la reintenta el próximo aviso
+	-- AnchorSync activa InhibitAnchorStore y lo devuelve al final (:709-710); si fallara a mitad, se devuelve acá.
+	-- Mientras tanto los SetPoint propios no disparan otra pasada (HookGuide): si WoW-Pro fallara siempre, eso sería
+	-- reintentar en cada cuadro. Se reintenta con el próximo aviso real de la guía.
+	local store = WP.InhibitAnchorStore
+	fixingGuide = true
+	local ok = pcall(WP.AnchorSync)
+	if not ok then WP.InhibitAnchorStore = store end
+	-- Nunca sin ancla: si falló después de ClearAllPoints, vuelve al punto de WoW-Pro.
+	if g:GetNumPoints() == 0 then g:SetPoint('TOPLEFT', _G.UIParent, 'RIGHT', -210, 175) end
+	fixingGuide = false
+end
+
 local function Arrange()
 	queued = false
 	if InCombatLockdown() then pending = true; return end
 	pending = false
+	pcall(EnsureGuide)
 	RestoreMoved()
 	if K.CC_IsActive and K:CC_IsActive() then return end -- el centro de comando ubica sus paneles (Workspace.lua)
 	local g = _G.WoWPro and _G.WoWPro.MainFrame
@@ -154,11 +189,16 @@ local function HookGuide()
 		WP.KnuPanelsCreateHooked = true
 		hooksecurefunc(WP, 'CreateFrames', function() HookGuide(); Queue() end)
 	end
+	-- Después de CustomizeFrames (donde WoW-Pro hace su única restauración, :868-872) se revisa si quedó bien.
+	if type(WP.CustomizeFrames) == 'function' and not WP.KnuPanelsCustomizeHooked then
+		WP.KnuPanelsCustomizeHooked = true
+		hooksecurefunc(WP, 'CustomizeFrames', function() HookGuide(); Queue() end)
+	end
 	local g = WP.MainFrame
 	if not g or g.KnuPanelsGuideHooked then return end
 	g.KnuPanelsGuideHooked = true
 	for _, script in ipairs({ 'OnSizeChanged', 'OnShow', 'OnHide' }) do g:HookScript(script, function() Queue() end) end
-	hooksecurefunc(g, 'SetPoint', function() Queue() end)
+	hooksecurefunc(g, 'SetPoint', function() if not fixingGuide then Queue() end end)
 	hooksecurefunc(g, 'StopMovingOrSizing', function() Queue() end)
 end
 

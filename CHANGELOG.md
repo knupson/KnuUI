@@ -1,5 +1,15 @@
 # KnuUI changelog
 
+## 3.6.3 (2026-11-17)
+
+- The WoW-Pro guide returns to its saved position when WoW-Pro leaves it where it creates it, under the
+  minimap. WoW-Pro restores the saved position once per session and skips that step in combat, so KnuUI now
+  asks it to restore the guide, waiting until combat ends if needed. A guide you dragged, or one placed by the
+  command center, stays where it is.
+- Flight timer: on a leg you have not flown yet, the time of the opposite direction is used as an estimate.
+  The bar says "(approx.)", the countdown starts with ~, and it switches to + if the flight runs longer. The
+  real time is saved when you land.
+
 ## 3.6.2 (2026-11-16)
 
 - Blizzard panels move only when they overlap the WoW-Pro guide. A panel goes under the guide if it fits there

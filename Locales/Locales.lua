@@ -238,6 +238,8 @@ L["Replace old spell ranks on your bars when you learn a new one"] = "Reemplazar
 -- Flight.lua
 L["KnuUI: flight timer"] = "KnuUI: temporizador de vuelo"
 L["%s (learning)"] = "%s (aprendiendo)"
+L["%s (approx.)"] = "%s (aprox.)"
+L["Flight time: about %s"] = "Tiempo de vuelo: aprox. %s"
 L["Flight time: %s"] = "Tiempo de vuelo: %s"
 L["Flight time: not learned yet"] = "Tiempo de vuelo: todavía sin datos"
 L["Flight timer (learns each route the first time you fly it)"] = "Temporizador de vuelo (aprende cada ruta la primera vez que la volás)"

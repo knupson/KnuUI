@@ -194,7 +194,13 @@ local function OnUpdate()
 	local elapsed = now - flight.started
 	if flight.total then
 		bar:SetValue(math.min(elapsed, flight.total))
-		bar.time:SetText(Clock(flight.total - elapsed))
+		if not flight.approx then
+			bar.time:SetText(Clock(flight.total - elapsed))
+		elseif elapsed <= flight.total then
+			bar.time:SetText('~'..Clock(flight.total - elapsed))
+		else
+			bar.time:SetText('+'..Clock(elapsed - flight.total)) -- ya pasó lo estimado: cuánto se pasó
+		end
 	else
 		bar:SetValue(0)
 		bar.time:SetText(Clock(elapsed))
@@ -206,12 +212,25 @@ local function Start(slot)
 	local from, to = CurrentNode(), TaxiNodeName(slot)
 	local key = Key(from, to)
 	flight = { key = key, requested = GetTime(), total = key and Times()[key] }
+	-- Tramo sin tiempo propio: se estima con el de vuelta (destino>origen), marcado como aprox. El vuelo
+	-- completo guarda igual su tiempo real en su propia clave (Finish), así la próxima vez es exacto.
+	if not flight.total and key then
+		flight.total = Times()[Key(to, from)]
+		flight.approx = flight.total ~= nil
+	end
 	if not bar then CreateBar(); Style() end
 	bar:SetMinMaxValues(0, flight.total or 1)
-	bar.text:SetText(flight.total and Place(to) or format(L["%s (learning)"], Place(to) or ''))
-	-- Una sola línea: si el destino no entra en 240, la barra se ensancha (6 + texto + 44 del reloj).
+	if flight.approx then
+		bar.text:SetText(format(L["%s (approx.)"], Place(to) or ''))
+	else
+		bar.text:SetText(flight.total and Place(to) or format(L["%s (learning)"], Place(to) or ''))
+	end
+	-- Una sola línea: si el destino no entra en 240, la barra se ensancha (6 + texto + reloj). El reloj
+	-- aprox. lleva '~' o '+' delante y necesita 6 más.
+	local clock = flight.approx and 50 or 44
+	bar.text:SetPoint('RIGHT', -clock, 0)
 	local measure = bar.text.GetUnboundedStringWidth or bar.text.GetStringWidth
-	bar:SetWidth(math.max(240, math.ceil(measure(bar.text) + 54)))
+	bar:SetWidth(math.max(240, math.ceil(measure(bar.text) + clock + 10)))
 	bar:SetAlpha(0)
 	bar:Show()
 	pcall(HookAvoid)
@@ -224,8 +243,12 @@ end
 -- Línea extra en el tooltip de cada destino: tiempo aprendido o "sin datos".
 local function TooltipLine(slot)
 	if E.db.KnuUIFlightTimer == false or not slot or TaxiNodeGetType(slot) ~= 'REACHABLE' then return end
-	local total = Times()[Key(CurrentNode(), TaxiNodeName(slot))]
-	GameTooltip:AddLine(total and format(L["Flight time: %s"], Clock(total)) or L["Flight time: not learned yet"], 0.8, 0.8, 0.8)
+	local from, to = CurrentNode(), TaxiNodeName(slot)
+	local total, back = Times()[Key(from, to)], Times()[Key(to, from)]
+	local line = total and format(L["Flight time: %s"], Clock(total))
+		or back and format(L["Flight time: about %s"], Clock(back))
+		or L["Flight time: not learned yet"]
+	GameTooltip:AddLine(line, 0.8, 0.8, 0.8)
 	GameTooltip:Show()
 end
 

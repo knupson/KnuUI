@@ -928,6 +928,9 @@ do
  function TaxiNodeName(i) return i == 1 and 'Ventormenta, Elwynn' or 'Villa Oscura, Bosque del Ocaso' end
  function TakeTaxiNode() end
  function TaxiRequestEarlyLanding() end
+ local tipLines = {}
+ GameTooltip = { AddLine = function(_, text) tipLines[#tipLines + 1] = text end, Show = function() end }
+ function TaxiNodeOnButtonEnter() end
  E.global.KnuUIFlights = nil
  module:SetupFlightTimer()
  local function Fly(seconds, early)
@@ -971,6 +974,56 @@ do
  Fly(20, true)
  -- Queda el último vuelo completo (30 s); el cortado con TaxiRequestEarlyLanding no lo pisa.
  assert(E.global.KnuUIFlights['Ventormenta, Elwynn>Villa Oscura, Bosque del Ocaso'] == 30)
+ module:FlushTweens()
+ -- Vuelta (Villa Oscura>Ventormenta) sin tiempo propio: se estima con la ida (30 s), marcada como aprox.
+ local function Tip() tipLines = {}; TaxiNodeOnButtonEnter({ GetID = function() return 2 end }); return tipLines[1] end
+ assert(Tip() == 'Tiempo de vuelo: 0:30')
+ local fwdName = TaxiNodeName
+ TaxiNodeName = function(i) return i == 1 and 'Villa Oscura, Bosque del Ocaso' or 'Ventormenta, Elwynn' end
+ assert(Tip() == 'Tiempo de vuelo: aprox. 0:30', 'tooltip aprox: '..tostring(Tip()))
+ TakeTaxiNode(2)
+ assert(bar.max == 30 and bar.text.text == 'Ventormenta (aprox.)', 'etiqueta aprox: '..tostring(bar.text.text))
+ assert(bar.width == 240 and bar.text.point[2] == -50)
+ -- Destino largo aprox.: el reloj con '~'/'+' reserva 50 (no 44) y la barra se ensancha a texto + 60;
+ -- el siguiente vuelo exacto vuelve a 44.
+ local longName = 'Refugio Roca del Sol de las Tierras Lejanas, Zona'
+ E.global.KnuUIFlights[longName..'>Villa Oscura, Bosque del Ocaso'] = 40
+ local backName = TaxiNodeName
+ TaxiNodeName = function(i) return i == 1 and 'Villa Oscura, Bosque del Ocaso' or longName end
+ TakeTaxiNode(2)
+ assert(bar.width == math.ceil(#'Refugio Roca del Sol de las Tierras Lejanas (aprox.)' * 7 + 60) and bar.text.point[2] == -50,
+  'reserva del reloj aprox: '..tostring(bar.width)..' '..tostring(bar.text.point[2]))
+ E.global.KnuUIFlights['Villa Oscura, Bosque del Ocaso>'..longName] = 40
+ TakeTaxiNode(2)
+ assert(bar.text.text == 'Refugio Roca del Sol de las Tierras Lejanas' and bar.text.point[2] == -44
+  and bar.width == math.ceil(#'Refugio Roca del Sol de las Tierras Lejanas' * 7 + 54))
+ E.global.KnuUIFlights[longName..'>Villa Oscura, Bosque del Ocaso'] = nil
+ E.global.KnuUIFlights['Villa Oscura, Bosque del Ocaso>'..longName] = nil
+ TaxiNodeName = backName
+ TakeTaxiNode(2); assert(bar.text.text == 'Ventormenta (aprox.)')
+ onTaxi = true; now = now + 1; bar.OnUpdate(); now = now + 10; bar.OnUpdate()
+ assert(bar.time.text == '~0:20', 'reloj aprox: '..tostring(bar.time.text))
+ now = now + 20; bar.OnUpdate(); assert(bar.time.text == '~0:00')
+ now = now + 5; bar.OnUpdate()
+ assert(bar.time.text == '+0:05' and bar.value == 30, 'pasado de lo estimado: '..tostring(bar.time.text))
+ onTaxi = false; now = now + 0.2; bar.OnUpdate(); module:FlushTweens()
+ -- Al aterrizar se guarda el tiempo real de la vuelta (35 s) y la próxima vez es exacto.
+ assert(E.global.KnuUIFlights['Villa Oscura, Bosque del Ocaso>Ventormenta, Elwynn'] == 35)
+ TakeTaxiNode(2); assert(bar.max == 35 and bar.text.text == 'Ventormenta')
+ onTaxi = true; now = now + 1; bar.OnUpdate(); now = now + 5; bar.OnUpdate()
+ assert(bar.time.text == '0:30')
+ onTaxi = false; bar.OnUpdate(); module:FlushTweens()
+ -- El tiempo propio manda sobre el de vuelta, y un aterrizaje anticipado con estimación no se guarda.
+ E.global.KnuUIFlights['Villa Oscura, Bosque del Ocaso>Ventormenta, Elwynn'] = nil
+ E.global.KnuUIFlights['Ventormenta, Elwynn>Villa Oscura, Bosque del Ocaso'] = 30
+ Fly(10, true); module:FlushTweens()
+ assert(E.global.KnuUIFlights['Villa Oscura, Bosque del Ocaso>Ventormenta, Elwynn'] == nil)
+ E.global.KnuUIFlights['Villa Oscura, Bosque del Ocaso>Ventormenta, Elwynn'] = 50
+ TakeTaxiNode(2); assert(bar.max == 50 and bar.text.text == 'Ventormenta')
+ assert(Tip() == 'Tiempo de vuelo: 0:50')
+ onTaxi = false; now = now + 10; bar.OnUpdate(); module:FlushTweens()
+ TaxiNodeName = fwdName
+ GameTooltip, TaxiNodeOnButtonEnter = nil, nil
  CreateFrame = baseCreate
 end
 
