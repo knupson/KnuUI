@@ -1,5 +1,13 @@
 # KnuUI changelog
 
+## 3.6.4 (2026-11-17)
+
+- Spell ranks on action bars: two ranks count as the same spell when they share the icon and the name,
+  ignoring case and accents. Hammer of Justice was left at rank 1 because the Spanish client capitalizes
+  the two ranks differently. KnuUI now also checks every action button against your spellbook on login and
+  whenever the spellbook changes, so a button that is already behind gets the highest rank you know. It
+  waits until combat ends or until you drop what you are dragging. Macros are not touched.
+
 ## 3.6.3 (2026-11-17)
 
 - The WoW-Pro guide returns to its saved position when WoW-Pro leaves it where it creates it, under the

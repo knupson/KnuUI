@@ -1131,24 +1131,93 @@ do
  issecretvalue = nil
 end
 
--- Rangos: al aprender Sello rango 2, las casillas con rango 1 pasan al 2; otras no se tocan.
+-- Rangos: cadena = nombre sin mayúsculas/acentos + ícono original (Ranks.lua). Casos del juego: Martillo de
+-- Justicia (rango 1) y Martillo de justicia (rango 2) son el mismo hechizo; el botón atrasado se corrige solo.
 do
- local spells = { [10] = { 'Sello', 'Rango 1' }, [20] = { 'Sello', 'Rango 2' }, [30] = { 'Bendición', 'Rango 1' }, [40] = { 'Sello', 'Rango 3' } }
- local actions = { [1] = 10, [5] = 30, [61] = 10, [99] = 40 }
- local cursor
+ local spells = {
+  [10] = { 'Sello', 'Rango 1', 1 }, [20] = { 'Sello', 'Rango 2', 1 }, [30] = { 'Bendición', 'Rango 1', 2 },
+  [40] = { 'Sello', 'Rango 3', 1 }, [853] = { 'Martillo de Justicia', 'Rango 1', 135963 },
+  [5588] = { 'Martillo de justicia', 'Rango 2', 135963 }, [70] = { 'Sello', 'Rango 1', 9 },
+  [80] = { 'ÁGUILA', 'Rango 1', 5 }, [81] = { 'águila', 'Rango 2', 5 }, [90] = { 'Sin rango', '', 6 },
+ }
+ local actions = { [1] = 10, [5] = 30, [61] = 10, [99] = 40, [4] = 853, [7] = 70, [8] = 80, [9] = 90 }
+ local macros = { [12] = 10 }
+ local cursor, failPickup
  C_Spell = C_Spell or {}
  function C_Spell.GetSpellName(id) return spells[id] and spells[id][1] end
  function C_Spell.GetSpellSubtext(id) return spells[id] and spells[id][2] end
- function C_Spell.PickupSpell(id) cursor = id end
- function GetActionInfo(slot) if actions[slot] then return 'spell', actions[slot] end end
+ function C_Spell.GetSpellTexture(id) if spells[id] then return 999, spells[id][3] end end -- visible distinto del original
+ function C_Spell.PickupSpell(id) if not failPickup then cursor = id end end
+ function GetActionInfo(slot)
+  if macros[slot] then return 'macro', macros[slot] end
+  if actions[slot] then return 'spell', actions[slot] end
+ end
  function PlaceAction(slot) actions[slot], cursor = cursor, actions[slot] end
  function ClearCursor() cursor = nil end
- function GetCursorInfo() return cursor end
+ function GetCursorInfo() if cursor then return 'spell', 1, 0, cursor end end
+ local book, bookReads = {}, 0
+ C_SpellBook = {
+  GetNumSpellBookSkillLines = function() bookReads = bookReads + 1; return 1 end,
+  GetSpellBookSkillLineInfo = function() return { itemIndexOffset = 0, numSpellBookItems = #book } end,
+  GetSpellBookItemInfo = function(i) return book[i] and { spellID = book[i], isPassive = false } end,
+ }
  combat = false; E.db.KnuUIRankUpgrade = nil
+ -- Al aprender Sello rango 2: las casillas con el 1 pasan al 2; el 3, la Bendición, otro ícono y la macro no.
  assert(module:UpgradeSpellRank(20) == 2)
  assert(actions[1] == 20 and actions[61] == 20 and actions[5] == 30 and actions[99] == 40 and not cursor)
- combat = true; actions[1] = 10; assert(module:UpgradeSpellRank(20) == 0 and actions[1] == 10); combat = false
- E.db.KnuUIRankUpgrade = false; assert(module:UpgradeSpellRank(20) == 0); E.db.KnuUIRankUpgrade = nil
+ assert(actions[7] == 70 and macros[12] == 10, 'otro ícono o macro tocados')
+ -- Martillo: nombres que difieren en la mayúscula, mismo ícono original -> mismo hechizo.
+ assert(module:UpgradeSpellRank(5588) == 1 and actions[4] == 5588, 'Martillo de justicia no reemplazado')
+ -- Acentos en mayúscula: ÁGUILA y águila son la misma cadena.
+ assert(module:UpgradeSpellRank(81) == 1 and actions[8] == 81)
+ -- Sin rango: no es cadena.
+ assert(module:UpgradeSpellRank(90) == 0 and actions[9] == 90)
+ -- Barrido contra el libro: un botón atrasado se corrige sin evento de aprendizaje.
+ actions[4] = 853; book = { 853, 5588, 10, 40 }
+ assert(module:UpgradeAllRanks() >= 1 and actions[4] == 5588)
+ assert(actions[1] == 40 and actions[61] == 40, 'Sello al rango más alto del libro')
+ -- Combate: queda pendiente y se aplica al salir.
+ actions[4] = 853; combat = true
+ assert(module:UpgradeAllRanks() == 0 and actions[4] == 853); combat = false
+ assert(module:UpgradeAllRanks() == 1 and actions[4] == 5588)
+ -- Cursor ocupado: no se toca; al soltar, se aplica.
+ actions[4] = 853; cursor = 77
+ assert(module:UpgradeAllRanks() == 0 and actions[4] == 853 and cursor == 77); cursor = nil
+ assert(module:UpgradeAllRanks() == 1 and actions[4] == 5588)
+ -- PickupSpell que no deja nada en el cursor: no se cuenta ni se toca la casilla.
+ actions[4] = 853; failPickup = true
+ assert(module:UpgradeAllRanks() == 0 and actions[4] == 853); failPickup = false
+ -- Por eventos: lo pendiente se aplica solo al salir de combate y al soltar el cursor.
+ local rankFrame, baseCreateRanks, baseAfter = nil, CreateFrame, C_Timer.After
+ C_Timer.After = function(_, callback) callback() end
+ function CreateFrame(...) rankFrame = baseCreateRanks(...); return rankFrame end
+ module:SetupRankUpgrade()
+ CreateFrame = baseCreateRanks
+ actions[4] = 853; combat = true
+ rankFrame.OnEvent(rankFrame, 'SPELLS_CHANGED')
+ assert(actions[4] == 853, 'en combate no se toca')
+ combat = false; rankFrame.OnEvent(rankFrame, 'PLAYER_REGEN_ENABLED')
+ assert(actions[4] == 5588, 'pendiente no aplicado al salir de combate')
+ actions[4] = 853; cursor = 77
+ rankFrame.OnEvent(rankFrame, 'LEARNED_SPELL_IN_SKILL_LINE')
+ assert(actions[4] == 853 and rankFrame.events.CURSOR_CHANGED, 'esperando el cursor')
+ rankFrame.OnEvent(rankFrame, 'CURSOR_CHANGED'); assert(actions[4] == 853, 'todavía arrastrando')
+ cursor = nil; rankFrame.OnEvent(rankFrame, 'CURSOR_CHANGED')
+ assert(actions[4] == 5588 and not rankFrame.events.CURSOR_CHANGED, 'pendiente no aplicado al soltar el cursor')
+ C_Timer.After = baseAfter
+ -- Varias señales antes de que corra el temporizador = una sola revisión del libro.
+ local timers = {}
+ C_Timer.After = function(_, callback) timers[#timers + 1] = callback end
+ actions[4] = 853; bookReads = 0
+ for _, event in ipairs({ 'SPELLS_CHANGED', 'SPELL_TEXT_UPDATE', 'LEARNED_SPELL_IN_SKILL_LINE' }) do rankFrame.OnEvent(rankFrame, event) end
+ assert(#timers == 1 and actions[4] == 853, 'señales no agrupadas: '..#timers)
+ timers[1](); assert(bookReads == 1 and actions[4] == 5588)
+ C_Timer.After = baseAfter
+ -- Opción apagada: con un botón atrasado no se toca nada y ni se lee el libro.
+ actions[4] = 853; bookReads = 0; E.db.KnuUIRankUpgrade = false
+ assert(module:UpgradeSpellRank(5588) == 0 and module:UpgradeAllRanks() == 0 and actions[4] == 853 and bookReads == 0)
+ E.db.KnuUIRankUpgrade = nil
+ C_SpellBook = nil
 end
 
 -- Accesos fijos: el marcado sale del desplegable y queda como botón a la izquierda de la K.
