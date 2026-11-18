@@ -138,17 +138,26 @@ end
 
 local hooked
 
--- Flecha de TomTom al lado de la guía de WoW-Pro (x 8-258), una vez por perfil. Arriba al centro
+-- Flecha de TomTom al lado de la guía de WoW-Pro (x 8-308), una vez por perfil. Arriba al centro
 -- chocaba con las barras de duración, que en Forever ubica el Modo edición de Blizzard y no se
 -- pueden mover desde KnuUI. TomTom guarda la posición relativa a UIParent
 -- (modules/crazy_arrow/crazy_arrow.lua:211-229); se convierte desde píxeles de ElvUIParent.
 local function PlaceArrow()
 	local tomtom, arrow = _G.TomTom, _G.TomTomCrazyArrow
-	if E.db.KnuUITomTomPlaced or not tomtom or not arrow or not tomtom.profile or not tomtom.profile.arrow then return end
-	if InCombatLockdown() then return end
-	E.db.KnuUITomTomPlaced = true
+	if not tomtom or not arrow or not tomtom.profile or not tomtom.profile.arrow then return end
+	-- Un perfil de estilo (Styles.lua) nunca mueve la flecha: su lugar es de TomTom y lo comparte con el del jugador.
+	if E.db.KnuUIStyle or InCombatLockdown() then return end
 	local scale = E.UIParent:GetEffectiveScale() / UIParent:GetEffectiveScale()
-	local x, y = math.floor(300 * scale + 0.5), math.floor(-16 * scale + 0.5)
+	-- Versiones anteriores la dejaban en x 300, encima del borde de la guía (que ahora mide 300 de ancho, x 8-308):
+	-- si sigue exactamente ahí, pasa a x 316. Si el jugador la movió, no se toca.
+	local pos = tomtom.profile.arrow.position
+	if E.db.KnuUITomTomPlaced and type(pos) == 'table' and pos[1] == 'TOPLEFT' and pos[3] == 'TOPLEFT'
+		and pos[4] == math.floor(300 * scale + 0.5) and pos[5] == math.floor(-16 * scale + 0.5) then
+		E.db.KnuUITomTomPlaced = nil
+	end
+	if E.db.KnuUITomTomPlaced then return end
+	E.db.KnuUITomTomPlaced = true
+	local x, y = math.floor(316 * scale + 0.5), math.floor(-16 * scale + 0.5)
 	tomtom.profile.arrow.position = { 'TOPLEFT', nil, 'TOPLEFT', x, y }
 	arrow:ClearAllPoints()
 	arrow:SetPoint('TOPLEFT', UIParent, 'TOPLEFT', x, y)

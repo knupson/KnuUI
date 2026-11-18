@@ -120,6 +120,7 @@ end
 -- 3. Rol por personaje: E.private es de cada personaje; E.db puede ser un perfil compartido.
 -- Al entrar con un rol distinto al del perfil, lo aplica y ofrece recargar.
 local function SyncRole()
+	if E.db.KnuUIStyle then return end
 	local mine = E.private.KnuUIRole
 	if not mine or mine == (E.db.KnuUIRole or 'mdps') or InCombatLockdown() then return end
 	if K:ApplyRole(mine) then

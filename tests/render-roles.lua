@@ -19,6 +19,13 @@ local function pairKey(a, b)
  if b < a then a, b = b, a end
  return a..'/'..b
 end
+local function equal(a, b)
+ if type(a) ~= type(b) then return false end
+ if type(a) ~= 'table' then return a == b end
+ for key, value in pairs(a) do if not equal(value,b[key]) then return false end end
+ for key in pairs(b) do if a[key] == nil then return false end end
+ return true
+end
 for key, reason in pairs(ALLOWED) do
  local a, b = key:match('^([^/]+)/([^/]+)$')
  assert(a and a < b and type(reason) == 'string' and reason:match('%S') and not reason:find('[\r\n]'),
@@ -113,8 +120,66 @@ for _, role in ipairs({'tank', 'mdps', 'rdps', 'healer'}) do
   end
  end
 end
-assert(layouts == 20 and cases == 20 * #resolutions, 'Matriz incompleta')
-print('Resolución | Escala | Lienzo (unidades) | Combinaciones con problemas / 20')
+assert(layouts == 20 and cases == 20 * #resolutions, 'Matriz base incompleta')
+-- Los doce estilos parten de defaults, sin importar el perfil del usuario.
+-- Se comprueban también los marcadores desconocidos contra la columna reservada.
+for _, profile in ipairs(K:StyleProfiles()) do
+ harness.fresh()
+ E.global.general.UIScale = nil
+ E.private.KnuUIRole = 'rol del personaje'
+ E.db.KnuUIStyle, E.db.KnuUIRole = profile.id, profile.role
+ E.db.KnuUIStylePending, E.db.KnuUITanks = true, false
+ local applyStyle = K.ApplyStyle
+ K.ApplyStyle = function(self, id)
+  local grid = {}
+  if profile.role == 'healer' then
+   for _, unit in ipairs({'party','raid1','raid2','raid3'}) do grid[unit]=E:CopyTable({},E.db.unitframe.units[unit]) end
+  end
+  local result = applyStyle(self,id)
+  for unit, before in pairs(grid) do assert(equal(before,E.db.unitframe.units[unit]), 'El estilo modificó la grilla: '..unit) end
+  return result
+ end
+ assert(K:ApplyPendingStyle(), profile.name)
+ K.ApplyStyle = applyStyle
+ assert(E.private.KnuUIRole == 'rol del personaje' and E.db.KnuUITanks == false)
+ if profile.role == 'healer' then
+  for _, name in ipairs({'Party','Raid1','Raid2','Raid3'}) do
+   assert(E.db.movers['ElvUF_'..name..'Mover']=='BOTTOM,ElvUIParent,BOTTOM,0,204', 'Grilla del Healer movida')
+  end
+  assert(E.db.unitframe.units.party.width==82 and E.db.unitframe.units.party.height==46)
+ elseif profile.role == 'tank' then
+  assert(E.db.unitframe.units.player.threatStyle=='BORDERS' and E.db.nameplates.threat.indicator)
+ elseif profile.role == 'rdps' then
+  assert(E.db.unitframe.units.player.castbar.width==340 and E.db.unitframe.units.player.castbar.height==32)
+  assert(E.db.unitframe.units.target.debuffs.sizeOverride==32)
+ end
+ local nodes, aliases = models.build({db=E.db,global=E.global,private=E.private}, '.', loader)
+ layouts = layouts+1
+ for _, res in ipairs(resolutions) do
+  local summary = summaries[res]
+  local canvas = geometry.canvas(res, ScaleFor(res))
+  local rects, skipped = geometry.rectangles(nodes, aliases, canvas)
+  local problems = geometry.intersections(rects)
+  for _, outside in ipairs(geometry.outside(rects, canvas)) do problems[#problems+1] = outside end
+  for _, r in ipairs(rects) do
+   local top = canvas.height-r.bottom-r.height
+   local w = math.min(r.left+r.width,308)-math.max(r.left,8)
+   local h = math.min(top+r.height,600)-math.max(top,0)
+   if w > 0 and h > 0 then
+    problems[#problems+1] = {a=r.name,b='columna WoWPro',width=w,height=h}
+   end
+  end
+  for _, p in ipairs(problems) do
+   local label = string.format('%s / %s / %s (%gx%g)',profile.name,p.a,p.b,p.width,p.height)
+   summary.problems[label] = (summary.problems[label] or 0)+1
+  end
+  for _, message in ipairs(skipped) do print(res..' / '..profile.name..': sin resolver: '..message) end
+  if #problems > 0 or #skipped > 0 then summary.bad=summary.bad+1 end
+  cases, failures, omitted = cases+1, failures+#problems, omitted+#skipped
+ end
+end
+assert(layouts == 32 and cases == 32 * #resolutions, 'Matriz de estilos incompleta')
+print('Resolución | Escala | Lienzo (unidades) | Combinaciones con problemas / 32')
 for _, res in ipairs(resolutions) do
  local summary = summaries[res]
  local c = summary.canvas

@@ -89,7 +89,7 @@ local installer = {
 	Title = '|cffecd9bdKNU|r|cffffa82eUI|r', Name = 'KnuUI',
 	tutorialImage = [[Interface\AddOns\KnuUI\media\logo]],
 	tutorialImageSize = { 256, 128 }, tutorialImageVertexColor = { 1, 1, 1 },
-	StepTitles = { L["Welcome"], L["Layout"], L["Role"], L["Theme"], L["Chat and data"], L["Addons"], L["Done"] },
+	StepTitles = { L["Welcome"], L["Layout"], L["Role"], L["Theme"], L["Chat and data"], L["Addons"], L["Styles"], L["Done"] },
 	StepTitlesColor = { 0.659, 0.561, 0.439 }, StepTitlesColorSelected = { 1, 0.659, 0.18 }, -- knunet --muted / --amber
 	Pages = {
 		function()
@@ -220,6 +220,19 @@ local installer = {
 				local column = i <= 3 and i - 2 or i - 5
 				button:SetPoint('BOTTOM', PluginInstallFrame, 'BOTTOM', column * 174, 34 + row * 34)
 			end
+		end,
+		-- Estilos opcionales (Styles.lua): cada uno es un perfil de ElvUI aparte; el del jugador no se toca.
+		function()
+			Page(L["Optional styles"],
+				L["Bruma (minimal): the least on screen. Tablero (utility): everything grouped. Paréntesis (combat): player and target around the character."],
+				L["Each style is a separate ElvUI profile for your role; your current profile is not changed."],
+				L["Return to your profile at any time with /knu volver."])
+			for i, style in ipairs(K.styles) do
+				local id = style.id -- Captura propia para Lua 5.1.
+				Button(i, style.name, function() K:TryStyle(id) end)
+			end
+			Button(#K.styles + 1, L["Keep mine"], function() E:GetModule('PluginInstaller'):SetPage(8) end)
+			Row({ 120, 120, 120, 140 }) -- 500 + 3 separaciones: entra en los 550 del instalador
 		end,
 		function()
 			Page(L["Ready to play"],
@@ -661,6 +674,9 @@ function K:SetupInstaller()
 	-- /knu es común a los addons Knu (KnuLib-1.0 minor 4, README de KnuLib «Comando /knu»): KnuUI registra
 	-- ahí sus subcomandos y el instalador como default. /fui queda propio de KnuUI con el mismo despacho.
 	local commands = {
+		{ 'perfiles', function(args) return K:CreateStyleProfiles(args == 'rehacer') end, L["Create style profiles"], {} },
+		{ 'probar', function(args) return K:TryStyleProfile(args) end, L["Try a style profile"], {} },
+		{ 'volver', function() return K:ReturnStyleProfile() end, L["Return to the previous profile"], {} },
 		{ 'aplicar', Confirm, L["Apply KnuUI to this profile"], { 'apply' } },
 		{ 'cine', function() K:ToggleCinema() end, L["Cinema mode"], { 'cinema' } },
 		{ 'enfriamientos', function() K:CooldownLayoutCommand() end, L["Place the cooldown manager"], { 'cooldowns' } },
@@ -684,7 +700,7 @@ function K:SetupInstaller()
 		if not (KL and KL.RegisterCommand and KL.SetDefaultCommand) then return end
 		for _, c in ipairs(commands) do
 			local fn = c[2]
-			KL:RegisterCommand(c[1], function() fn() end, c[3], c[4])
+			KL:RegisterCommand(c[1], function(args) return fn(args) end, c[3], c[4])
 		end
 		KL:SetDefaultCommand(function() K:OpenInstaller() end)
 	end

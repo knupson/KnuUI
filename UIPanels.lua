@@ -258,6 +258,57 @@ function K:FitLootRolls()
 	if E.PostAlertMove then pcall(E.PostAlertMove, E) end
 end
 
+-- Columna de la guía (x 8-308): versiones anteriores ponían ahí el grupo, la banda, el ticket GM y el botín, y la
+-- guía los tapaba al crecer. Grupo y banda van encima del chat izquierdo, creciendo hacia arriba. Pasa a la
+-- posición nueva (Layout.lua, Base.lua) sólo un mover que tiene exactamente la posición vieja de KnuUI; si el jugador lo movió, o el rol Healer / las columnas lo pusieron abajo, no se toca.
+-- En combate no se escribe nada: grupo y banda son cabeceras seguras ancladas a su mover. Se reintenta al cargar.
+local OLD_COLUMN_POINTS = {
+	ElvUF_PartyMover = { 'TOPLEFT,ElvUIParent,LEFT,8,110', 'TOPLEFT,ElvUIParent,LEFT,320,110' },
+	ElvUF_Raid1Mover = { 'TOPLEFT,ElvUIParent,LEFT,8,110', 'TOPLEFT,ElvUIParent,LEFT,320,110' },
+	ElvUF_Raid2Mover = { 'TOPLEFT,ElvUIParent,LEFT,8,110', 'TOPLEFT,ElvUIParent,LEFT,320,110' },
+	ElvUF_Raid3Mover = { 'TOPLEFT,ElvUIParent,LEFT,8,110', 'TOPLEFT,ElvUIParent,LEFT,320,110' },
+	GMMover = { 'TOPLEFT,ElvUIParent,TOPLEFT,8,-310', 'TOPLEFT,ElvUIParent,TOPLEFT,270,-8' },
+	LootFrameMover = { 'TOPLEFT,ElvUIParent,TOPLEFT,270,-400' },
+}
+K.guideColumnPoints = {
+	ElvUF_PartyMover = 'BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,4,270',
+	ElvUF_Raid1Mover = 'BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,4,270',
+	ElvUF_Raid2Mover = 'BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,4,270',
+	ElvUF_Raid3Mover = 'BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,4,270',
+	GMMover = 'TOPLEFT,ElvUIParent,TOPLEFT,320,-310',
+	LootFrameMover = 'TOPLEFT,ElvUIParent,TOPLEFT,530,-400',
+}
+
+local RAID_SHAPE = { raid1 = { 72, 1 }, raid2 = { 72, 1 }, raid3 = { 80, 2 } } -- ancho, grupos por columna
+local GROUPS = { ElvUF_PartyMover = 'party', ElvUF_Raid1Mover = 'raid1', ElvUF_Raid2Mover = 'raid2', ElvUF_Raid3Mover = 'raid3' }
+
+function K:ClearGuideColumn()
+	local movers = E.db.movers
+	if not movers or InCombatLockdown() then return end
+	for name, olds in pairs(OLD_COLUMN_POINTS) do
+		local current = movers[name]
+		for _, old in ipairs(olds) do
+			if current == old then
+				movers[name] = K.guideColumnPoints[name]
+				local group = GROUPS[name]
+				local db = group and E.db.unitframe and E.db.unitframe.units[group]
+				if db and db.growthDirection == 'DOWN_RIGHT' then
+					db.growthDirection = 'UP_RIGHT' -- apoyado sobre el chat: un grupo chico queda abajo
+					-- Banda: con el ancho y las columnas que ponía KnuUI (80, 1) llegaría al foco; pasa a los de Layout.lua.
+					local shape = RAID_SHAPE[group]
+					if shape and db.width == 80 and db.groupsPerRowCol == 1 then
+						db.width, db.groupsPerRowCol = shape[1], shape[2]
+					end
+					local UF = E:GetModule('UnitFrames', true)
+					if UF and UF.CreateAndUpdateHeaderGroup then pcall(UF.CreateAndUpdateHeaderGroup, UF, group) end
+				end
+				if E.SetMoverPoints then pcall(E.SetMoverPoints, E, name) end
+				break
+			end
+		end
+	end
+end
+
 function K:SetupUIPanels()
 	local map = _G.WorldMapFrame
 	if map and not map.KnuPanelHook then
@@ -265,6 +316,7 @@ function K:SetupUIPanels()
 		map:HookScript('OnShow', function() C_Timer.After(0, function() pcall(AdjustMap) end) end)
 	end
 	pcall(self.FitLootRolls, self)
+	pcall(self.ClearGuideColumn, self)
 	if self.uiPanelsHooked then return end
 	self.uiPanelsHooked = true
 	-- Después de cada acomodo de Blizzard. UpdateScaleForFitForOpenPanels hace que el delegado reubique por dentro

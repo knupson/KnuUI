@@ -33,8 +33,9 @@ K.blizzardMovers = {
 	-- Misc/LootRoll.lua:443-451). Con K.lootRoll y el máximo de 5 (Defaults/Profile.lua:280) van de y 775 a y 595:
 	-- arriba del objetivo (y 812) y debajo de la barra de clase (y 586) y la placa propia (y 577).
 	AlertFrameMover = 'TOP,ElvUIParent,TOP,0,-780',
-	GMMover = 'TOPLEFT,ElvUIParent,TOPLEFT,8,-310', -- debajo de la guía; arriba va la flecha de TomTom
-	LootFrameMover = 'TOPLEFT,ElvUIParent,TOPLEFT,270,-400',
+	-- La columna x 8-308 es sólo de la guía (crece hacia abajo con los pasos): lo demás va a su derecha.
+	GMMover = 'TOPLEFT,ElvUIParent,TOPLEFT,320,-310', -- arriba del grupo
+	LootFrameMover = 'TOPLEFT,ElvUIParent,TOPLEFT,530,-400', -- a la derecha del grupo
 	-- Encima del chat izquierdo (y 4-184, caja de escribir encima).
 	BNETMover = 'BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,4,212',
 	-- Botones especiales encima del jugador y del objetivo: fuera del grupo del Healer (x 747-1173).
@@ -70,10 +71,12 @@ local movers = {
 	ElvUF_PetMover = 'BOTTOM,ElvUIParent,BOTTOM,-273,226',
 	ElvUF_TargetTargetMover = 'BOTTOM,ElvUIParent,BOTTOM,507,192', -- 92×24, x 1421-1513
 	KnuUI_ButtonsMover = 'TOPRIGHT,ElvUIParent,TOPRIGHT,-8,-238', -- lanzador debajo de franjas y brillo, sin tocarlos
-	ElvUF_PartyMover = 'TOPLEFT,ElvUIParent,LEFT,8,110',
-	ElvUF_Raid1Mover = 'TOPLEFT,ElvUIParent,LEFT,8,110',
-	ElvUF_Raid2Mover = 'TOPLEFT,ElvUIParent,LEFT,8,110',
-	ElvUF_Raid3Mover = 'TOPLEFT,ElvUIParent,LEFT,8,110',
+	-- Grupo y banda encima del chat izquierdo (y 4-184), su caja de escribir y el aviso de Battle.net (250×50 en y 212):
+	-- fuera de la columna de la guía y creciendo hacia arriba, así un grupo chico queda apoyado abajo.
+	ElvUF_PartyMover = 'BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,4,270', -- 200×40 ×5 + 6: y 270-494
+	ElvUF_Raid1Mover = 'BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,4,270',
+	ElvUF_Raid2Mover = 'BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,4,270',
+	ElvUF_Raid3Mover = 'BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,4,270',
 	MinimapMover = 'TOPRIGHT,ElvUIParent,TOPRIGHT,-8,-8',
 	BuffsMover = 'TOPRIGHT,ElvUIParent,TOPRIGHT,-200,-8',
 	DebuffsMover = 'TOPRIGHT,ElvUIParent,TOPRIGHT,-200,-148', -- debajo de 3 filas de buffs de 36
@@ -134,7 +137,8 @@ end
 
 function K:ApplyLayout()
 	if not self:CanApply() then return false end
-	local pw, ph = GetPhysicalScreenSize and GetPhysicalScreenSize()
+	local pw, ph
+	if GetPhysicalScreenSize then pw, ph = GetPhysicalScreenSize() end
 	local scale = self:LayoutScale(pw, ph)
 	if scale and E.global.general then
 		E.global.general.UIScale = scale
@@ -262,7 +266,7 @@ function K:ApplyLayout()
 	-- maná fino sin texto, rol chico arriba a la derecha y sin los cuadraditos de AuraWatch.
 	-- Claves: Profile.lua:1716-1724 (AuraWatch), 1864-1870 (Name), 1996-2004 (RoleIcon), 3016-3040.
 	Set(E.db.unitframe.units.party, {
-		enable = true, width = 200, height = 40, growthDirection = 'DOWN_RIGHT',
+		enable = true, width = 200, height = 40, growthDirection = 'UP_RIGHT',
 		verticalSpacing = 6, horizontalSpacing = 4, startFromCenter = false,
 		infoPanel = { enable = false }, portrait = { enable = false },
 		visibility = P.unitframe.units.party.visibility,
@@ -275,8 +279,11 @@ function K:ApplyLayout()
 	for i = 1, 3 do
 		local key = 'raid'..i
 		Set(E.db.unitframe.units[key], {
-			enable = true, width = 80, height = 32, growthDirection = 'DOWN_RIGHT',
-			groupsPerRowCol = 1, verticalSpacing = 4, horizontalSpacing = 4,
+			-- Hasta x 404, antes del foco (x 409 en el modo columnas). En UP_RIGHT, groupsPerRowCol son los grupos
+			-- apilados por columna (ElvUI UnitFrames.lua:1052-1069): banda 1 y 2 = 5 columnas de 72 (x 4-396; entre columnas suma horizontalSpacing y groupSpacing);
+			-- banda 3 (8 grupos) = 4 columnas de 2 grupos (x 4-344).
+			enable = true, width = i == 3 and 80 or 72, height = 32, growthDirection = 'UP_RIGHT',
+			groupsPerRowCol = i == 3 and 2 or 1, verticalSpacing = 4, horizontalSpacing = 4,
 			groupSpacing = 4, startFromCenter = false, raidWideSorting = false,
 			infoPanel = { enable = false }, portrait = { enable = false },
 			numGroups = P.unitframe.units[key].numGroups,

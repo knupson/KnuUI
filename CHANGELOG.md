@@ -1,5 +1,20 @@
 # KnuUI changelog
 
+## 3.6.5 (2026-11-18)
+
+- The WoW-Pro guide keeps its column on the left (x 8 to 308) to itself, since it grows downward as it shows more
+  steps. Party and raid frames now sit above the left chat and the Battle.net toast, and grow upward, so a small
+  group rests on the chat. Raid frames are narrower so they stop before the focus frame: 5 columns of 72 for
+  10 and 25 players, 4 columns of two groups for 40. The GM ticket status and the loot window moved out of the
+  guide column too. Profiles that still have the old KnuUI positions are moved once, out of combat; anything you
+  placed yourself stays where it is.
+- Three optional styles, each one a separate ElvUI profile for every role (MDPS, RDPS, Healer, Tank): Bruma
+  (minimal), Tablero (utility) and Paréntesis (combat, player and target on both sides of the character). Try
+  them from the new Styles page in the installer, or with /knu perfiles, /knu probar <number> and /knu volver.
+  Your own profile is never changed, and you get a reload prompt each time you switch.
+- The TomTom arrow sits next to the guide instead of over its right edge. If it is still at the old KnuUI spot,
+  it moves once; an arrow you placed yourself is kept.
+
 ## 3.6.4 (2026-11-17)
 
 - Spell ranks on action bars: two ranks count as the same spell when they share the icon and the name,

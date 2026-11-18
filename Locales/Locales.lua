@@ -10,6 +10,20 @@ local locale = GetLocale and GetLocale() or 'enUS'
 if locale ~= 'esES' and locale ~= 'esMX' then return end
 
 -- Core.lua
+-- Styles.lua
+L["%d. %s"] = "%d. %s"
+L["Styles"] = "Estilos"
+L["Optional styles"] = "Estilos opcionales"
+L["Bruma (minimal): the least on screen. Tablero (utility): everything grouped. Paréntesis (combat): player and target around the character."] = "Bruma (minimalista): lo mínimo en pantalla. Tablero (utilidad): todo agrupado. Paréntesis (combate): jugador y objetivo alrededor del personaje."
+L["Each style is a separate ElvUI profile for your role; your current profile is not changed."] = "Cada estilo es un perfil de ElvUI aparte para tu rol; tu perfil actual no cambia."
+L["Return to your profile at any time with /knu volver."] = "Volvé a tu perfil cuando quieras con /knu volver."
+L["Keep mine"] = "Seguir con el mío"
+L["Create style profiles"] = "Creá los perfiles de estilo (rehacer para recrearlos)"
+L["Try a style profile"] = "Probá un perfil de estilo por número o nombre completo"
+L["Return to the previous profile"] = "Volvé al perfil anterior"
+L["KnuUI: %d style profiles created; existing profiles were kept."] = "KnuUI: %d perfiles de estilo creados; los existentes se conservaron."
+L["KnuUI: choose an existing style profile by number or full name."] = "KnuUI: elegí un perfil de estilo existente por número o nombre completo."
+L["KnuUI: no previous profile is available."] = "KnuUI: no hay un perfil anterior disponible."
 L["Cooldown Viewer skin"] = "Skin del administrador de tiempos de reutilización"
 L["Cooldown Viewer layout"] = "Posiciones del administrador de tiempos de reutilización"
 L["Place Blizzard cooldown viewers when applying KnuUI. Disable to keep your Edit Mode positions."] = "Ubica los paneles de reutilización de Blizzard al aplicar KnuUI. Desactivá esta opción para conservar tus posiciones de Modo edición."

@@ -23,13 +23,17 @@ function M.build(c, root, loader)
  for id, position in abSource:gmatch("bar(%d+) = {[^\n]-position = '([^']+)'") do
   barPositions[tonumber(id)] = position
  end
- for i=1,15 do
-  local b, name = db.actionbar['bar'..i], 'ElvAB_'..i
+ local bars = {}
+ for i=1,15 do bars[#bars+1] = {key='bar'..i,name='ElvAB_'..i,max=12,position=barPositions[i],id=i} end
+ bars[#bars+1]={key='barPet',name='PetAB',max=10}
+ bars[#bars+1]={key='stanceBar',name='ShiftAB',max=10}
+ for _, spec in ipairs(bars) do
+  local b, name = db.actionbar[spec.key], spec.name
   handled[name] = true
   if b then
    -- ActionBars/ActionBars.lua:172-226,121-146: caja del backdrop y multiplicadores.
    -- Las barras de acciones tienen 12 botones (bucle de PositionAndSizeBar:339).
-   local count = math.min(b.buttons,12)
+   local count = math.min(b.buttons,spec.max)
    if count > 0 then
     local cols = math.max(1,math.min(b.buttonsPerRow,count))
     local rows, gap = math.ceil(count/cols), b.buttonSpacing
@@ -39,18 +43,20 @@ function M.build(c, root, loader)
      w = w+2*b.backdropSpacing+(w+gap)*(math.max(1,b.widthMult)-1)
      h = h+2*b.backdropSpacing+(h+gap)*(math.max(1,b.heightMult)-1)
     end
-    add(name,w,h,pos(name,barPositions[i]),private.actionbar.enable and b.enabled)
+    add(name,w,h,pos(name,spec.position),private.actionbar.enable and b.enabled)
     -- ActionBars/ActionBars.lua:252-260: el frame puede desplazarse respecto del mover.
-    if b.backdrop then
+    if spec.id and b.backdrop then
      local up = b.point == 'BOTTOMLEFT' or b.point == 'BOTTOMRIGHT'
      local left = b.point == 'BOTTOMRIGHT' or b.point == 'TOPRIGHT'
      local anchor = up and 'BOTTOMLEFT' or 'TOPLEFT'
-     nodes['ElvUI_Bar'..i] = {width=w,height=h,enabled=false,
+     nodes['ElvUI_Bar'..spec.id] = {width=w,height=h,enabled=false,
       position=anchor..','..name..','..anchor..','..(left and border or -border)..','..(up and -border or border)}
-    else aliases['ElvUI_Bar'..i] = name end
+    elseif spec.id then aliases['ElvUI_Bar'..spec.id] = name end
    end
   end
  end
+ local xp = db.databars.experience
+ add('ExperienceBarMover',xp.width,xp.height,pos('ExperienceBarMover'),xp.enable)
  local names = {player='Player',target='Target',targettarget='TargetTarget',focus='Focus',
   pet='Pet',focustarget='FocusTarget',pettarget='PetTarget',targettargettarget='TargetTargetTarget',
   party='Party',raid1='Raid1',raid2='Raid2',raid3='Raid3',raidpet='Raidpet'}
@@ -90,6 +96,46 @@ function M.build(c, root, loader)
     private.unitframe.enable and b.enable,note,approximate)
    aliases['ElvUF_'..suffix] = name
   end
+ end
+ -- CastBar.lua:216,300-313: tamaño del holder; el ícono separado sale a la izquierda.
+ local cast = db.unitframe.units.player.castbar
+ if cast and cast.enable and cast.overlayOnFrame == 'None' then
+  local n = add('ElvUF_PlayerCastbarMover',cast.width,cast.height,
+   pos('ElvUF_PlayerCastbarMover'),private.unitframe.enable)
+  if cast.icon and not cast.iconAttached and cast.iconPosition == 'LEFT' and cast.iconAttachedTo == 'Castbar' then
+   n.drawWidth,n.drawHeight,n.drawAnchor=cast.width+cast.iconSize+3,cast.height,'RIGHT'
+  end
+ end
+ -- Auras del objetivo sobre el marco (Auras.lua:438-459,509-510,544).
+ -- Sólo esta disposición conocida; no se inventan anclas para las otras variantes.
+ for _, kind in ipairs({'buffs','debuffs'}) do
+  local b = db.unitframe.units.target[kind]
+  if b.enable and b.attachTo == 'FRAME' and b.anchorPoint == 'TOPLEFT' and b.growthY == 'UP' and b.sizeOverride > 0 then
+   add('ElvUF_Target_'..kind,b.perrow*b.sizeOverride+(b.perrow-1)*b.spacing,
+    b.numrows*b.sizeOverride+(b.numrows-1)*b.spacing,
+    'BOTTOMLEFT,ElvUF_Target,TOPLEFT,'..b.xOffset..','..b.yOffset,
+    private.unitframe.enable,'Capacidad máxima de auras del objetivo.',true)
+  end
+ end
+ -- Los estilos reservan la pila completa: AlertFrameHolder (180×20, AlertFrame.lua)
+ -- y cinco tiradas hacia arriba (LootRoll.lua:443-451). No es una alerta observada en juego.
+ if db.KnuUIStyle then
+  local roll = db.general.lootRoll
+  local n = add('AlertFrameMover',180,20,pos('AlertFrameMover'),true,
+   'Reserva de cinco tiradas; las alertas variables requieren el cliente.',true)
+  n.drawWidth,n.drawHeight,n.drawAnchor=math.max(180,roll.width),
+   20+5*(roll.height+roll.spacing),'BOTTOM'
+  -- Grupos de cinco: Groups/Arena.lua:167-171, Groups/Boss.lua:96-101.
+  for _, unit in ipairs({'arena','boss'}) do
+   local b = db.unitframe.units[unit]
+   local name = unit == 'arena' and 'ArenaHeaderMover' or 'BossHeaderMover'
+   if b.growthDirection == 'DOWN' then
+    local height = b.height+(b.infoPanel.enable and b.infoPanel.height or 0)
+    add(name,b.width,5*height+4*b.spacing,pos(name),private.unitframe.enable and b.enable,
+     'Reserva de cinco unidades; no incluye auras externas.',true)
+   end
+  end
+  add('BNETMover',250,50,pos('BNETMover'),true,'Reserva del aviso de Battle.net.',true)
  end
  -- Layout/Layout.lua:181-210: el mover incluye 23 unidades si tiene datatext integrado.
  for _, side in ipairs({'Left','Right'}) do

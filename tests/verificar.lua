@@ -133,6 +133,7 @@ local function Widget()
  function w:GetAlpha() return 1 end
  function w:RegisterEvent(event) self.events = self.events or {}; self.events[event] = true end
  function w:UnregisterEvent(event) if self.events then self.events[event] = nil end end
+ function w:UnregisterAllEvents() self.events = {} end
  function w:HookScript(event, callback)
   local original = self[event]
   self[event] = function(...) if original then original(...) end; callback(...) end
@@ -270,7 +271,67 @@ do
  assert(Case(ALERT) == ALERT and set == 4 and post == 4, 'tiradas: idempotente')
  E.SetMoverPoints, E.PostAlertMove = oldSet, oldPost
 end
-assert(installer and #installer.Pages == 7 and #installer.StepTitles == 7)
+-- Columna de la guía (x 8-308): las posiciones viejas de KnuUI pasan a la derecha; las demás no se tocan.
+do
+ local NEW = module.guideColumnPoints
+ local set, oldSet = 0, E.SetMoverPoints
+ E.SetMoverPoints = function() set = set + 1 end
+ local function Case(name, current, inCombat)
+  E.db.movers[name] = current
+  combat = inCombat or false
+  module:ClearGuideColumn()
+  combat = false
+  return E.db.movers[name]
+ end
+ for _, name in ipairs({ 'ElvUF_PartyMover', 'ElvUF_Raid1Mover', 'ElvUF_Raid2Mover', 'ElvUF_Raid3Mover' }) do
+  assert(Case(name, 'TOPLEFT,ElvUIParent,LEFT,8,110') == NEW[name] and NEW[name] == 'BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,4,270', name)
+ end
+ assert(set == 4, 'columna: SetMoverPoints del grupo y la banda')
+ -- Crecimiento hacia arriba: sólo si el grupo tenía el DOWN_RIGHT de KnuUI y su mover se migró.
+ local party, updated = E.db.unitframe.units.party, 0
+ local UF, oldGet = { CreateAndUpdateHeaderGroup = function(_, group) updated = updated + 1; assert(group == 'party') end }, E.GetModule
+ E.GetModule = function(self, name, ...) if name == 'UnitFrames' then return UF end return oldGet(self, name, ...) end
+ party.growthDirection = 'DOWN_RIGHT'
+ assert(Case('ElvUF_PartyMover', 'TOPLEFT,ElvUIParent,LEFT,320,110') == NEW.ElvUF_PartyMover, 'columna: valor intermedio')
+ assert(party.growthDirection == 'UP_RIGHT' and updated == 1, 'columna: crece hacia arriba')
+ party.growthDirection = 'DOWN_RIGHT'
+ assert(Case('ElvUF_PartyMover', 'BOTTOM,ElvUIParent,BOTTOM,0,204') and party.growthDirection == 'DOWN_RIGHT', 'columna: sin migrar no cambia el crecimiento')
+ party.growthDirection = 'RIGHT_UP'
+ assert(Case('ElvUF_PartyMover', 'TOPLEFT,ElvUIParent,LEFT,8,110') == NEW.ElvUF_PartyMover and party.growthDirection == 'RIGHT_UP', 'columna: crecimiento ajeno')
+ assert(updated == 1, 'columna: refresca sólo si cambió el crecimiento')
+ -- Banda: forma nueva sólo con los valores de KnuUI (80, 1); un ancho propio se respeta.
+ local raid3, raid1 = E.db.unitframe.units.raid3, E.db.unitframe.units.raid1
+ raid3.growthDirection, raid3.width, raid3.groupsPerRowCol = 'DOWN_RIGHT', 80, 1
+ updated = 0
+ local ok = pcall(Case, 'ElvUF_Raid3Mover', 'TOPLEFT,ElvUIParent,LEFT,8,110')
+ assert(raid3.growthDirection == 'UP_RIGHT' and raid3.width == 80 and raid3.groupsPerRowCol == 2, 'banda 3: 4 columnas de 2')
+ raid1.growthDirection, raid1.width, raid1.groupsPerRowCol = 'DOWN_RIGHT', 90, 1
+ pcall(Case, 'ElvUF_Raid1Mover', 'TOPLEFT,ElvUIParent,LEFT,8,110')
+ assert(raid1.growthDirection == 'UP_RIGHT' and raid1.width == 90 and raid1.groupsPerRowCol == 1, 'banda 1: ancho propio')
+ raid1.growthDirection, raid1.width = 'DOWN_RIGHT', 80
+ pcall(Case, 'ElvUF_Raid1Mover', 'TOPLEFT,ElvUIParent,LEFT,8,110')
+ assert(raid1.width == 72 and raid1.groupsPerRowCol == 1, 'banda 1: 5 columnas de 72')
+ set = set - 3
+ E.GetModule = oldGet
+ set = set - 2
+ assert(Case('GMMover', 'TOPLEFT,ElvUIParent,TOPLEFT,8,-310') == 'TOPLEFT,ElvUIParent,TOPLEFT,320,-310')
+ assert(Case('GMMover', 'TOPLEFT,ElvUIParent,TOPLEFT,270,-8') == 'TOPLEFT,ElvUIParent,TOPLEFT,320,-310', 'GM de Base.lua')
+ assert(Case('LootFrameMover', 'TOPLEFT,ElvUIParent,TOPLEFT,270,-400') == 'TOPLEFT,ElvUIParent,TOPLEFT,530,-400')
+ assert(set == 7, 'columna: SetMoverPoints por cada mover migrado')
+ assert(Case('ElvUF_PartyMover', 'BOTTOM,ElvUIParent,BOTTOM,0,204') == 'BOTTOM,ElvUIParent,BOTTOM,0,204', 'columna: Healer')
+ assert(Case('ElvUF_PartyMover', 'TOPLEFT,ElvUIParent,LEFT,40,90') == 'TOPLEFT,ElvUIParent,LEFT,40,90', 'columna: jugador')
+ assert(Case('LootFrameMover', nil) == nil, 'columna: mover sin valor')
+ assert(Case('ElvUF_PartyMover', 'TOPLEFT,ElvUIParent,LEFT,8,110', true) == 'TOPLEFT,ElvUIParent,LEFT,8,110', 'columna: combate')
+ assert(set == 7, 'columna: en combate no mueve')
+ assert(Case('ElvUF_PartyMover', NEW.ElvUF_PartyMover) == NEW.ElvUF_PartyMover and set == 7, 'columna: idempotente')
+ -- Layout.lua y Base.lua ya escriben las posiciones nuevas.
+ for name, point in pairs(NEW) do
+  if module.blizzardMovers[name] then assert(module.blizzardMovers[name] == point, name) end
+ end
+ assert(module.Base.movers.GMMover == NEW.GMMover, 'Base.lua: GMMover')
+ E.SetMoverPoints = oldSet
+end
+assert(installer and #installer.Pages == 8 and #installer.StepTitles == 8)
 assert(installer.tutorialImage == [[Interface\AddOns\KnuUI\media\logo]])
 assert(installer.tutorialImageSize[1] == 256 and installer.tutorialImageSize[2] == 128)
 assert(not E.db.datatexts.panels.ForeverUI_Data.enable and not E.db.movers.DTPanelForeverUI_DataMover)
@@ -492,7 +553,19 @@ buttons[4].OnClick(); assert(E.db.KnuUIAddonSkins == true)
 pi:SetupReset(); assert(not buttons[1].shown and not buttons[2].shown and not buttons[3].shown and not buttons[4].shown)
 installer.Pages[2](); assert(PluginInstallFrame.Option1.enabled)
 local before = reloads
-installer.Pages[7](); PluginInstallFrame.Option1.OnClick()
+do -- Página de estilos: un botón por estilo y uno para seguir con el diseño propio.
+ local tried, savedTry = {}, module.TryStyle
+ module.TryStyle = function(_, id) tried[#tried+1] = id end
+ installer.Pages[7]()
+ for i = 1, 3 do PluginInstallFrame['Option'..i].OnClick() end
+ assert(table.concat(tried, ',') == 'bruma,tablero,parentesis', 'Instalador: botones de estilo')
+ -- La fila entra en el instalador (550 de ancho, PluginInstaller.lua).
+ local total = 0
+ for i = 1, 4 do total = total + (PluginInstallFrame['Option'..i].width or 0) end
+ assert(total > 0 and total + 3 * 4 <= 550, 'Instalador: fila de estilos dentro del marco')
+ module.TryStyle = savedTry
+end
+installer.Pages[8](); PluginInstallFrame.Option1.OnClick()
 assert(reloads == before + 1)
 
 Fresh(); combat = true
@@ -877,7 +950,11 @@ module:ApplyRole('mdps')
 assert(not units.party.healPrediction.enable and not units.party.buffIndicator.enable)
 assert(units.raid1.buffIndicator.enable == P.unitframe.units.raid1.buffIndicator.enable)
 assert(units.party.debuffs.sizeOverride == P.unitframe.units.party.debuffs.sizeOverride and units.party.width == 200)
-assert(E.db.movers.ElvUF_PartyMover == 'TOPLEFT,ElvUIParent,LEFT,8,110')
+assert(E.db.movers.ElvUF_PartyMover == 'BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,4,270' and units.party.growthDirection == 'UP_RIGHT')
+for i = 1, 3 do assert(E.db.movers['ElvUF_Raid'..i..'Mover'] == module.guideColumnPoints['ElvUF_Raid'..i..'Mover'], 'banda '..i) end
+assert(units.raid1.width == 72 and units.raid2.width == 72 and units.raid3.width == 80 and units.raid3.groupsPerRowCol == 2 and units.raid1.groupsPerRowCol == 1)
+-- Ancho de la banda: hasta x 404, antes del foco (x 409). Entre columnas suma horizontalSpacing y groupSpacing (ElvUI UnitFrames.lua:960,1049).
+for i = 1, 3 do local r = units['raid'..i]; local cols = math.ceil(r.numGroups / r.groupsPerRowCol); assert(4 + cols * r.width + (cols - 1) * (r.horizontalSpacing + r.groupSpacing) <= 404, 'banda '..i..' ancho') end
 combat = true; assert(not module:ApplyRole('healer') and E.db.KnuUIRole == 'mdps'); combat = false
 -- Barra de marcas: botones seguros raidtarget/worldmarker, mover propio y visibilidad por driver.
 do
@@ -1460,6 +1537,237 @@ do
    assert(rawget(ns.L, key), file..': falta traducción de '..key)
   end
  end
+end
+
+-- Perfiles aislados: creación, comandos reales, inicialización y combate.
+do
+ local savedDB, savedGlobal, savedPrivate = E.db, E.global, E.private
+ local savedData, savedElvDB, savedEvents = E.data, ElvDB, module.styleEvents
+ local savedScreen, savedPrint, savedAfter = GetPhysicalScreenSize, E.Print, C_Timer.After
+ -- ReloadUI está bloqueada fuera de un clic: el estilo pide recargar con la ventana CONFIG_RL. Acá cada ventana
+ -- cuenta como una recarga aceptada; una llamada directa a ReloadUI rompe la prueba.
+ local savedPopup, savedReload = E.StaticPopup_Show, ReloadUI
+ E.StaticPopup_Show = function(_, name) popup = name; if name == 'CONFIG_RL' then reloads = reloads + 1 end end
+ ReloadUI = function() error('ReloadUI directo: bloqueado en el juego') end
+ local savedLibStub=LibStub
+ LibStub=nil
+ C_Timer.After=function(_, fn) fn() end
+ local function Equal(a, b)
+  if type(a) ~= type(b) then return false end
+  if type(a) ~= 'table' then return a == b end
+  for k, v in pairs(a) do if not Equal(v, b[k]) then return false end end
+  for k in pairs(b) do if a[k] == nil then return false end end
+  return true
+ end
+ local current, switches, callback = 'Personal', 0, nil
+ local raw = { unitframe={units={player={width=713}}}, ajeno={uno={dos=3}} }
+ local original = E:CopyTable({}, raw)
+ ElvDB = { profiles={ Personal=raw, ['KnuUI ajeno']={ajeno=true},
+  ['Ajeno con marcador']={KnuUIStyle='bruma'} } }
+ E.data = {
+  GetCurrentProfile = function() return current end,
+  SetProfile = function(_, name)
+   assert(ElvDB.profiles[name]); current=name; switches=switches+1
+   -- AceDB aporta defaults al perfil vacío; UpdateAll actualiza E.db antes del callback.
+   if name == 'Personal' then E.db=raw
+   else
+    E.db=E:CopyTable(E:CopyTable({}, P), ElvDB.profiles[name])
+    ElvDB.profiles[name]=E.db
+   end
+   if callback then callback() end
+  end,
+  RegisterCallback = function(owner, event, method)
+   assert(owner == module and event == 'OnProfileChanged' and method == 'StyleProfileChanged')
+   callback=function() owner[method](owner) end
+  end,
+ }
+ Fresh()
+ E.private.KnuUIRole = 'tank'
+ local beforeDB, beforePrivate = E:CopyTable({}, E.db), E:CopyTable({}, E.private)
+ local printed = {}
+ E.Print = function(_, message) printed[#printed+1]=message end
+ assert(knuCommands.perfiles and knuCommands.probar and knuCommands.volver)
+ assert(knuCommands.perfiles.h(''))
+ local list = module:StyleProfiles()
+ assert(#list == 12 and switches == 0 and Equal(raw, original) and Equal(beforeDB,E.db))
+ assert(Equal(beforePrivate,E.private))
+ local categories, names = {}, {}
+ for i, p in ipairs(list) do
+  assert(not names[p.name] and p.name:match('^KnuUI ') and p.name:find(' · '..p.category..' · '..p.role:upper(),1,true))
+  names[p.name],categories[p.category]=true,(categories[p.category] or 0)+1
+  local seed=ElvDB.profiles[p.name]
+  assert(Equal(seed,{KnuUIStyle=p.id,KnuUIRole=p.role,KnuUITanks=false,KnuUIStylePending=true,KnuUITomTomPlaced=true}))
+  assert(printed[i+1+math.ceil(i/4)] == format('%d. %s',i,p.name), 'Lista numerada y agrupada')
+ end
+ assert(categories.Minimalista==4 and categories.Utilidad==4 and categories.Combate==4)
+ local first=ElvDB.profiles[list[1].name]
+ assert(knuCommands.perfiles.h('') and ElvDB.profiles[list[1].name] == first)
+ first.ajeno=true
+ ElvDB.profiles['KnuUI obsoleto']={KnuUIStyle='viejo'}
+ assert(knuCommands.perfiles.h('rehacer'))
+ assert(ElvDB.profiles[list[1].name] ~= first and not ElvDB.profiles[list[1].name].ajeno)
+ assert(not ElvDB.profiles['KnuUI obsoleto'] and ElvDB.profiles['KnuUI ajeno'].ajeno)
+ assert(ElvDB.profiles['Ajeno con marcador'].KnuUIStyle and Equal(raw,original) and switches==0)
+ -- El perfil activo jamás se recrea, tampoco si es un estilo.
+ current=list[1].name; first=ElvDB.profiles[current]
+ assert(module:CreateStyleProfiles(true) and ElvDB.profiles[current]==first)
+ current='Personal'
+ combat=true
+ local snapshot=E:CopyTable({},ElvDB)
+ assert(not knuCommands.perfiles.h('') and not knuCommands.perfiles.h('rehacer'))
+ assert(not knuCommands.probar.h('1') and not knuCommands.volver.h(''))
+ assert(Equal(snapshot,ElvDB) and switches==0 and E.global.KnuUIPreviousProfile==nil)
+ combat=false
+ assert(not module:ApplyStyle('bruma') and Equal(beforeDB,E.db))
+ assert(not module:ApplyPendingStyle())
+ -- Registra el callback que también cubre el selector nativo de ElvUI.
+ module.styleEvents=nil
+ assert(not module:SetupStyles() and callback)
+ local methods = {'ApplyLayout','ApplyChat','ApplyNameplates','ApplyTracker','ApplyTheme','ApplyBase','ApplyRoleOverlay','ApplyStyle'}
+ local excluded = {'ApplyCamera','ApplyCooldownLayout','ApplyAddons','ApplyTanks','ApplyRole'}
+ local originals, order = {}, {}
+ for _, name in ipairs(methods) do
+  local method=name; originals[method]=module[method]
+  module[method]=function(self,...)
+   order[#order+1]=method
+   assert(E.db.KnuUIRole=='healer' and E.private.KnuUIRole=='tank')
+   return originals[method](self,...)
+  end
+ end
+ for _, name in ipairs(excluded) do originals[name]=module[name]; module[name]=function() error('Paso excluido: '..name) end end
+ GetPhysicalScreenSize=function() return 1280,720 end
+ local oldReloads=reloads
+ assert(knuCommands.probar.h('3') and current==list[3].name and E.global.KnuUIPreviousProfile=='Personal')
+ -- ApplyLayout también aplica el overlay; la secuencia explícita conserva el orden auditado.
+ assert(table.concat(order,',')=='ApplyLayout,ApplyRoleOverlay,ApplyChat,ApplyNameplates,ApplyTracker,ApplyTheme,ApplyBase,ApplyRoleOverlay,ApplyStyle')
+ assert(reloads==oldReloads+1 and E.db.KnuUILayoutVersion==module.version and not E.db.KnuUIStylePending)
+ assert(math.abs(E.global.general.UIScale-768/1080)<1e-12, 'Se necesitan las dos dimensiones físicas')
+ assert(E.private.KnuUIRole=='tank' and E.db.KnuUIRole=='healer' and not E.db.KnuUITanks)
+ local globalOnce, privateOnce=E:CopyTable({},E.global),E:CopyTable({},E.private)
+ assert(not module:ApplyPendingStyle() and reloads==oldReloads+1)
+ -- Repetir las escrituras compartidas de la inicialización es idempotente.
+ E.db.KnuUIStylePending=true
+ assert(module:ApplyPendingStyle() and Equal(globalOnce,E.global) and Equal(privateOnce,E.private))
+ -- Extras no debe imponer el rol del personaje sobre el del estilo.
+ local savedCreate, roleCalls=CreateFrame,0
+ C_Timer.After=function(_, fn) fn() end
+ local frames={}
+ CreateFrame=function(...) local f=savedCreate(...); frames[#frames+1]=f; return f end
+ module.ApplyRole=function() roleCalls=roleCalls+1; return false end
+ module:SetupExtras()
+ for _, f in ipairs(frames) do
+  if f.events and f.events.PLAYER_REGEN_DISABLED and f.events.PLAYER_ENTERING_WORLD then f.OnEvent(f,'PLAYER_ENTERING_WORLD') end
+ end
+ assert(roleCalls==0 and E.private.KnuUIRole=='tank' and E.db.KnuUIRole=='healer')
+ E.db.KnuUIStyle=nil
+ module:SetupExtras()
+ for _, f in ipairs(frames) do
+  if f.events and f.events.PLAYER_REGEN_DISABLED and f.events.PLAYER_ENTERING_WORLD then f.OnEvent(f,'PLAYER_ENTERING_WORLD') end
+ end
+ assert(roleCalls>0, 'Extras conserva el rol por personaje fuera de estilos')
+ E.db.KnuUIStyle=list[3].id
+ CreateFrame=savedCreate
+ for name, fn in pairs(originals) do module[name]=fn end
+ oldReloads=reloads; popup=nil
+ assert(knuCommands.volver.h('') and current=='Personal' and Equal(raw,original))
+ assert(popup=='CONFIG_RL' and reloads==oldReloads+1, 'Volver pide recargar con la ventana')
+ oldReloads=reloads; popup=nil
+ local styleCalls, savedApplyStyle = 0, module.ApplyStyle
+ module.ApplyStyle=function(...) styleCalls=styleCalls+1; return savedApplyStyle(...) end
+ assert(knuCommands.probar.h('3') and styleCalls==0, 'Volver a un estilo inicializado no lo reaplica')
+ assert(popup=='CONFIG_RL' and reloads==oldReloads+1, 'Un estilo ya armado pide recargar')
+ module.ApplyStyle=savedApplyStyle
+ assert(knuCommands.volver.h(''))
+ assert(knuCommands.probar.h(list[2].name) and current==list[2].name)
+ -- Probar otro estilo encima de un estilo conserva el perfil del jugador para volver.
+ assert(knuCommands.probar.h('4') and current==list[4].name and E.global.KnuUIPreviousProfile=='Personal')
+ assert(knuCommands.volver.h('') and current=='Personal')
+ -- Instalador: el botón de un estilo crea lo que falte y prueba ese estilo con el rol del perfil activo.
+ assert(knuCommands.volver.h('') and current=='Personal')
+ local roleNow = E.db.KnuUIRole or E.private.KnuUIRole or 'mdps'
+ local beforeCount = 0; for _ in pairs(ElvDB.profiles) do beforeCount = beforeCount + 1 end
+ assert(module:TryStyle('parentesis'))
+ local want; for _, p in ipairs(list) do if p.id=='parentesis' and p.role==roleNow then want=p.name end end
+ assert(want and current==want and E.global.KnuUIPreviousProfile=='Personal', 'Instalador: estilo con el rol actual')
+ local afterCount = 0; for _ in pairs(ElvDB.profiles) do afterCount = afterCount + 1 end
+ assert(afterCount==beforeCount, 'Instalador: no duplica perfiles')
+ assert(not module:TryStyle('inexistente'))
+ assert(knuCommands.volver.h('') and current=='Personal')
+ -- Perfil anterior borrado: volver no hace nada y no falla.
+ E.global.KnuUIPreviousProfile='Borrado'
+ assert(not knuCommands.volver.h('') and current=='Personal')
+ E.global.KnuUIPreviousProfile='Personal'
+ assert(not knuCommands.probar.h('99') and not knuCommands.probar.h('inexistente'))
+ oldReloads=reloads
+ E.data:SetProfile(list[5].name)
+ assert(reloads==oldReloads+1 and not E.db.KnuUIStylePending, 'Selector nativo de ElvUI')
+ assert(knuCommands.volver.h('') and Equal(raw,original))
+ -- AceDB puede avisar antes de que ElvUI cambie E.db. El callback espera un cuadro.
+ local queued={}
+ C_Timer.After=function(_, fn) queued[#queued+1]=fn end
+ oldReloads=reloads
+ callback()
+ assert(#queued==1 and reloads==oldReloads)
+ E.db=E:CopyTable({}, P)
+ E.db.KnuUIStyle,E.db.KnuUIRole,E.db.KnuUIStylePending='bruma','healer',true
+ queued[1]()
+ assert(reloads==oldReloads+1 and not E.db.KnuUIStylePending and E.private.KnuUIRole=='tank')
+ C_Timer.After=function(_, fn) fn() end
+ -- Carga en combate: espera, y sólo inicializa el perfil que siga activo al salir.
+ Fresh(); E.private.KnuUIRole='tank'
+ E.db.KnuUIStyle,E.db.KnuUIRole,E.db.KnuUIStylePending='tablero','healer',true
+ combat=true; oldReloads=reloads
+ module:Initialize()
+ assert(E.db.KnuUIStylePending and reloads==oldReloads)
+ assert(module.styleEvents.events.PLAYER_REGEN_ENABLED)
+ combat=false
+ module.styleEvents.OnEvent(module.styleEvents,'PLAYER_REGEN_ENABLED')
+ assert(reloads==oldReloads+1 and not E.db.KnuUIStylePending and E.private.KnuUIRole=='tank')
+ module.styleEvents.OnEvent(module.styleEvents,'PLAYER_REGEN_ENABLED')
+ assert(reloads==oldReloads+1)
+ E.db.KnuUIStylePending=true; combat=true; module.styleEvents.events.PLAYER_REGEN_ENABLED=nil
+ assert(not module:ApplyPendingStyle() and module.styleEvents.events.PLAYER_REGEN_ENABLED, 'En combate espera sin cortar la carga')
+ E.db.KnuUIStyle=nil; combat=false
+ module.styleEvents.OnEvent(module.styleEvents,'PLAYER_REGEN_ENABLED')
+ assert(reloads==oldReloads+1, 'No aplicar el estilo después de abandonar el perfil pendiente')
+ E.db,E.global,E.private=savedDB,savedGlobal,savedPrivate
+ E.data,ElvDB,module.styleEvents=savedData,savedElvDB,savedEvents
+ GetPhysicalScreenSize,E.Print,C_Timer.After=savedScreen,savedPrint,savedAfter
+ E.StaticPopup_Show, ReloadUI = savedPopup, savedReload
+ LibStub=savedLibStub
+ print('OK: 12 perfiles aislados; comandos, recreación, inicialización, roles y combate.')
+end
+
+-- Flecha de TomTom: la posición vieja de KnuUI (x 300, encima del borde de la guía) pasa a x 316; si el jugador la
+-- movió, no se toca. TomTom guarda la posición en su propio perfil, compartido entre perfiles de ElvUI.
+do
+ local savedTT, savedArrow, savedAfter, savedLoaded = _G.TomTom, _G.TomTomCrazyArrow, C_Timer.After, module.IsLoaded
+ local savedEUI, savedUI, savedDB = E.UIParent.GetEffectiveScale, UIParent.GetEffectiveScale, E.db
+ E.UIParent.GetEffectiveScale = function() return 1 end
+ UIParent.GetEffectiveScale = function() return 1 end
+ C_Timer.After = function(_, fn) fn() end
+ module.IsLoaded = function() return false end
+ local point
+ _G.TomTomCrazyArrow = { ClearAllPoints = function() end, SetPoint = function(_, ...) point = { ... } end }
+ local function Run(pos, placed)
+  E.db = { KnuUITomTomPlaced = placed }
+  _G.TomTom = { profile = { arrow = { position = pos } } }
+  point = nil
+  module:SetupTomTomSkin()
+  return _G.TomTom.profile.arrow.position
+ end
+ local p = Run({ 'TOPLEFT', nil, 'TOPLEFT', 300, -16 }, true)
+ assert(p[4] == 316 and p[5] == -16 and point and point[4] == 316 and E.db.KnuUITomTomPlaced, 'flecha: x 300 pasa a 316')
+ p = Run({ 'TOPLEFT', nil, 'TOPLEFT', 900, -40 }, true)
+ assert(p[4] == 900 and not point, 'flecha: movida por el jugador')
+ p = Run({ 'CENTER', nil, 'CENTER', 0, 0 }, nil)
+ assert(p[4] == 316 and p[1] == 'TOPLEFT', 'flecha: primera vez en el perfil')
+ E.db = { KnuUITomTomPlaced = true, KnuUIStyle = 'tablero' }
+ _G.TomTom = { profile = { arrow = { position = { 'TOPLEFT', nil, 'TOPLEFT', 300, -16 } } } }
+ point = nil; module:SetupTomTomSkin()
+ assert(_G.TomTom.profile.arrow.position[4] == 300 and not point, 'flecha: un perfil de estilo no la mueve')
+ _G.TomTom, _G.TomTomCrazyArrow, C_Timer.After, module.IsLoaded = savedTT, savedArrow, savedAfter, savedLoaded
+ E.UIParent.GetEffectiveScale, UIParent.GetEffectiveScale, E.db = savedEUI, savedUI, savedDB
 end
 
 assert(loadfile('addons/KnuUI/tests/cooldown-viewer.lua'))()
