@@ -1,5 +1,9 @@
 # KnuUI changelog
 
+## 3.6.8 (2026-11-21)
+
+- New KnuUI logo and addon icon: an interface panel instead of the K, matching the other Knu addons.
+
 ## 3.6.7 (2026-11-21)
 
 - Small close buttons are easy to click again. ElvUI's close-button style trims the clickable area for its usual
