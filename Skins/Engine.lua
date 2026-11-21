@@ -9,6 +9,19 @@ local styled = setmetatable({}, { __mode = 'k' })
 P.KnuUIAddonSkins = true
 P.KnuUIAddonSkinsOff = {}
 
+-- Cruz de cierre con el estilo de ElvUI y una zona de clic usable. HandleCloseButton recorta 6 px por costado y 7 arriba
+-- y abajo (ElvUI/Game/Shared/Modules/Skins/Skins.lua, HandleCloseButton), pensado para las cruces de 32 px: en una de
+-- 16 (RareScanner.lua:182) quedaban 4x2 px clickeables (reportado en el juego 2026-11-21). En las chicas se agranda a 22.
+function K:SkinClose(button)
+	if not button then return end
+	S:HandleCloseButton(button)
+	local w, h = button:GetSize()
+	if w and h and w > 0 and h > 0 and (w < 28 or h < 28) then
+		local x, y = math.min(0, (w - 22) / 2), math.min(0, (h - 22) / 2)
+		button:SetHitRectInsets(x, x, y, y)
+	end
+end
+
 local function Enabled(addon)
 	return E.Forever and E.db and E.db.KnuUIAddonSkins ~= false
 		and not (E.db.KnuUIAddonSkinsOff and E.db.KnuUIAddonSkinsOff[addon])
@@ -84,7 +97,7 @@ function K:SkinChildren(frame)
 				-- ScrollFrame usa su ScrollBar; no se pasa el contenedor a un helper de slider.
 				local bar = child.ScrollBar or (kind == 'ScrollFrame' and _G[name..'ScrollBar'])
 				if bar then S:HandleScrollBar(bar); handled[bar] = true; Border(bar) end
-				if name:match('CloseButton$') or child == node.CloseButton then S:HandleCloseButton(child)
+				if name:match('CloseButton$') or child == node.CloseButton then K:SkinClose(child)
 				elseif kind == 'CheckButton' then S:HandleCheckBox(child)
 				elseif kind == 'EditBox' then S:HandleEditBox(child)
 				elseif name:match('ScrollBar$') and kind ~= 'ScrollFrame' then S:HandleScrollBar(child)

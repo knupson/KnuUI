@@ -44,7 +44,7 @@ local function Dress(frame, depth)
 			local parent = frame.GetParent and frame:GetParent()
 			local isLabel = parent and parent.IsObjectType and parent:IsObjectType('CheckButton')
 			if isLabel then -- se deja como está
-			elseif IsClose(frame) then S:HandleCloseButton(frame) else S:HandleButton(frame) end
+			elseif IsClose(frame) then K:SkinClose(frame) else S:HandleButton(frame) end
 		elseif name:match('ScrollBar$') then S:HandleScrollBar(frame)
 		elseif kind == 'Slider' then
 			-- HandleSliderFrame cambia alto/anclajes; se conserva la geometría de Controls.lua:366.

@@ -8,7 +8,7 @@ K:RegisterSkin('RareScanner', function()
 	-- (RareScanner.lua:178-204) que HandleButton borraría. El motor lo aplica fuera de combate.
 	K:WatchAddonFrame('RareScanner', 'RARESCANNER_BUTTON', function(button)
 		local t = K:GetTheme()
-		if button.CloseButton then S:HandleCloseButton(button.CloseButton) end
+		if button.CloseButton then K:SkinClose(button.CloseButton) end
 		K:SkinFont(button.Title, true)
 		K:SkinFont(button.Description_text)
 		-- RareScanner pone el borde blanco/negro al pasar el mouse (RareScanner.lua:116-121):
@@ -31,6 +31,6 @@ K:RegisterSkin('RareScanner', function()
 	-- (:9-30, atlas shop-loading-background y bordes NineSlice en el hijo Border). Sólo el exterior.
 	K:WatchAddonFrame('RareScanner', 'RSExplorerFrame', function(frame)
 		if frame.Border then frame.Border:StripTextures() end
-		if frame.CloseButton then S:HandleCloseButton(frame.CloseButton) end
+		if frame.CloseButton then K:SkinClose(frame.CloseButton) end
 	end, true)
 end)

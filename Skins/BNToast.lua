@@ -26,7 +26,7 @@ local function Style()
 	end
 	if toast.CloseButton and not toast.KnuClose then
 		toast.KnuClose = true
-		pcall(S.HandleCloseButton, S, toast.CloseButton)
+		pcall(K.SkinClose, K, toast.CloseButton)
 	end
 	if not toast.KnuLine then
 		toast.KnuLine = toast:CreateTexture(nil, 'OVERLAY')

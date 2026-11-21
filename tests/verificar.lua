@@ -117,6 +117,7 @@ local function Widget()
  function w:SetPoint(...) self.point = { ... } end
  function w:SetSize(width, height) self.width, self.height = width, height end
  function w:GetSize() return self.width or 400, self.height or 180 end
+ function w:SetHitRectInsets(...) self.hitInsets = { ... } end
  function w:GetTop() return 180 end
  function w:GetBottom() return 0 end
  function w:GetLeft() return 0 end
@@ -1233,6 +1234,16 @@ do
  E.db.KnuUILootMonitor = nil
  CreateFrame = baseCreate
  issecretvalue = nil
+end
+
+-- Cruces de cierre: estilo de ElvUI y, en las chicas, zona de clic de 22 px (ElvUI recorta 6/7 px por lado).
+do
+ local small, big = Widget(), Widget()
+ small:SetSize(16, 16); big:SetSize(32, 32)
+ module:SkinClose(small); module:SkinClose(big); module:SkinClose(nil)
+ assert(skinCallsByHelper[small] == 'HandleCloseButton' and skinCallsByHelper[big] == 'HandleCloseButton')
+ assert(small.hitInsets[1] == -3 and small.hitInsets[2] == -3 and small.hitInsets[3] == -3 and small.hitInsets[4] == -3)
+ assert(big.hitInsets == nil)
 end
 
 -- Votos de las tiradas (LootRollCounts.lua): ElvUI no los escribe en Forever; KnuUI los toma del historial de botín.

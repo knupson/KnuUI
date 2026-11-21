@@ -1,5 +1,11 @@
 # KnuUI changelog
 
+## 3.6.7 (2026-11-21)
+
+- Small close buttons are easy to click again. ElvUI's close-button style trims the clickable area for its usual
+  32 px buttons, which left RareScanner's 16 px close button with a clickable spot of 4 by 2 px. KnuUI now keeps
+  at least 22 px clickable on small close buttons it styles.
+
 ## 3.6.6 (2026-11-20)
 
 - Loot rolls: ElvUI's roll buttons now show how many players picked Need, Greed, Transmog or Pass, and the

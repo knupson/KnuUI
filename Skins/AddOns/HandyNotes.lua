@@ -30,7 +30,7 @@ local function Style(frame)
 	local scroll = frame.descscrollframe
 	Handle(scroll and (scroll.ScrollBar or _G.HandyNotes_EditScrollFrameScrollBar), 'HandleScrollBar')
 	-- Cierre :62; casilla :185; aceptar :203; cancelar :210.
-	Handle(frame.CloseButton, 'HandleCloseButton')
+	if frame.CloseButton and not handled[frame.CloseButton] then K:SkinClose(frame.CloseButton); handled[frame.CloseButton] = true end
 	Handle(frame.continentcheckbox, 'HandleCheckBox')
 	Handle(frame.okbutton, 'HandleButton')
 	Handle(frame.cancelbutton, 'HandleButton')

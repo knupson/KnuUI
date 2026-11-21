@@ -57,7 +57,7 @@ local function Undress(frame, regions, children)
 	for _, c in ipairs({ frame:GetChildren() }) do
 		if not children[c] then
 			if IsNineSlice(c) then c:Hide()
-			elseif IsCloseButton(c) and S and S.HandleCloseButton then S:HandleCloseButton(c) end
+			elseif IsCloseButton(c) and S and S.HandleCloseButton then K:SkinClose(c) end
 		end
 	end
 end
@@ -94,7 +94,7 @@ local function WrapWindow(Look)
 			if text then K:SkinFont(text, true) end
 			if close and S and S.HandleCloseButton and not close.KnuSkinned then
 				close.KnuSkinned = true
-				S:HandleCloseButton(close)
+				K:SkinClose(close)
 			end
 			C_Timer.After(0, function() pcall(SkinControls, frame) end)
 			frame:HookScript('OnShow', function(f) pcall(SkinControls, f) end)
@@ -155,7 +155,7 @@ local function DressMenu()
 	end
 	for _, c in ipairs({ menu:GetChildren() }) do
 		if IsNineSlice(c) then c:Hide()
-		elseif IsCloseButton(c) and S and S.HandleCloseButton then S:HandleCloseButton(c) end
+		elseif IsCloseButton(c) and S and S.HandleCloseButton then K:SkinClose(c) end
 	end
 	Theme(menu)
 end
