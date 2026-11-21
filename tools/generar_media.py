@@ -69,7 +69,7 @@ def hexagono(cx, cy, r, rot=90):
 
 
 def emblema(lado):
-    """Hexágono con borde neón y una K geométrica adentro."""
+    """Hexágono con borde ámbar y un panel de interfaz adentro (antes, una K)."""
     s = 4  # supermuestreo para bordes suaves
     L = lado * s
     cx = cy = L / 2
@@ -83,16 +83,18 @@ def emblema(lado):
     relleno = Image.new("L", (L, L), 0)
     ImageDraw.Draw(relleno).polygon(hexagono(cx, cy, r * 0.84), fill=255)
 
-    # K: asta vertical + dos brazos diagonales.
+    # Panel de interfaz (familia Knu, 2026-11-21): contorno redondeado, dos paneles arriba y una
+    # barra abajo. Mismas reglas que KnuMail y KnuJunk: trazo 5 % del lienzo, caja 46 % x 32 %.
     k = Image.new("L", (L, L), 0)
     dk = ImageDraw.Draw(k)
-    g = L * 0.085  # grosor
-    x0, y0, y1 = cx - L * 0.17, cy - L * 0.24, cy + L * 0.24
-    dk.rectangle([x0, y0, x0 + g, y1], fill=255)
-    # Brazos como polígonos que nacen del asta, sin huecos en la unión.
-    xa, xb = x0 + g * 0.6, cx + L * 0.21
-    dk.polygon([(xa, cy - g * 0.55), (xb - g * 1.1, y0), (xb + g * 0.15, y0), (xa + g * 0.9, cy + g * 0.35)], fill=255)
-    dk.polygon([(xa + g * 0.35, cy - g * 0.35), (xa + g * 1.5, cy - g * 0.9), (xb + g * 0.15, y1), (xb - g * 1.1, y1)], fill=255)
+    t = L * 0.05
+    w, h = L * 0.46, L * 0.32
+    x0, y0, x1, y1 = cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2
+    dk.rounded_rectangle([x0, y0, x1, y1], radius=t, fill=255)
+    dk.rounded_rectangle([x0 + t, y0 + t, x1 - t, y1 - t], radius=t * 0.3, fill=0)
+    yb = y0 + h * 0.66
+    dk.rectangle([x0, yb - t / 2, x1, yb + t / 2], fill=255)
+    dk.rectangle([cx - t / 2, y0, cx + t / 2, yb], fill=255)
 
     capa = Image.new("RGBA", (L, L), (0, 0, 0, 0))
     capa.paste(Image.new("RGBA", (L, L), (*FONDO, 235)), (0, 0), relleno)
