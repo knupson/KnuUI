@@ -64,6 +64,7 @@ function E:GetModule(name)
  if name == 'ActionBars' then return actionbars end
  if name == 'DataTexts' then return { PanelPool = { InUse = { KnuUI_Data = _G.KnuTestData } } } end
  if name == 'Skins' then return skins end
+ if name == 'Misc' then return _G.KnuTestMisc end
  if name == 'AFK' or name == 'Layout' or name == 'Chat' or name == 'Minimap' or name == 'UnitFrames' or name == 'Distributor' then return {} end
  assert(name == 'PluginInstaller'); return pi
 end
@@ -229,6 +230,32 @@ for line in io.lines('addons/KnuUI/KnuUI.toc') do
  local file = line:match('^([%w_/%-]+%.lua)%s*$')
  if file then assert(loadfile('addons/KnuUI/'..file))('KnuUI', ns) end
 end
+-- KnuLib-1.0 AfterCombat (acá no se carga Libs/KnuLib): misma semántica que lib:AfterCombat, una entrada por clave.
+-- RunAfterCombat() hace de PLAYER_REGEN_ENABLED.
+local afterQueue, afterKeys = {}, {}
+local function TestAfterCombat(_, fn, key)
+ if not InCombatLockdown() then fn() return true end
+ local e = key ~= nil and afterKeys[key]
+ if e then e.fn = fn return false end
+ e = { fn = fn }; afterQueue[#afterQueue + 1] = e
+ if key ~= nil then afterKeys[key] = e end
+ return false
+end
+function RunAfterCombat()
+ local q = afterQueue; afterQueue, afterKeys = {}, {}
+ for _, e in ipairs(q) do e.fn() end
+ return #q
+end
+function PendingAfterCombat(key) return afterKeys[key] ~= nil end
+-- Core.lua delega en KnuLib: con una KnuLib falsa, la llamada le llega tal cual.
+do
+ local got
+ local savedLS = LibStub
+ LibStub = function(name) if name == 'KnuLib-1.0' then return { AfterCombat = function(_, fn, key) got = key; return 'kl' end } end end
+ assert(module:AfterCombat(function() end, 'k') == 'kl' and got == 'k', 'AfterCombat no usa KnuLib')
+ LibStub = savedLS
+end
+module.AfterCombat = TestAfterCombat
 -- Reutiliza el entorno sin ejecutar la batería ni sembrar perfiles ajenos.
 if ... == 'render-harness' then
  return { E = E, K = module, fresh = function()
@@ -604,10 +631,10 @@ end
 assert(clicks == 1 and not module.flyout.shown)
 module.launcherAddons.GearQuest.click(); assert(gearClicks == 1)
 local lastHides = hides
-combat = true; module:ScanMinimapButtons(); assert(hides == lastHides and module.minimapScanPending)
+combat = true; module:ScanMinimapButtons(); assert(hides == lastHides and PendingAfterCombat('KnuUI:MinimapScan'))
 assert(not module:ToggleDecor())
-combat = false; module.minimapButtonsEvents.OnEvent(nil, 'PLAYER_REGEN_ENABLED')
-assert(hides == lastHides + 1 and not module.minimapScanPending)
+combat = false; RunAfterCombat()
+assert(hides == lastHides + 1 and not PendingAfterCombat('KnuUI:MinimapScan'))
 LibStub = function() error('biblioteca rota') end
 module:ScanMinimapButtons() -- No propaga el error de LibStub.
 local timers = {}
@@ -680,7 +707,7 @@ for id = 1, 2 do
 end
 Details = {
  GetInstance = function(_, id) return instances[id] end,
- GetPlugin = function(_, name) assert(name == 'Details_TinyThreat'); return plugin end,
+ GetPlugin = function(_, name) assert(name == 'DETAILS_PLUGIN_TINY_THREAT'); return plugin end,
  SetFontColor = function(_, title, color) title:SetTextColor(unpack(color)) end,
  SendEvent = function(_, event) assert(event == 'DETAILS_INSTANCE_SIZECHANGED'); plugin:RefreshRows() end,
 }
@@ -1206,6 +1233,233 @@ do
  E.db.KnuUILootMonitor = nil
  CreateFrame = baseCreate
  issecretvalue = nil
+end
+
+-- Votos de las tiradas (LootRollCounts.lua): ElvUI no los escribe en Forever; KnuUI los toma del historial de botín.
+do
+ wipe = wipe or function(t) for k in pairs(t) do t[k] = nil end return t end
+ tinsert = tinsert or table.insert
+ local secret = {}
+ issecretvalue = function(v) return v == secret end
+ local function Bar()
+  local bar = { rolls = {}, button = {} }
+  for _, key in ipairs({ 'need', 'greed', 'pass', 'disenchant', 'transmog' }) do bar[key] = { text = Widget() } end
+  return bar
+ end
+ local misc = { RollBars = { Bar(), Bar(), Bar(), Bar() } }
+ local starts = {}
+ function misc:START_LOOT_ROLL(_, rollID) local s = starts[rollID]; s.bar.rollID = rollID; s.bar.button.link = s.link; wipe(s.bar.rolls) end
+ _G.KnuTestMisc = misc
+ local history, queried = {}, 0
+ C_LootHistory = { GetSortedInfoForDrop = function(e, k) queried = queried + 1; return history[e..':'..k] end }
+ local frame
+ local baseCreate = CreateFrame
+ CreateFrame = function(...) frame = baseCreate(...); return frame end
+ module:SetupLootRollCounts()
+ CreateFrame = baseCreate
+ assert(frame.events.LOOT_HISTORY_UPDATE_DROP and frame.events.LOOT_HISTORY_CLEAR_HISTORY)
+ local function Fire(e, k) frame.OnEvent(frame, 'LOOT_HISTORY_UPDATE_DROP', e, k) end
+ local function Text(bar, key) return bar[key].text.text end
+ local A = '|cff0070dd|Hitem:500::::::::60:::::|h[Diseño A]|h|r'
+ local function R(name, state) return { playerName = name, playerClass = 'MAGE', state = state } end
+ local b1, b2, b3 = misc.RollBars[1], misc.RollBars[2], misc.RollBars[3]
+ -- 1) Barra a la vista y votos: necesidad (principal y secundaria), codicia, paso; sin tirar no cuenta.
+ starts[11] = { bar = b1, link = A }; misc:START_LOOT_ROLL('START_LOOT_ROLL', 11)
+ history['0:1'] = { itemHyperlink = A, rollInfos = { R('Ana', 0), R('Beto', 1), R('Caro', 3), R('Dani', 5), R('Eva', 4) } }
+ Fire(0, 1)
+ assert(Text(b1, 'need') == 2 and Text(b1, 'greed') == 1 and Text(b1, 'pass') == 1 and Text(b1, 'transmog') == '')
+ assert(#b1.rolls[1] == 2 and b1.rolls[1][1][1] == 'Ana' and b1.rolls[1][1][2] == 'MAGE' and b1.rolls[0][1][1] == 'Dani')
+ -- Un voto más actualiza la misma barra sin duplicar.
+ history['0:1'].rollInfos[5] = R('Eva', 2)
+ Fire(0, 1)
+ assert(Text(b1, 'need') == 2 and Text(b1, 'transmog') == 1)
+ -- Una segunda tirada del mismo objeto no le roba el objeto atado a la barra 1.
+ local b4 = misc.RollBars[4]
+ starts[13] = { bar = b4, link = A }; misc:START_LOOT_ROLL('START_LOOT_ROLL', 13)
+ history['0:1'].rollInfos[6] = R('Fede', 3)
+ Fire(0, 1)
+ assert(Text(b1, 'greed') == 2 and Text(b4, 'greed') == nil)
+ b4.rollID = nil
+ -- Otro objeto igual sin barra propia no pisa la barra 1, que ya tiene dueño.
+ history['0:5'] = { itemHyperlink = A, rollInfos = { R('Gus', 5), R('Hugo', 5) } }
+ Fire(0, 5)
+ assert(Text(b1, 'pass') == 1)
+ history['0:5'].allPassed = true; Fire(0, 5)
+ -- 2) Votos antes que la barra, con un enlace distinto del mismo objeto: se pintan al mostrarse (por número de objeto).
+ history['0:2'] = { itemHyperlink = '|Hitem:600::::::::60|h[B]|h', rollInfos = { R('Ana', 3) } }
+ Fire(0, 2)
+ assert(Text(b2, 'greed') == nil)
+ starts[21] = { bar = b2, link = '|cff1eff00|Hitem:600::::::::61:::::|h[B]|h|r' }
+ misc:START_LOOT_ROLL('START_LOOT_ROLL', 21)
+ assert(Text(b2, 'greed') == 1)
+ -- 3) Dos barras con el mismo objeto: no se adivina.
+ local C = '|Hitem:700|h[C]|h'
+ starts[31] = { bar = b3, link = C }; misc:START_LOOT_ROLL('START_LOOT_ROLL', 31)
+ b2.rollID, b2.button.link = 32, C
+ history['0:3'] = { itemHyperlink = C, rollInfos = { R('Ana', 0) } }
+ Fire(0, 3)
+ assert(Text(b3, 'need') == nil and next(b3.rolls) == nil)
+ -- 4) Sin datos (nil) no rompe; 5) secreto y tiradas de ElvUI apagadas no consultan.
+ Fire(0, 99)
+ local before = queried
+ module:LootHistoryDrop(secret, 1); module:LootHistoryDrop(0, secret) -- sin pcall: un error rompe la prueba
+ E.private.general.lootRoll = false; Fire(0, 1); E.private.general.lootRoll = true
+ assert(queried == before)
+ -- 6) Objeto terminado (ganador) que no tenía barra: no se guarda ni se pinta en una tirada nueva del mismo objeto.
+ local D = '|Hitem:800|h[D]|h'
+ history['0:4'] = { itemHyperlink = D, winner = R('Ana', 0), rollInfos = { R('Ana', 0) } }
+ Fire(0, 4)
+ b3.rollID = nil
+ starts[41] = { bar = b3, link = D }; misc:START_LOOT_ROLL('START_LOOT_ROLL', 41)
+ assert(Text(b3, 'need') == nil)
+ -- 7) Al terminar la tirada de la barra 1, el objeto se suelta: una tirada nueva del mismo objeto no hereda sus votos.
+ history['0:1'].winner = R('Ana', 0); Fire(0, 1)
+ starts[12] = { bar = b1, link = A }; b1.need.text.text = nil
+ misc:START_LOOT_ROLL('START_LOOT_ROLL', 12)
+ assert(b1.need.text.text == nil)
+ -- 8) Dos objetos iguales esperando barra (revisión de Codex): la barra nueva no se queda con ninguno.
+ local G2 = '|Hitem:900|h[G]|h'
+ history['0:6'] = { itemHyperlink = G2, rollInfos = { R('Ana', 3) } }
+ history['0:7'] = { itemHyperlink = G2, rollInfos = { R('Beto', 5) } }
+ Fire(0, 6); Fire(0, 7)
+ b2.rollID = nil
+ starts[61] = { bar = b2, link = G2 }; b2.greed.text.text, b2.pass.text.text = nil, nil
+ misc:START_LOOT_ROLL('START_LOOT_ROLL', 61)
+ assert(b2.greed.text.text == nil and b2.pass.text.text == nil)
+ history['0:6'].allPassed, history['0:7'].allPassed = true, true; Fire(0, 6); Fire(0, 7)
+ -- 9) Barra cancelada con el objeto todavía abierto: otra tirada del mismo objeto no hereda esos votos.
+ local H = '|Hitem:950|h[H]|h'
+ b4.rollID = nil
+ starts[71] = { bar = b4, link = H }; misc:START_LOOT_ROLL('START_LOOT_ROLL', 71)
+ history['0:8'] = { itemHyperlink = H, rollInfos = { R('Ana', 0) } }
+ Fire(0, 8)
+ assert(Text(b4, 'need') == 1)
+ b4.need.text.text = nil
+ starts[72] = { bar = b4, link = H }; misc:START_LOOT_ROLL('START_LOOT_ROLL', 72)
+ Fire(0, 8)
+ assert(b4.need.text.text == nil)
+ -- 10) Secuencia combinada (revisión de Codex): dos objetos iguales, barra bloqueada y cancelada, uno termina, barra
+ -- nueva del mismo ítem: no hereda los votos del objeto cancelado.
+ local J = '|Hitem:960|h[J]|h'
+ history['0:9'] = { itemHyperlink = J, rollInfos = { R('Ana', 0) } }
+ history['0:10'] = { itemHyperlink = J, rollInfos = { R('Beto', 3) } }
+ Fire(0, 9); Fire(0, 10)
+ b2.rollID = nil
+ starts[81] = { bar = b2, link = J }; misc:START_LOOT_ROLL('START_LOOT_ROLL', 81)
+ b2.rollID = nil -- cancelada
+ history['0:10'].winner = R('Beto', 3); Fire(0, 10)
+ starts[82] = { bar = b2, link = J }; b2.need.text.text = nil
+ misc:START_LOOT_ROLL('START_LOOT_ROLL', 82)
+ Fire(0, 9)
+ assert(b2.need.text.text == nil)
+ -- 11) Un objeto y dos barras posibles; una se cancela: el objeto no se ata a la que queda.
+ local L2 = '|Hitem:970|h[L]|h'
+ b3.rollID, b4.rollID = nil, nil
+ starts[91] = { bar = b3, link = L2 }; misc:START_LOOT_ROLL('START_LOOT_ROLL', 91)
+ starts[92] = { bar = b4, link = L2 }; misc:START_LOOT_ROLL('START_LOOT_ROLL', 92)
+ history['0:11'] = { itemHyperlink = L2, rollInfos = { R('Ana', 5) } }
+ Fire(0, 11)
+ b4.rollID = nil; b3.pass.text.text = nil
+ Fire(0, 11)
+ assert(b3.pass.text.text == nil)
+ -- 12) Secuencia de Codex: dos barras iguales A y B, llega el objeto de una (ambiguo), se cancela A, llega el objeto
+ -- de una tercera tirada antes que su barra: no se ata a B. El ítem queda bloqueado mientras haya involucrados.
+ local M = '|Hitem:980|h[M]|h'
+ b3.rollID, b4.rollID = nil, nil
+ starts[101] = { bar = b3, link = M }; misc:START_LOOT_ROLL('START_LOOT_ROLL', 101)
+ starts[102] = { bar = b4, link = M }; misc:START_LOOT_ROLL('START_LOOT_ROLL', 102)
+ history['0:12'] = { itemHyperlink = M, rollInfos = { R('Ana', 0) } }
+ Fire(0, 12)
+ b3.rollID = nil -- se cancela A
+ history['0:13'] = { itemHyperlink = M, rollInfos = { R('Beto', 5) } }
+ b4.need.text.text, b4.pass.text.text = nil, nil
+ Fire(0, 13)
+ assert(b4.need.text.text == nil and b4.pass.text.text == nil)
+ starts[103] = { bar = b3, link = M }; misc:START_LOOT_ROLL('START_LOOT_ROLL', 103)
+ Fire(0, 13)
+ assert(b3.pass.text.text == nil and b4.pass.text.text == nil)
+ -- 13) Terminan los objetos y se cierran las barras: el bloqueo se levanta y la tirada siguiente sí muestra números.
+ history['0:12'].winner = R('Ana', 0); history['0:13'].allPassed = true; Fire(0, 12); Fire(0, 13)
+ b3.rollID, b4.rollID = nil, nil
+ starts[104] = { bar = b3, link = M }; misc:START_LOOT_ROLL('START_LOOT_ROLL', 104)
+ history['0:14'] = { itemHyperlink = M, rollInfos = { R('Caro', 3) } }
+ Fire(0, 14)
+ assert(Text(b3, 'greed') == 1)
+ -- 14) El objeto involucrado terminó pero una barra involucrada sigue a la vista: el ítem sigue bloqueado.
+ local N = '|Hitem:990|h[N]|h'
+ b3.rollID, b4.rollID = nil, nil
+ starts[105] = { bar = b3, link = N }; misc:START_LOOT_ROLL('START_LOOT_ROLL', 105)
+ starts[106] = { bar = b4, link = N }; misc:START_LOOT_ROLL('START_LOOT_ROLL', 106)
+ history['0:15'] = { itemHyperlink = N, rollInfos = { R('Ana', 0) } }
+ Fire(0, 15)
+ history['0:15'].winner = R('Ana', 0); Fire(0, 15)
+ b3.rollID = nil
+ history['0:16'] = { itemHyperlink = N, rollInfos = { R('Beto', 0) } }
+ b4.need.text.text = nil
+ Fire(0, 16)
+ assert(b4.need.text.text == nil)
+ -- 15) Secuencia de Codex: A y B bloquean el ítem, termina el objeto, aparece C con B a la vista, se cierra B, llega el
+ -- objeto de D antes que su barra: no se ata a C (C apareció bloqueada).
+ local O = '|Hitem:995|h[O]|h'
+ b1.rollID, b2.rollID, b3.rollID, b4.rollID = nil, nil, nil, nil
+ starts[111] = { bar = b1, link = O }; misc:START_LOOT_ROLL('START_LOOT_ROLL', 111)
+ starts[112] = { bar = b2, link = O }; misc:START_LOOT_ROLL('START_LOOT_ROLL', 112)
+ history['0:17'] = { itemHyperlink = O, rollInfos = { R('Ana', 0) } }
+ Fire(0, 17)
+ history['0:17'].winner = R('Ana', 0); Fire(0, 17)
+ b1.rollID = nil
+ starts[113] = { bar = b3, link = O }; misc:START_LOOT_ROLL('START_LOOT_ROLL', 113)
+ b2.rollID = nil
+ history['0:18'] = { itemHyperlink = O, rollInfos = { R('Beto', 0) } }
+ b3.need.text.text = nil
+ Fire(0, 18)
+ assert(b3.need.text.text == nil)
+ -- 16) Secuencia de Codex: A tiene barra, B del mismo ítem espera, A termina con su barra todavía a la vista, llega B:
+ -- no toma la barra de A. Cuando la barra de A se cierra y aparece la de B, B sí se pinta.
+ local Q = '|Hitem:997|h[Q]|h'
+ b1.rollID, b2.rollID, b3.rollID, b4.rollID = nil, nil, nil, nil
+ starts[121] = { bar = b1, link = Q }; misc:START_LOOT_ROLL('START_LOOT_ROLL', 121)
+ history['0:19'] = { itemHyperlink = Q, rollInfos = { R('Ana', 0) } }
+ Fire(0, 19)
+ assert(Text(b1, 'need') == 1)
+ history['0:20'] = { itemHyperlink = Q, rollInfos = { R('Beto', 5) } }
+ Fire(0, 20)
+ history['0:19'].winner = R('Ana', 0); Fire(0, 19)
+ b1.pass.text.text = nil
+ Fire(0, 20)
+ assert(b1.pass.text.text == nil)
+ b1.rollID = nil
+ starts[122] = { bar = b2, link = Q }; misc:START_LOOT_ROLL('START_LOOT_ROLL', 122)
+ assert(Text(b2, 'pass') == 1)
+ -- 17) Un objeto terminado cuya barra ya se cerró no deja el ítem bloqueado para siempre.
+ local T = '|Hitem:998|h[T]|h'
+ b1.rollID, b2.rollID, b3.rollID, b4.rollID = nil, nil, nil, nil
+ starts[131] = { bar = b1, link = T }; misc:START_LOOT_ROLL('START_LOOT_ROLL', 131)
+ history['0:21'] = { itemHyperlink = T, rollInfos = { R('Ana', 0) } }
+ Fire(0, 21)
+ starts[132] = { bar = b2, link = T }; misc:START_LOOT_ROLL('START_LOOT_ROLL', 132)
+ starts[133] = { bar = b3, link = T }; misc:START_LOOT_ROLL('START_LOOT_ROLL', 133)
+ history['0:22'] = { itemHyperlink = T, rollInfos = { R('Beto', 0) } }
+ Fire(0, 22) -- dos barras libres: el ítem queda bloqueado, con 0:21 involucrado
+ history['0:21'].winner = R('Ana', 0); Fire(0, 21)
+ history['0:22'].allPassed = true; Fire(0, 22)
+ b1.rollID, b2.rollID, b3.rollID = nil, nil, nil
+ starts[134] = { bar = b4, link = T }; misc:START_LOOT_ROLL('START_LOOT_ROLL', 134)
+ history['0:23'] = { itemHyperlink = T, rollInfos = { R('Caro', 3) } }
+ Fire(0, 23)
+ assert(Text(b4, 'greed') == 1)
+ -- 18) Secuencia de Codex: dos barras iguales antes del historial, se cancela A y llega su objeto todavía abierto: no
+ -- se ata a B.
+ local U = '|Hitem:999|h[U]|h'
+ b1.rollID, b2.rollID, b3.rollID, b4.rollID = nil, nil, nil, nil
+ starts[141] = { bar = b1, link = U }; misc:START_LOOT_ROLL('START_LOOT_ROLL', 141)
+ starts[142] = { bar = b2, link = U }; misc:START_LOOT_ROLL('START_LOOT_ROLL', 142)
+ b1.rollID = nil
+ history['0:24'] = { itemHyperlink = U, rollInfos = { R('Ana', 0) } }
+ b2.need.text.text = nil
+ Fire(0, 24)
+ assert(b2.need.text.text == nil)
+ _G.KnuTestMisc, C_LootHistory, issecretvalue = nil, nil, nil
 end
 
 -- Rangos: cadena = nombre sin mayúsculas/acentos + ícono original (Ranks.lua). Casos del juego: Martillo de
@@ -1768,6 +2022,104 @@ do
  assert(_G.TomTom.profile.arrow.position[4] == 300 and not point, 'flecha: un perfil de estilo no la mueve')
  _G.TomTom, _G.TomTomCrazyArrow, C_Timer.After, module.IsLoaded = savedTT, savedArrow, savedAfter, savedLoaded
  E.UIParent.GetEffectiveScale, UIParent.GetEffectiveScale, E.db = savedEUI, savedUI, savedDB
+end
+
+-- Auditoría 2026-11-19 (Codex): cámara sólo en el perfil «KnuUI» de DynamicCam, build Healer -> Tank sin
+-- arrastrar el grupo del Healer, animación reemplazada que no sigue corriendo y flecha por la guía de Shortest Path.
+do
+ local savedAfter, savedLoaded = C_Timer.After, module.IsLoaded
+ C_Timer.After = function(_, fn) fn() end
+ local function Cam(profile)
+  local s = { ['300'] = { transitionTime = { timeToEnter = 1, timeToExit = 1 }, rotation = { enabled = true } } }
+  _G.DynamicCam = { db = { profile = { standardSettings = { cvars = {} }, situations = s },
+   GetCurrentProfile = function() return profile end } }
+  module.IsLoaded = function(_, name) return name == 'DynamicCam' or savedLoaded(module, name) end
+  E.global.KnuUICameraApplied, E.global.KnuUICombatZoomV = true, 2
+  module:SetupCombatZoom()
+  return s['300']
+ end
+ -- La migración única (KnuUICombatZoomV) tampoco cambia un perfil ajeno al de KnuUI.
+ local applied = false
+ local savedApply = module.ApplyCamera
+ module.ApplyCamera = function() applied = true; return true end
+ Cam('Mi perfil'); E.global.KnuUICombatZoomV = nil; module:SetupCombatZoom()
+ assert(not applied and E.global.KnuUICombatZoomV == nil, 'cámara: la migración pisó un perfil ajeno')
+ module.ApplyCamera = savedApply
+ local mine = Cam('Mi perfil')
+ assert(mine.rotation.enabled == true and mine.transitionTime.timeToEnter == 1, 'cámara: perfil ajeno intacto')
+ local knu = Cam('KnuUI')
+ assert(knu.rotation.enabled == false and knu.transitionTime.timeToEnter == 2.5, 'cámara: perfil KnuUI suavizado')
+ _G.DynamicCam, E.global.KnuUICameraApplied, E.global.KnuUICombatZoomV = nil, nil, nil
+ module.IsLoaded = savedLoaded
+
+ -- Motion: una animación reemplazada por otra que ya está en su valor no sigue escribiendo el valor viejo.
+ local v = 0
+ module:Tween('auditoria', 0, 1, 0.25, function(x) v = x end)
+ module:Tween('auditoria', 0, 0, 0.25, function(x) v = x end)
+ module:FlushTweens()
+ assert(v == 0, 'motion: la animación vieja quedó corriendo')
+
+ -- Builds: Healer -> Tank deja el grupo igual que Melee -> Tank.
+ local savedClass = E.myclass
+ E.myclass = 'DRUID'
+ local party = E.db.unitframe.units.party
+ assert(module:ApplyBuild('DRUID_mdps') and module:ApplyBuild('DRUID_tank'))
+ local ref = { party.width, party.growthDirection, E.db.movers.ElvUF_PartyMover }
+ assert(module:ApplyBuild('DRUID_healer') and party.width == 82)
+ assert(module:ApplyBuild('DRUID_tank'))
+ assert(party.width == ref[1] and party.growthDirection == ref[2] and E.db.movers.ElvUF_PartyMover == ref[3],
+  'builds: el grupo del Healer quedó en la build Tank')
+ E.myclass = savedClass
+ C_Timer.After = savedAfter
+end
+
+-- TomTomRoute: la flecha sigue la próxima curva de API.Guidance (sin punto de usuario del juego), se actualiza
+-- por la suscripción, y nunca borra un punto de TomTom que no creó KnuUI.
+do
+ local savedTT, savedSPF, savedLoaded, savedHooked = _G.TomTom, _G.ShortestPathForever, module.IsLoaded, module.tomtomRouteHooked
+ local savedRoute, savedQuiet = E.db.KnuUITomTomRoute, E.global.KnuUISPFQuiet
+ local points, removed, arrow, listener = {}, {}, nil, nil
+ local guidance = { point = { map = 1, x = 0.2, y = 0.3 } }
+ local tt = {}
+ function tt:SetCrazyArrow(uid) arrow = uid end
+ function tt:IsValidWaypoint(uid) return not removed[uid] end
+ function tt:RemoveWaypoint(uid) removed[uid] = true end
+ function tt:AddWaypoint(m, x, y, opts)
+  local key = m..':'..x..':'..y..':'..tostring(opts.title)
+  if points[key] and not removed[points[key]] then return points[key] end
+  local uid = { m, x, y, title = opts.title, from = opts.from }
+  points[key] = uid; arrow = uid
+  return uid
+ end
+ _G.TomTom = tt
+ local stop = true
+ _G.ShortestPathForever = { API = {
+  Navigate = function() return true end,
+  CurrentStop = function() return stop end,
+  Guidance = function() return guidance end,
+  Subscribe = function(fn) listener = fn end,
+ } }
+ module.IsLoaded = function(_, name) return name == 'TomTom' or name == 'ShortestPathForever' or savedLoaded(module, name) end
+ module.tomtomRouteHooked, E.db.KnuUITomTomRoute, E.global.KnuUISPFQuiet = nil, nil, true
+ module:SetupTomTomRoute()
+ assert(type(listener) == 'function', 'ruta: sin suscripción a Shortest Path')
+ local dest = { 1, 0.8, 0.9, title = 'Destino', from = 'WoWPro' }
+ points['1:0.8:0.9:Destino'] = dest
+ tt:SetCrazyArrow(dest)
+ assert(arrow and arrow ~= dest and arrow[2] == 0.2 and arrow.from == 'KnuUI', 'ruta: la flecha no fue a la curva')
+ local first = arrow
+ guidance = { point = { map = 1, x = 0.5, y = 0.5 } }
+ listener({ guidance = 1 })
+ assert(removed[first] and arrow[2] == 0.5, 'ruta: la suscripción no movió la flecha')
+ -- La curva cae justo en el destino (mismo mapa, coordenadas y título): TomTom devuelve el original.
+ guidance = { point = { map = 1, x = 0.8, y = 0.9 } }
+ listener({ guidance = 1 })
+ assert(arrow == dest and not removed[dest], 'ruta: no apunta al destino original')
+ stop = false
+ listener({ ended = 1 })
+ assert(not removed[dest] and arrow == dest, 'ruta: al terminar borró el punto original')
+ _G.TomTom, _G.ShortestPathForever, module.IsLoaded, module.tomtomRouteHooked = savedTT, savedSPF, savedLoaded, savedHooked
+ E.db.KnuUITomTomRoute, E.global.KnuUISPFQuiet = savedRoute, savedQuiet
 end
 
 assert(loadfile('addons/KnuUI/tests/cooldown-viewer.lua'))()

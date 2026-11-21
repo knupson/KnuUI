@@ -106,4 +106,20 @@ E.db.KnuUICC.mapOrig = { window = false, windowSize = false, windowScale = 1 }
 OpenMapDB.worldmap.window = { 'TOPLEFT', 'BOTTOMLEFT', 5, 2000 }
 CC:Apply()
 check(OpenMapDB.worldmap.window == false, 'sesión nueva sin Offhand repone el mapa')
+-- 5) un bloque que vuelve al juego recupera su letra (auditoría 2026-11-19)
+E.db.chat = E.db.chat or { fontSize = 12 }
+E.db.KnuUICC.fontOrig = nil
+spanned = true; CC:Apply()
+local orig = E.db.KnuUICC.fontOrig and E.db.KnuUICC.fontOrig.chat
+check(orig and E.db.chat.fontSize == orig + 4, 'chat con letra grande arriba')
+E.db.KnuUICC.blocks.chat = 'game'
+CC:ApplyFonts(true)
+check(E.db.chat.fontSize == orig, 'chat devuelto al juego con su letra (' .. tostring(E.db.chat.fontSize) .. ')')
+E.db.KnuUICC.blocks.details = 'game'
+CC:ApplyFonts(true)
+check(K.CCDetailsFont == nil and K.CCDetailsRow == nil, 'Details devuelto al juego con su letra')
+E.db.KnuUICC.blocks.details = nil
+E.db.KnuUICC.blocks.chat = nil
+spanned = false; CC:Apply()
 print(fails == 0 and 'CICLO OK' or ('FALLAS ' .. fails))
+if fails > 0 then os.exit(1) end

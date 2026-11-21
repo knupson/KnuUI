@@ -131,15 +131,7 @@ end
 function K:SetupButtons()
  if self.buttons then return end
  if InCombatLockdown() then
-  if not self.buttonsWait then
-   self.buttonsWait = CreateFrame('Frame')
-   self.buttonsWait:RegisterEvent('PLAYER_REGEN_ENABLED')
-   self.buttonsWait:SetScript('OnEvent', function(frame)
-    frame:UnregisterEvent('PLAYER_REGEN_ENABLED')
-    K.buttonsWait = nil
-    K:SetupButtons()
-   end)
-  end
+  K:AfterCombat(function() K:SetupButtons() end, 'KnuUI:Buttons')
   return
  end
  local button = CreateFrame('Button', 'KnuUI_Buttons', E.UIParent)

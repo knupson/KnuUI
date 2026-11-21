@@ -18,6 +18,15 @@ end
 
 K.Set = Set
 
+-- «Hacelo cuando se pueda»: ya fuera de combate, o al terminar el combate (una vez por clave). La cola es la de
+-- KnuLib-1.0 minor 5 (Libs/KnuLib/KnuLib.lua, lib:AfterCombat), embebida en el .toc: siempre está.
+function K:AfterCombat(fn, key)
+	local KL = LibStub and LibStub('KnuLib-1.0', true)
+	if KL and KL.AfterCombat then return KL:AfterCombat(fn, key) end
+	if not InCombatLockdown() then fn() return true end
+	return false
+end
+
 -- Datatext de la estadística principal según la clase ('Primary Stat' mostraba Intelecto sin
 -- especialización en Forever).
 local STAT_BY_CLASS = {
@@ -110,7 +119,7 @@ function K:Initialize()
 	if E.Forever and self:SetupStyles() then return end
 	self:SetupAFK()
 	if E.Forever then
-		for _, setup in ipairs({ 'SetupAddonSkins', 'SetupButtons', 'SetupDock', 'SetupWoWProSkin', 'SetupTanks', 'SetupTracker', 'SetupDecor', 'SetupPanels', 'SetupWoWProES', 'SetupTomTomSkin', 'SetupBaganatorSkin', 'SetupExtras', 'SetupBNToast', 'SetupRaidMarkers', 'SetupFlightTimer', 'SetupCombatZoom', 'SetupPanelFade', 'SetupLootMonitor', 'SetupRankUpgrade', 'SetupPawnSpec', 'SetupTomTomRoute', 'SetupOffhand', 'SetupWorkspace', 'SetupMinimapZoom', 'SetupUIPanels', 'SetupCooldownAutoFit' }) do
+		for _, setup in ipairs({ 'SetupAddonSkins', 'SetupButtons', 'SetupDock', 'SetupWoWProSkin', 'SetupTanks', 'SetupTracker', 'SetupDecor', 'SetupPanels', 'SetupWoWProES', 'SetupTomTomSkin', 'SetupBaganatorSkin', 'SetupExtras', 'SetupBNToast', 'SetupRaidMarkers', 'SetupFlightTimer', 'SetupCombatZoom', 'SetupPanelFade', 'SetupLootMonitor', 'SetupLootRollCounts', 'SetupRankUpgrade', 'SetupPawnSpec', 'SetupTomTomRoute', 'SetupOffhand', 'SetupWorkspace', 'SetupMinimapZoom', 'SetupUIPanels', 'SetupCooldownAutoFit' }) do
 			local ok, err = pcall(self[setup], self)
 			if not ok then E:Print(format(L["KnuUI: %s failed: %s"], setup, tostring(err))) end
 		end

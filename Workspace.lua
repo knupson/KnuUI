@@ -492,17 +492,23 @@ function CC:ApplyFonts(on)
 			db.fontOrig = { chat = E.db.chat.fontSize, step = W and W.stepfontsize, note = W and W.notefontsize }
 		end
 		local o = db.fontOrig
-		if Dest('chat') == 'workspace' and o.chat then E.db.chat.fontSize = o.chat + FONT_UP end
-		if Dest('details') == 'workspace' then K.CCDetailsFont, K.CCDetailsRow = 12 + FONT_UP, 16 + FONT_UP + 2 end
+		-- Cada bloque: letra grande si va al monitor de arriba; si volvió al juego, su letra original.
+		if o.chat then E.db.chat.fontSize = Dest('chat') == 'workspace' and o.chat + FONT_UP or o.chat end
+		if Dest('details') == 'workspace' then K.CCDetailsFont, K.CCDetailsRow = 12 + FONT_UP, 16 + FONT_UP + 2
+		else K.CCDetailsFont, K.CCDetailsRow = nil, nil end
 		local dp = E.db.datatexts and E.db.datatexts.panels and E.db.datatexts.panels.KnuUI_Data
 		if dp and Dest('data') == 'workspace' then
 			if o.dataFonts == nil then o.dataFonts = dp.fonts and E:CopyTable({}, dp.fonts) or false end
 			local base = tonumber(E.db.datatexts.fontSize) or 12
 			dp.fonts = { enable = true, font = E.db.datatexts.font, fontSize = base + FONT_UP, fontOutline = E.db.datatexts.fontOutline }
+		elseif dp and o.dataFonts ~= nil then
+			dp.fonts = o.dataFonts or nil
+			o.dataFonts = nil
 		end
-		if W and Dest('guide') == 'workspace' then
-			if o.step then W.stepfontsize = o.step + FONT_UP end
-			if o.note then W.notefontsize = o.note + FONT_UP end
+		if W then
+			local up = Dest('guide') == 'workspace' and FONT_UP or 0
+			if o.step then W.stepfontsize = o.step + up end
+			if o.note then W.notefontsize = o.note + up end
 		end
 	else
 		local o = db.fontOrig

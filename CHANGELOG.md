@@ -1,5 +1,22 @@
 # KnuUI changelog
 
+## 3.6.6 (2026-11-20)
+
+- Loot rolls: ElvUI's roll buttons now show how many players picked Need, Greed, Transmog or Pass, and the
+  button tooltip lists who. In Forever ElvUI never got that data; KnuUI reads it from the game's loot history.
+  If two rolls for the same item are open at once, those two bars stay blank so votes never land on the wrong one.
+- DynamicCam: KnuUI only adjusts camera situations on its own "KnuUI" DynamicCam profile. Before, it also
+  softened transitions and turned off views and rotations on whatever profile you had selected, every login.
+- Shortest Path + TomTom: the TomTom arrow now follows each bend of the route again. With Shortest Path's
+  default settings it never got the bends and kept pointing straight at the destination. Route changes arrive
+  through Shortest Path's own notifications instead of a check every half second, and a TomTom waypoint that
+  KnuUI did not create is never removed.
+- Builds: switching from the Healer build to another column build no longer keeps the healer party frames.
+- Command center: a block moved back to the game screen gets its normal font size back.
+- Tiny Threat inside Details gets the KnuUI row style (the plugin was looked up by the wrong name).
+- Fades: a fade replaced by one that is already at its target no longer keeps running.
+- Updated the embedded KnuLib to version 6; out-of-combat retries now use its shared queue.
+
 ## 3.6.5 (2026-11-18)
 
 - The WoW-Pro guide keeps its column on the left (x 8 to 308) to itself, since it grows downward as it shows more

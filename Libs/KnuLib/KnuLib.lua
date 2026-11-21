@@ -1,5 +1,162 @@
-﻿local MAJOR, MINOR = 'KnuLib-1.0', 4
+﻿local MAJOR, MINOR = 'KnuLib-1.0', 6
 local lib = LibStub:NewLibrary(MAJOR, MINOR); if not lib then return end
+
+function lib:ApplyDefaults(db, defaults)
+    assert(type(db) == 'table' and type(defaults) == 'table', 'Se esperaban dos tablas')
+    for key, value in pairs(defaults) do
+        if type(value) == 'table' then
+            if type(db[key]) ~= 'table' then db[key] = {} end
+            self:ApplyDefaults(db[key], value)
+        elseif db[key] == nil then
+            db[key] = value
+        end
+    end
+    return db
+end
+
+lib.EventsMethods = lib.EventsMethods or {}
+lib.EventsMeta = lib.EventsMeta or { __index = lib.EventsMethods }
+
+local function AddEvent(obj, event, fn, once)
+    assert(type(event) == 'string', 'Se esperaba un evento de texto')
+    assert(type(fn) == 'function', 'Se esperaba una función')
+    local handlers = obj.handlers[event]
+    if not handlers then
+        local success, err = pcall(obj.frame.RegisterEvent, obj.frame, event)
+        if not success then obj.invalid[event] = tostring(err); return false end
+        handlers = {}
+        obj.handlers[event] = handlers
+    end
+    for _, entry in ipairs(handlers) do
+        if entry.fn == fn then return true end
+    end
+    handlers[#handlers + 1] = { fn = fn, once = once }
+    return true
+end
+
+function lib.EventsMethods:On(event, fn)
+    return AddEvent(self, event, fn, false)
+end
+
+function lib.EventsMethods:Once(event, fn)
+    return AddEvent(self, event, fn, true)
+end
+
+-- Quitar por identidad evita borrar un registro nuevo de la misma función.
+local function RemoveEvent(obj, event, entry)
+    local handlers = obj.handlers[event]
+    if not handlers then return end
+    for i = #handlers, 1, -1 do
+        if handlers[i] == entry then table.remove(handlers, i) end
+    end
+    if #handlers == 0 then
+        pcall(obj.frame.UnregisterEvent, obj.frame, event)
+        obj.handlers[event] = nil
+    end
+end
+
+function lib.EventsMethods:Off(event, fn)
+    local handlers = self.handlers[event]
+    if not handlers then return end
+    for i = #handlers, 1, -1 do
+        if handlers[i].fn == fn then RemoveEvent(self, event, handlers[i]) end
+    end
+end
+
+function lib.EventsMethods:Emit(event, ...)
+    local pending = {}
+    for i, entry in ipairs(self.handlers[event] or {}) do pending[i] = entry end
+    for _, entry in ipairs(pending) do
+        -- Un Once ya consumido por un despacho anidado no vuelve a ejecutarse.
+        if not entry.fired then
+            if entry.once then
+                entry.fired = true
+                RemoveEvent(self, event, entry)
+            end
+            entry.fn(...)
+        end
+    end
+end
+
+function lib:NewEvents()
+    local obj = setmetatable({ handlers = {}, invalid = {}, frame = CreateFrame('Frame') }, self.EventsMeta)
+    obj.frame:SetScript('OnEvent', function(_, event, ...) obj:Emit(event, ...) end)
+    return obj
+end
+
+local function ReportError(err)
+    if print then print(err) end
+end
+
+lib.loggedIn = lib.loggedIn or false
+lib.loginQueue = lib.loginQueue or {}
+
+function lib:OnLogin(fn)
+    assert(type(fn) == 'function', 'Se esperaba una función')
+    if self.loggedIn or (IsLoggedIn and IsLoggedIn()) then fn(); return end
+    self.loginQueue[#self.loginQueue + 1] = fn
+end
+
+function lib:RunLoginQueue()
+    if self.loggedIn then return end
+    self.loggedIn = true
+    self.loginFrame:UnregisterEvent('PLAYER_LOGIN')
+    local pending = {}
+    for i, fn in ipairs(self.loginQueue) do pending[i] = fn end
+    for i = #self.loginQueue, 1, -1 do self.loginQueue[i] = nil end
+    for _, fn in ipairs(pending) do xpcall(fn, geterrorhandler and geterrorhandler() or ReportError) end
+end
+
+if not lib.loginFrame then
+    lib.loginFrame = lib.loginFrame or CreateFrame('Frame')
+    lib.loginFrame:RegisterEvent('PLAYER_LOGIN')
+    lib.loginFrame:SetScript('OnEvent', function() lib:RunLoginQueue() end)
+end
+
+lib.combatQueue = lib.combatQueue or {}
+lib.combatKeys = lib.combatKeys or {}
+
+function lib:AfterCombat(fn, key)
+    assert(type(fn) == 'function', 'Se esperaba una función')
+    if not InCombatLockdown or not InCombatLockdown() then fn(); return true end
+    local entry = key ~= nil and self.combatKeys[key]
+    if entry then
+        entry.fn = fn
+    else
+        entry = { fn = fn, key = key }
+        self.combatQueue[#self.combatQueue + 1] = entry
+        if key ~= nil then self.combatKeys[key] = entry end
+    end
+    return false
+end
+
+function lib:CancelAfterCombat(key)
+    local entry = key ~= nil and self.combatKeys[key]
+    if entry then
+        entry.cancelled = true
+        self.combatKeys[key] = nil
+        -- Sacarla de la cola: cancelar y re-encolar en un combate largo no la hace crecer.
+        for i = #self.combatQueue, 1, -1 do
+            if self.combatQueue[i] == entry then table.remove(self.combatQueue, i) end
+        end
+    end
+end
+
+function lib:RunCombatQueue()
+    local pending = {}
+    for i, entry in ipairs(self.combatQueue) do pending[i] = entry end
+    for i = #self.combatQueue, 1, -1 do self.combatQueue[i] = nil end
+    for key in pairs(self.combatKeys) do self.combatKeys[key] = nil end
+    for _, entry in ipairs(pending) do
+        if not entry.cancelled then xpcall(entry.fn, geterrorhandler and geterrorhandler() or ReportError) end
+    end
+end
+
+if not lib.combatFrame then
+    lib.combatFrame = lib.combatFrame or CreateFrame('Frame')
+    lib.combatFrame:RegisterEvent('PLAYER_REGEN_ENABLED')
+    lib.combatFrame:SetScript('OnEvent', function() lib:RunCombatQueue() end)
+end
 
 -- en (opcional): textos en inglés para claves que no son texto (p. ej. cod = 'cash on delivery').
 function lib:NewLocale(es, en)

@@ -78,7 +78,7 @@ local function Managed(f)
 	return rel == _G.UIParent
 end
 
-local queued, pending, Queue
+local queued, Queue
 
 local function HookPanel(f)
 	if f.KnuPanelSizeHooked then return end
@@ -124,8 +124,7 @@ end
 
 local function Arrange()
 	queued = false
-	if InCombatLockdown() then pending = true; return end
-	pending = false
+	if InCombatLockdown() then K:AfterCombat(function() Queue() end, 'KnuUI:UIPanels'); return end
 	pcall(EnsureGuide)
 	RestoreMoved()
 	if K.CC_IsActive and K:CC_IsActive() then return end -- el centro de comando ubica sus paneles (Workspace.lua)
@@ -327,13 +326,8 @@ function K:SetupUIPanels()
 	HookGuide()
 	local events = CreateFrame('Frame')
 	events:RegisterEvent('ADDON_LOADED')
-	events:RegisterEvent('PLAYER_REGEN_ENABLED')
 	events:SetScript('OnEvent', function(_, event, name)
-		if event == 'ADDON_LOADED' then
-			if name == 'WoWPro' then pcall(HookGuide); Queue() end
-		elseif pending then
-			Queue()
-		end
+		if event == 'ADDON_LOADED' and name == 'WoWPro' then pcall(HookGuide); Queue() end
 	end)
 	Queue()
 end

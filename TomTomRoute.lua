@@ -7,16 +7,14 @@ local K = E:GetModule('KnuUI')
 --    Shortest Path con su API pública: ShortestPathForever.API.Navigate(owner, uiMapID, x, y, title)
 --    (ShortestPathForever/Core/API.lua:568; el punto es el mismo uiMapID y 0-1 que usa TomTom,
 --    Core/TomTom.lua). Shortest Path calcula la ruta más corta (caminos, vuelos, barcos, portales).
--- 2) Shortest Path guía la ruta curva por curva poniendo el punto de usuario del juego en la próxima
---    curva o parada (C_Map.SetUserWaypoint, Journey/JourneyGuide.lua:421-460). KnuUI copia ese punto
---    a un punto temporal de TomTom (TomTom:AddWaypoint, core/waypoints.lua:415) que toma la flecha.
+-- 2) Shortest Path guía la ruta curva por curva; KnuUI lee la próxima curva o parada con API.Guidance
+--    y la copia a un punto temporal de TomTom (TomTom:AddWaypoint, core/waypoints.lua:415) que toma la flecha.
 -- 3) Al terminar el viaje (o cerca del destino, donde Shortest Path deja de poner el punto) la flecha
 --    vuelve al destino original.
--- La API pública de Shortest Path no da las coordenadas de cada tramo (JourneyLegs, API.lua:609-622):
--- por eso se lee el punto de usuario del juego.
 
 local OWNER = 'KnuUI'
-local original, mirror, mirrorKey, active, restoring, ticker
+local original, mirror, mirrorKey, active, restoring, subscribed
+local Subscribe
 
 local function API()
 	local spf = _G.ShortestPathForever
@@ -29,20 +27,38 @@ end
 
 local function Stop()
 	active = false
-	if ticker then ticker:Cancel(); ticker = nil end
 	Remove(mirror)
 	mirror, mirrorKey = nil, nil
+end
+
+-- La flecha apunta a un punto de TomTom que no es de KnuUI (sin que KnuUI lo vuelva a desviar).
+local function Point(tt, uid)
+	restoring = true
+	pcall(tt.SetCrazyArrow, tt, uid, uid.arrivaldistance or 15, uid.title)
+	restoring = false
 end
 
 -- La flecha vuelve al destino original (si TomTom todavía lo tiene).
 local function Restore()
 	Stop()
 	local tt = _G.TomTom
-	if original and tt and tt.IsValidWaypoint and tt:IsValidWaypoint(original) then
-		restoring = true
-		pcall(tt.SetCrazyArrow, tt, original, original.arrivaldistance or 15, original.title)
-		restoring = false
+	if original and tt and tt.IsValidWaypoint and tt:IsValidWaypoint(original) then Point(tt, original) end
+end
+
+-- La próxima curva o parada. Con sus opciones de fábrica (guideStops = true, arrowDirect = false;
+-- Core/Core.lua:124,131) Shortest Path no pone el punto de usuario del juego (Journey/JourneyGuide.lua:544-549):
+-- se lee con API.Guidance (Core/API.lua:698; point = {map, x, y}, JourneyGuide.lua:905-935).
+-- Sin esa función (versión vieja) queda el punto de usuario del juego.
+local function NextPoint(api)
+	if type(api.Guidance) == 'function' then
+		local ok, g = pcall(api.Guidance)
+		local p = ok and type(g) == 'table' and g.point
+		if p and p.map and p.x and p.y then return p.map, p.x, p.y end
+		return nil
 	end
+	local wp = C_Map.GetUserWaypoint and C_Map.GetUserWaypoint()
+	local pos = wp and wp.position
+	if pos then return wp.uiMapID, pos.x, pos.y end
 end
 
 local function Sync()
@@ -50,22 +66,28 @@ local function Sync()
 	local api, tt = API(), _G.TomTom
 	if not (api and tt) then return Stop() end
 	if not api.CurrentStop(OWNER) then return Restore() end -- el viaje terminó, se canceló o lo tomó otro
-	local wp = C_Map.GetUserWaypoint and C_Map.GetUserWaypoint()
-	local pos = wp and wp.position
-	if not pos then
-		-- Cerca del destino Shortest Path no pone punto: la flecha apunta al destino.
-		if mirror then Restore(); active = true; ticker = ticker or C_Timer.NewTicker(0.5, function() pcall(Sync) end) end
+	local map, x, y = NextPoint(api)
+	if not map then
+		-- Cerca del destino (o recalculando) no hay curva: la flecha apunta al destino y se sigue escuchando.
+		if mirror or mirrorKey then Restore(); active = true end
 		return
 	end
-	local key = format('%d:%.4f:%.4f', wp.uiMapID or 0, pos.x, pos.y)
+	local key = format('%d:%.4f:%.4f', map, x, y)
 	if key == mirrorKey then return end
 	Remove(mirror)
-	mirrorKey = key
-	mirror = tt:AddWaypoint(wp.uiMapID, pos.x, pos.y, {
+	mirror, mirrorKey = nil, key
+	local uid = tt:AddWaypoint(map, x, y, {
 		title = original and original.title or nil,
 		from = OWNER, persistent = false, minimap = false, world = false,
 		crazy = true, silent = true, cleardistance = 0, arrivaldistance = 0,
 	})
+	-- TomTom devuelve el punto que ya tenga mismo mapa, coordenadas y título (core/waypoints.lua:435-437):
+	-- si no lo creó KnuUI no se guarda como temporal (Stop lo borraría) y sólo se le apunta la flecha.
+	if type(uid) == 'table' and uid.from ~= OWNER then
+		Point(tt, uid)
+	else
+		mirror = uid
+	end
 end
 
 local function OnArrow(_, uid)
@@ -75,10 +97,20 @@ local function OnArrow(_, uid)
 	if not (uid[1] and uid[2] and uid[3]) then return end
 	Stop()
 	original = uid
+	pcall(Subscribe) -- por si la API no estaba publicada al iniciar
 	if api.Navigate(OWNER, uid[1], uid[2], uid[3], uid.title) then
 		active = true
-		ticker = C_Timer.NewTicker(0.5, function() pcall(Sync) end)
+		pcall(Sync)
 	end
+end
+
+-- Los cambios de la guía llegan por la suscripción pública (ForeverCore/Core/APIKit.lua:103; canales guidance,
+-- leg, ended y active, Core/API.lua:81-92): sin sondeo por tiempo.
+function Subscribe()
+	local api = API()
+	if subscribed or not (api and type(api.Subscribe) == 'function') then return end
+	subscribed = true
+	api.Subscribe(function() pcall(Sync) end)
 end
 
 -- Una vez: apaga lo que Shortest Path dibuja en pantalla (sus opciones están en ShortestPathForeverDB,
@@ -104,4 +136,5 @@ function K:SetupTomTomRoute()
 	self.tomtomRouteHooked = true
 	pcall(Quiet)
 	hooksecurefunc(tt, 'SetCrazyArrow', function(...) pcall(OnArrow, ...) end)
+	pcall(Subscribe)
 end

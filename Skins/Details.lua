@@ -36,7 +36,7 @@ end
 local function Tiny(instance)
  if not K:IsLoaded('Details_TinyThreat') then return end
  -- Details/core/plugins.lua:44,80; Details_TinyThreat.lua:68,220,242,248.
- local plugin = Call(_G.Details, 'GetPlugin', 'Details_TinyThreat')
+ local plugin = Call(_G.Details, 'GetPlugin', 'DETAILS_PLUGIN_TINY_THREAT')
  if not plugin or Call(plugin, 'GetPluginInstance') ~= instance then return end
  if not hooked[plugin] and type(plugin.RefreshRow) == 'function' then
   hooksecurefunc(plugin, 'RefreshRow', function(self, row)

@@ -4,7 +4,8 @@ local L = ns.L
 local K = E:GetModule('KnuUI')
 local MEDIA = [[Interface\AddOns\KnuUI\media\]]
 local decorated = {}
-local pending, applying
+local applying
+local function Later() K:AfterCombat(function() K:RefreshDecor() end, 'KnuUI:Decor') end
 
 -- Texturas/plantillas: _ref/ElvUI/Game/Shared/General/Toolkit.lua:294,410-434,526.
 -- Cada adorno es propio: apagarlo no oculta sombras de otros módulos.
@@ -62,7 +63,7 @@ local function TopLine(frame)
 end
 
 local function ZoneText()
- if InCombatLockdown() then pending = true; return end
+ if InCombatLockdown() then Later(); return end
  if E.db.KnuUIDecor == false then return end
  -- Minimap.location: Modules/Maps/Minimap.lua:333-340,893-896 (ya anclado arriba).
  local text = _G.Minimap and _G.Minimap.location
@@ -145,7 +146,7 @@ local function Style()
 end
 
 function K:RefreshDecor()
- if InCombatLockdown() then pending = true; return false end
+ if InCombatLockdown() then Later(); return false end
  if applying then return false end
  applying = true
  local ok, err = pcall(Style)
@@ -175,10 +176,7 @@ function K:SetupDecor()
  local events = CreateFrame('Frame')
  events:RegisterEvent('PLAYER_ENTERING_WORLD')
  events:RegisterEvent('ADDON_LOADED')
- events:RegisterEvent('PLAYER_REGEN_ENABLED')
- events:SetScript('OnEvent', function(_, event)
-  if event ~= 'PLAYER_REGEN_ENABLED' or pending then pending = false; K:RefreshDecor() end
- end)
+ events:SetScript('OnEvent', function() K:RefreshDecor() end)
  -- Ganchos reales; el bloqueo de combate se aplica antes de crear o cambiar marcos.
  for name, methods in pairs({
   Minimap = { 'UpdateSettings', 'Update_ZoneText', 'Minimap_EnterLeave' }, -- Minimap.lua:262-265

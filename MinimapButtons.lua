@@ -9,8 +9,7 @@ local K = E:GetModule('KnuUI')
 -- Hide no persiste: db.hide evita que Refresh vuelva a mostrar el botón.
 -- Cada objeto se procesa en su propio pcall: uno roto no interrumpe los demás.
 function K:ScanMinimapButtons()
- if InCombatLockdown() then self.minimapScanPending = true; return end
- self.minimapScanPending = false
+ if InCombatLockdown() then K:AfterCombat(function() K:ScanMinimapButtons() end, 'KnuUI:MinimapScan'); return end
  self.launcherAddons = self.launcherAddons or {}
  local entries = self.launcherAddons
  local ok, lib, ldb = pcall(function()
@@ -152,14 +151,9 @@ function K:SetupMinimapButtons()
  local events = CreateFrame('Frame')
  self.minimapButtonsEvents = events
  events:RegisterEvent('PLAYER_ENTERING_WORLD')
- events:RegisterEvent('PLAYER_REGEN_ENABLED')
  events:RegisterEvent('PLAYER_REGEN_DISABLED')
  events:SetScript('OnEvent', function(_, event)
   if event == 'PLAYER_REGEN_DISABLED' then K.flyout:Hide(); return end
-  if event == 'PLAYER_REGEN_ENABLED' then
-   if K.minimapScanPending then K:ScanMinimapButtons() end
-   return
-  end
   K:ScanMinimapButtons()
   -- Temporizadores como Dock.lua: reintentos acotados para botones tardíos.
   if C_Timer and type(C_Timer.After) == 'function' then

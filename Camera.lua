@@ -197,19 +197,30 @@ end
 -- Al entrar, después de que DynamicCam cargue su perfil (Core.lua:653 demora su arranque).
 -- La versión anterior (3.4 beta sin publicar) prendía las situaciones de combate de DynamicCam:
 -- una vez se recarga el preset de cámara de KnuUI para deshacerlo (ApplyCamera -> LoadPreset).
+-- ¿El perfil activo de DynamicCam es el que armó KnuUI? (AceDB: GetCurrentProfile, AceDB-3.0.lua:559)
+local function OwnsCamProfile()
+	if not (E.global.KnuUICameraApplied and K:IsLoaded('DynamicCam')) then return false end
+	local db = _G.DynamicCam and _G.DynamicCam.db
+	return db and type(db.GetCurrentProfile) == 'function' and db:GetCurrentProfile() == PROFILE or false
+end
+
 function K:SetupCombatZoom()
 	local events = CreateFrame('Frame')
 	events:RegisterEvent('PLAYER_REGEN_DISABLED')
 	events:RegisterEvent('PLAYER_REGEN_ENABLED')
 	events:SetScript('OnEvent', function(_, event) pcall(K.CombatZoom, K, event == 'PLAYER_REGEN_DISABLED') end)
 	C_Timer.After(3, function()
-		if E.global.KnuUICombatZoomV ~= 2 and E.global.KnuUICameraApplied and K:IsLoaded('DynamicCam') and not InCombatLockdown() then
+		-- Sólo sobre el perfil «KnuUI» de DynamicCam: si elegiste otro perfil, sus situaciones no se tocan.
+		local owns = OwnsCamProfile()
+		if owns and E.global.KnuUICombatZoomV ~= 2 and not InCombatLockdown() then
 			E.global.KnuUICombatZoomV = 2
 			pcall(K.ApplyCamera, K, true)
 		end
-		pcall(K.DisableBrokenCamSituations, K) -- también en perfiles ya aplicados
-		pcall(K.SoftenCamSituations, K)
-		pcall(K.FixHearthCamSituation, K) -- después de suavizar, que apaga los giros
+		if owns then
+			pcall(K.DisableBrokenCamSituations, K) -- también en perfiles ya aplicados
+			pcall(K.SoftenCamSituations, K)
+			pcall(K.FixHearthCamSituation, K) -- después de suavizar, que apaga los giros
+		end
 		pcall(K.FastHearthFade, K)
 		pcall(K.ApplyCombatZoom, K)
 	end)

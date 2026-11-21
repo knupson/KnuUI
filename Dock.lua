@@ -55,7 +55,7 @@ local hooksInstalled = false
 local isUpdating = false
 local conflictWarned = false
 local errorWarned = false
-local pendingDock -- acople pendiente porque llegó en combate
+local DockWindows, DockWindowsUnsafe -- antes de Safe: lo encola al terminar el combate
 local separator
 
 -- Objeto propio; mismo color y grosor que Skins/Panels.lua (línea de pestañas).
@@ -98,7 +98,7 @@ end
 -- Todas las entradas (eventos, hooks, comandos y temporizadores) pasan por acá.
 -- Un error de terceros no deja isUpdating trabado ni propaga errores al cliente.
 local function Safe(callback, ...)
- if InCombatLockdown() then pendingDock = true; return false end
+ if InCombatLockdown() then K:AfterCombat(function() DockWindows() end, 'KnuUI:Dock'); return false end
  if not E.Forever or K:IsLoaded('ForeverDock') or not K:IsLoaded('Details') then return false end
  local ok, result = pcall(callback, ...)
  if not ok then
@@ -421,7 +421,6 @@ local function RefreshInstanceLayout(Details, instance)
 	end
 end
 
-local DockWindows, DockWindowsUnsafe
 
 -- Posiciona y dimensiona una ventana individual de Details! dentro de su ranura en RightChatPanel.
 -- Referencias Details!:
@@ -720,7 +719,7 @@ DockWindowsUnsafe = function()
 end
 
 DockWindows = function()
- if InCombatLockdown() then pendingDock = true return end
+ if InCombatLockdown() then K:AfterCombat(function() DockWindows() end, 'KnuUI:Dock') return end
  return Safe(DockWindowsUnsafe)
 end
 
@@ -937,12 +936,7 @@ function K:SetupDock()
  local eventFrame = CreateFrame('Frame')
  eventFrame:RegisterEvent('PLAYER_ENTERING_WORLD')
  eventFrame:RegisterEvent('ADDON_LOADED')
- eventFrame:RegisterEvent('PLAYER_REGEN_ENABLED')
  eventFrame:SetScript('OnEvent', function(_, event, name)
-  if event == 'PLAYER_REGEN_ENABLED' then
-   if pendingDock then pendingDock = false; DockWindows() end
-   return
-  end
   if event == 'ADDON_LOADED' and name ~= 'Details' and name ~= 'Details_TinyThreat' then return end
   Safe(TryActivate)
   if _G.C_Timer and type(_G.C_Timer.After) == 'function' then

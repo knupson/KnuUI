@@ -31,7 +31,10 @@ end
 -- Anima un valor numérico. key identifica la animación (una nueva con la misma key la reemplaza,
 -- desde el valor actual: interrumpible sin saltos).
 function K:Tween(key, from, to, duration, apply, done)
-	if duration <= 0 or from == to then apply(to) if done then done() end return end
+	if duration <= 0 or from == to then
+		tweens[key] = nil -- la anterior con la misma key no sigue corriendo
+		apply(to) if done then done() end return
+	end
 	tweens[key] = { from = from, to = to, duration = duration, elapsed = 0, apply = apply, done = done }
 	driver:SetScript('OnUpdate', Step)
 end

@@ -85,6 +85,15 @@ function GetUIPanel(key) return slots[key] end
 local cc = false
 
 local K = { blizzardMovers = {}, CC_IsActive = function() return cc end }
+-- KnuLib AfterCombat: una entrada por clave; AfterCombatRun() hace de PLAYER_REGEN_ENABLED.
+local after, afterKeys = {}, {}
+function K:AfterCombat(fn, key)
+	if not InCombatLockdown() then fn() return true end
+	if afterKeys[key] then afterKeys[key].fn = fn return false end
+	local e = { fn = fn }; after[#after + 1] = e; afterKeys[key] = e
+	return false
+end
+local function AfterCombatRun() local q = after; after, afterKeys = {}, {}; for _, e in ipairs(q) do e.fn() end end
 local E = { db = {} }
 function E:GetModule(name) assert(name == 'KnuUI'); return K end
 ElvUI = { E }
@@ -183,7 +192,7 @@ assert(Flush() == 1, 'una sola pasada por cuadro')
 l, t = Px(char)
 assert(Near(l, 16) and Near(t, 116), 'en combate no se mueve')
 combat = false
-events.fn(events, 'PLAYER_REGEN_ENABLED'); Flush()
+AfterCombatRun(); Flush()
 l, t = Px(char)
 assert(Near(l, 8) and Near(t, 407), 'al salir de combate')
 
@@ -287,7 +296,7 @@ assert(syncs == 1 and Saved(), 'guía restaurada: '..syncs)
 -- b) En combate no; al salir, sí.
 DefaultPoint(); combat = true; WoWPro:CustomizeFrames(); Flush()
 assert(syncs == 1, 'en combate no se restaura')
-combat = false; events.fn(events, 'PLAYER_REGEN_ENABLED'); Flush()
+combat = false; AfterCombatRun(); Flush()
 assert(syncs == 2 and Saved(), 'restaurada al salir de combate')
 -- c) Con la restauración inhibida (redimensionando) no; el próximo aviso de la guía la restaura.
 DefaultPoint(); WoWPro.InhibitAnchorSync = true; g2:Fire('OnSizeChanged'); Flush()

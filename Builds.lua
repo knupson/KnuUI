@@ -86,6 +86,9 @@ function K:ApplyBuild(id)
 	end
 	self:ApplyNameplates()
 	E.private.KnuUIRole = build.role -- mismo recuerdo por personaje que Roles.lua:122
+	-- Con columnas, primero el diseño base (como ApplyRole, Roles.lua:121-122): ApplyTanks(true) no repone el
+	-- grupo, y pasar de Healer a otra build dejaba el grupo del Healer.
+	if build.settings.KnuUITanks then self:ApplyLayout() end
 	self:ApplyTanks(build.settings.KnuUITanks) -- ambos caminos reaplican el overlay del rol
 	self:ApplySideBlocks() -- también restaura los anchos cuando se sale de columnas
 	self.Set(E.db.actionbar, build.settings.actionbar)
