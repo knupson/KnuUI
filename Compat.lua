@@ -123,3 +123,32 @@ function K:SetupPawnPaperDoll()
 	Hold()
 end
 K:SetupPawnPaperDoll()
+
+-- Hueco de la bolsa de componentes vacío: Baganator pide el tooltip con SetOwner + SetInventoryItem + Show
+-- (Baganator/ItemViewCommon/ContainerSlots.lua:93-97) y, sin bolsa, no sale nada. Syndicator arma ese quinto hueco
+-- con Enum.BagIndex.ReagentBag (Syndicator/Core/Constants.lua:53-54). Sin datos, SetInventoryItem oculta el tooltip
+-- (TooltipDataHandler.lua:266-268 de la rama forever de wow-ui-source) y así pierde el dueño: se le devuelve el del
+-- SetOwner de esta misma consulta antes de escribir. Va en el tooltip, sirve para cualquier ventana.
+function K:SetupReagentSlotTip()
+	local tip, bagIndex = _G.GameTooltip, _G.Enum and _G.Enum.BagIndex
+	if self.reagentSlotTip or not (tip and bagIndex and bagIndex.ReagentBag and _G.C_Container and _G.C_Container.ContainerIDToInventoryID) then return end
+	self.reagentSlotTip = true
+	local owner, anchor, x, y
+	-- Sólo vale el dueño de la consulta en curso: al mostrarse el tooltip (o al usarlo) se olvida.
+	hooksecurefunc(tip, 'SetOwner', function(_, o, a, ox, oy) owner, anchor, x, y = o, a, ox, oy end)
+	tip:HookScript('OnShow', function() owner = nil end)
+	hooksecurefunc(tip, 'SetInventoryItem', function(tt, unit, slot)
+		if unit ~= 'player' or not slot then return end
+		local ok, reagentSlot = pcall(_G.C_Container.ContainerIDToInventoryID, bagIndex.ReagentBag)
+		if not ok or slot ~= reagentSlot or _G.GetInventoryItemID('player', slot) then return end
+		if not tt:GetOwner() then
+			local o = owner
+			owner = nil
+			if not (o and o.IsVisible and o:IsVisible()) then return end
+			tt:SetOwner(o, anchor, x, y)
+			owner = nil -- el SetOwner de arriba pasa por el enganche y lo volvería a recordar
+		end
+		tt:SetText(_G.EQUIP_CONTAINER_REAGENT or L["Reagent bag slot: only reagent bags fit here"], 1, 1, 1)
+	end)
+end
+K:SetupReagentSlotTip()

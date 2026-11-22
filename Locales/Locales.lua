@@ -48,6 +48,7 @@ L['KnuUI: camera "%s" applied to DynamicCam profile "%s".'] = 'KnuUI: cámara "%
 L["not installed or not loaded"] = "no instalado o no cargado"
 L["incompatible API; the adjustment could not be completed"] = "API incompatible; no se pudo completar el ajuste"
 L["texture and font applied; the dock keeps its anchors"] = "textura y fuente aplicadas; el dock conserva los anclajes"
+L["Reagent bag slot: only reagent bags fit here"] = "Hueco de bolsa de componentes: sólo entran bolsas de componentes"
 L["no existing windows; no windows were created"] = "sin ventanas existentes; no se crearon ventanas"
 L["includes its own ElvUI skin; pick it in Baganator. Your bags are kept"] = "incluye skin ElvUI propia; elegila en Baganator. Se conservan sus bolsas"
 L["position saved below the minimap; reload to see it"] = "posición guardada bajo el minimapa; recargá para verla"

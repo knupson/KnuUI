@@ -1,5 +1,10 @@
 # KnuUI changelog
 
+## 3.6.11 (2026-11-22)
+
+- Bags: the empty reagent bag slot (the fifth slot in Baganator's bag row) showed no tooltip, so there was no way to
+  tell why ordinary bags would not go in. It now says "Equip Reagent Bag", in the game's own words.
+
 ## 3.6.10 (2026-11-22)
 
 - Minimap buttons: the KnuUI launcher now takes in the minimap button of any addon, not only those built on

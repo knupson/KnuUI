@@ -1310,6 +1310,71 @@ do
  skins.LoadSkin, module.pawnPaperDoll = nil, nil
 end
 
+-- Hueco de bolsa de componentes vacío (Compat.lua): el tooltip dice qué va ahí; con bolsa o en otro hueco, nada.
+-- Como en Forever, SetInventoryItem sin datos oculta el tooltip y le saca el dueño; sin dueño SetText no escribe.
+do
+ local text, tipOwner
+ local equipped = {}
+ local slotFrame = { IsVisible = function(self) return not self.hidden end }
+ GameTooltip = {
+  SetOwner = function(_, o) tipOwner = o end,
+  GetOwner = function() return tipOwner end,
+  SetInventoryItem = function(_, _, slot) if not equipped[slot] then tipOwner = nil end end,
+  SetText = function(_, t) if tipOwner then text = t end end,
+  HookScript = function(self, script, fn) assert(script == 'OnShow'); self.onShow = fn end,
+  Show = function(self) if self.onShow then self.onShow(self) end end,
+  Hide = function() tipOwner = nil end,
+ }
+ Enum = { BagIndex = { ReagentBag = 5 } }
+ C_Container = { ContainerIDToInventoryID = function(id) return 30 + id end }
+ GetInventoryItemID = function(_, slot) return equipped[slot] end
+ module.reagentSlotTip = nil
+ module:SetupReagentSlotTip()
+ GameTooltip:SetOwner(slotFrame, 'ANCHOR_RIGHT')
+ GameTooltip:SetInventoryItem('player', 35)
+ assert(text == 'Reagent bag slot: only reagent bags fit here' or text == 'Hueco de bolsa de componentes: sólo entran bolsas de componentes')
+ assert(tipOwner == slotFrame)
+ text = nil
+ GameTooltip:SetOwner(slotFrame, 'ANCHOR_RIGHT')
+ GameTooltip:SetInventoryItem('player', 34) -- otra bolsa
+ assert(text == nil)
+ equipped[35] = 12345
+ GameTooltip:SetOwner(slotFrame, 'ANCHOR_RIGHT')
+ GameTooltip:SetInventoryItem('player', 35) -- con bolsa puesta: el tooltip del objeto
+ assert(text == nil)
+ equipped[35] = nil
+ GameTooltip:SetOwner(slotFrame, 'ANCHOR_RIGHT')
+ GameTooltip:SetInventoryItem('target', 35) -- inspección de otro: nada
+ assert(text == nil)
+ slotFrame.hidden = true -- el dueño ya no se ve: no se reabre sobre nada
+ GameTooltip:SetOwner(slotFrame, 'ANCHOR_RIGHT')
+ GameTooltip:SetInventoryItem('player', 35)
+ assert(text == nil and tipOwner == nil)
+ slotFrame.hidden = nil
+ -- Dueño viejo: otro tooltip con ese dueño ya se mostró y se cerró; una consulta sin SetOwner nuevo no lo reabre.
+ GameTooltip:SetOwner(slotFrame, 'ANCHOR_RIGHT')
+ GameTooltip:Show()
+ GameTooltip:Hide()
+ GameTooltip:SetInventoryItem('player', 35)
+ assert(text == nil and tipOwner == nil)
+ -- Ya usado una vez: una segunda consulta sin SetOwner tampoco.
+ GameTooltip:SetOwner(slotFrame, 'ANCHOR_RIGHT')
+ GameTooltip:SetInventoryItem('player', 35)
+ assert(text ~= nil); text = nil
+ GameTooltip:Hide()
+ GameTooltip:SetInventoryItem('player', 35)
+ assert(text == nil)
+ EQUIP_CONTAINER_REAGENT = 'Equipar bolsa de componentes'
+ GameTooltip:SetOwner(slotFrame, 'ANCHOR_RIGHT')
+ GameTooltip:SetInventoryItem('player', 35)
+ assert(text == 'Equipar bolsa de componentes')
+ local hooked = GameTooltip.SetInventoryItem
+ module:SetupReagentSlotTip() -- una sola vez
+ assert(GameTooltip.SetInventoryItem == hooked)
+ GameTooltip, Enum, C_Container, GetInventoryItemID, EQUIP_CONTAINER_REAGENT = nil, nil, nil, nil, nil
+ module.reagentSlotTip = nil
+end
+
 -- Manners (Skins/AddOns/Manners.lua): sólo cambia lo que sigue por defecto, una vez por perfil, y le pide redibujarse.
 do
  local defaults = { style = 'glass', classicArt = false, font = 'Friz', bgColor = { 0.04, 0.04, 0.06, 0.88 }, accentColor = { 0.45, 0.4, 0.9, 1 },
