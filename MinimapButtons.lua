@@ -143,7 +143,101 @@ function K:ScanMinimapButtons()
    hooksecurefunc(offhand, 'UpdateMinimapIcon', function() button:Hide() end)
   end
  end)
+ pcall(K.AbsorbOtherMinimapButtons, K, entries)
  self:RefreshLauncher()
+end
+
+-- Botones propios de cualquier otro addon (pedido del user 2026-11-22: «tiene que ser universal, no addon por addon»):
+-- todo Button con nombre colgado del minimapa (o de MinimapBackdrop) que no sea del juego, de ElvUI, de KnuUI ni de
+-- LibDBIcon (esos van arriba). Caso que lo originó: CheapUpgradesMinimapButton, hijo de Minimap con su propio OnClick
+-- (CheapUpgrades/Options.lua:1327-1360). Ícono: el campo icon/Icon del botón o su textura más grande que no sea borde ni
+-- resaltado. Clic: el OnClick original con el botón del mouse que se usó en el menú. Sólo se oculta por esta sesión, y
+-- si el addon lo vuelve a mostrar se oculta otra vez. Los botones protegidos (seguros) no se tocan.
+local SKIP_NAME = { '^Minimap', '^MiniMap', '^GameTime', '^TimeManager', '^Elv', '^KnuUI', '^LibDBIcon', '^QueueStatus',
+	'^Garrison', '^ExpansionLandingPage', '^AddonCompartment', '^HybridMinimap', 'Pin', 'Arrow', 'Ping', 'Tracking' }
+local function Skippable(name)
+	for _, pattern in ipairs(SKIP_NAME) do if name:find(pattern) then return true end end
+end
+
+local function ButtonIcon(button)
+	for _, key in ipairs({ 'icon', 'Icon' }) do
+		local t = button[key]
+		local tex = type(t) == 'table' and t.GetTexture and t:GetTexture()
+		if tex then return tex end
+	end
+	local best, area
+	for _, region in ipairs({ button:GetRegions() }) do
+		if region.IsObjectType and region:IsObjectType('Texture') and region.GetTexture then
+			local tex = region:GetTexture()
+			local text = type(tex) == 'string' and tex:lower() or ''
+			if tex and not text:find('border') and not text:find('highlight') and not text:find('background') then
+				local w, h = region:GetSize()
+				local a = (w or 0) * (h or 0)
+				if not area or a > area then best, area = tex, a end
+			end
+		end
+	end
+	return best
+end
+
+-- Pines de mapa (TomTom crea TTMinimapButton%d con textura y OnClick, TomTom/modules/minimap_pins.lua:131-154, y
+-- HereBeDragons los cuelga del minimapa): no son lanzadores. Se reconocen por la tabla de pines de HereBeDragons
+-- (pins.minimapPins, HereBeDragons-Pins-2.0.lua:16; revisión de Codex 2026-11-22).
+local function IsMapPin(button)
+	if not LibStub then return false end
+	for _, major in ipairs({ 'HereBeDragons-Pins-2.0', 'HereBeDragons-Pins-1.0' }) do
+		local ok, lib = pcall(LibStub, major, true)
+		if ok and type(lib) == 'table' and type(lib.minimapPins) == 'table' and lib.minimapPins[button] then return true end
+	end
+	return false
+end
+
+-- OnClick, o OnMouseUp en los botones que sólo usan ese (revisión de Codex 2026-11-22).
+local function Handler(button)
+	return button:GetScript('OnClick') or button:GetScript('OnMouseUp')
+end
+
+K.absorbedButtons = K.absorbedButtons or {}
+function K:AbsorbOtherMinimapButtons(entries)
+	local absorbed = self.absorbedButtons
+	local parents = { _G.Minimap, _G.MinimapBackdrop }
+	for _, parent in ipairs(parents) do
+		if parent and parent.GetChildren then
+			for _, button in ipairs({ parent:GetChildren() }) do
+				local name = button.GetName and button:GetName()
+				local key = name and 'Btn:'..name
+				if name and not Skippable(name) and button.IsObjectType and button:IsObjectType('Button')
+					and not (button.IsProtected and button:IsProtected())
+					and (absorbed[button] or button:IsShown()) and not self:LauncherHasButton(entries, button)
+					and not IsMapPin(button) then
+					local icon = ButtonIcon(button)
+					if icon and Handler(button) then
+						local label = name:gsub('MinimapButton$', ''):gsub('MinimapIcon$', ''):gsub('_?Minimap$', '')
+						entries[key] = {
+							label = label ~= '' and label or name, icon = icon, button = button,
+							click = function(_, mouse)
+								local script = Handler(button)
+								if script then script(button, mouse == 'RightButton' and 'RightButton' or 'LeftButton') end
+							end,
+						}
+						button:Hide()
+						if not absorbed[button] then
+							absorbed[button] = true
+							hooksecurefunc(button, 'Show', function(self) if K.absorbedButtons[self] then self:Hide() end end)
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
+-- ¿Ya hay una entrada propia (de las de arriba) para este botón? Las de arriba lo ocultan, así que no queda a la vista.
+function K:LauncherHasButton(entries, button)
+	for key, entry in pairs(entries) do
+		if entry.button == button and not key:find('^Btn:') then return true end
+	end
+	return false
 end
 
 function K:SetupMinimapButtons()

@@ -1,5 +1,15 @@
 # KnuUI changelog
 
+## 3.6.10 (2026-11-22)
+
+- Minimap buttons: the KnuUI launcher now takes in the minimap button of any addon, not only those built on
+  LibDBIcon. Left and right clicks in the launcher reach the original button. Map pins (TomTom waypoints and other
+  HereBeDragons pins) stay on the minimap. Cheap Upgrades' button no longer covers the minimap zoom button.
+- WoW-Pro guide: with many "As you go" steps the guide stops above the party frames instead of covering them. It
+  shows the end, where the current step is, and the mouse wheel scrolls up to the rest.
+- Manners: the prompt sits on a plain KnuUI panel. Manners' painted pane, its white underline and KnuUI's extra
+  accent line are gone, so the prompt has a single clean border.
+
 ## 3.6.9 (2026-11-22)
 
 - Character sheet: with Pawn installed, ElvUI's character skin stopped halfway with an "attempt to index local 'icon'"

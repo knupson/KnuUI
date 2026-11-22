@@ -107,6 +107,7 @@ local function Widget()
  local w = { enabled = true }
  function w:SetText(text) self.text = text end
  function w:SetScript(event, callback) self[event] = callback end
+ function w:GetScript(event) return self[event] end
  function w:Show() local changed = not self.shown; self.shown = true; if changed and self.OnShow then self:OnShow() end end
  function w:Hide() local changed = self.shown; self.shown = false; if changed and self.OnHide then self:OnHide() end end
  function w:Enable() self.enabled = true end
@@ -638,6 +639,45 @@ combat = false; RunAfterCombat()
 assert(hides == lastHides + 1 and not PendingAfterCombat('KnuUI:MinimapScan'))
 LibStub = function() error('biblioteca rota') end
 module:ScanMinimapButtons() -- No propaga el error de LibStub.
+-- Botones propios de cualquier addon en el minimapa (pedido del user 2026-11-22): universales, no addon por addon.
+do
+ local function Btn(name, opts)
+  local b = Widget(); b.kind = 'Button'; b.globalName = name; b.shown = true
+  b.icon = Widget(); b.icon.texture = opts and opts.icon or 'Interface/AddOns/X/icon'
+  if not (opts and opts.noClick) then b.OnClick = function(_, mouse) b.lastClick = mouse end end
+  if opts and opts.protected then function b:IsProtected() return true end end
+  return b
+ end
+ local cheap, pin, zoom, secure = Btn('CheapUpgradesMinimapButton'), Btn('GatherMatePin12'), Btn('MinimapZoomIn'), Btn('SecureThingButton', { protected = true })
+ local unnamed = Btn(nil)
+ -- Pin de TomTom registrado en HereBeDragons, y un lanzador que sólo usa OnMouseUp.
+ local ttpin = Btn('TTMinimapButton3')
+ local mouseUp = Btn('OtroAddonMinimapButton', { noClick = true })
+ mouseUp.OnMouseUp = function(_, mouse) mouseUp.lastClick = mouse end
+ local savedMinimap = _G.Minimap
+ _G.Minimap = Widget(); _G.Minimap.children = { cheap, pin, zoom, secure, unnamed, ttpin, mouseUp }
+ local hbd = { minimapPins = { [ttpin] = {} } }
+ LibStub = function(name) if name == 'HereBeDragons-Pins-2.0' then return hbd end end
+ module:ScanMinimapButtons()
+ local entry = module.launcherAddons['Btn:CheapUpgradesMinimapButton']
+ assert(entry and entry.label == 'CheapUpgrades' and entry.icon == cheap.icon.texture, 'minimapa: botón propio absorbido')
+ assert(cheap.shown == false and pin.shown and zoom.shown and secure.shown, 'minimapa: sólo el botón de addon')
+ assert(not module.launcherAddons['Btn:GatherMatePin12'] and not module.launcherAddons['Btn:MinimapZoomIn'] and not module.launcherAddons['Btn:SecureThingButton'])
+ entry.click(nil, 'RightButton'); assert(cheap.lastClick == 'RightButton', 'minimapa: clic derecho al original')
+ entry.click(nil, 'LeftButton'); assert(cheap.lastClick == 'LeftButton')
+ assert(ttpin.shown and not module.launcherAddons['Btn:TTMinimapButton3'], 'minimapa: pin de mapa intacto')
+ local other = module.launcherAddons['Btn:OtroAddonMinimapButton']
+ assert(other and mouseUp.shown == false, 'minimapa: lanzador con OnMouseUp absorbido')
+ other.click(nil, 'RightButton'); assert(mouseUp.lastClick == 'RightButton')
+ -- El addon lo vuelve a mostrar: se oculta otra vez; un escaneo nuevo lo mantiene en el menú.
+ cheap:Show(); assert(cheap.shown == false, 'minimapa: no reaparece')
+ module:ScanMinimapButtons()
+ assert(module.launcherAddons['Btn:CheapUpgradesMinimapButton'], 'minimapa: sigue en el menú')
+ _G.Minimap = savedMinimap
+ module.absorbedButtons[cheap], module.absorbedButtons[mouseUp] = nil, nil
+ module.launcherAddons['Btn:CheapUpgradesMinimapButton'], module.launcherAddons['Btn:OtroAddonMinimapButton'] = nil, nil
+ LibStub = nil
+end
 local timers = {}
 C_Timer = { After = function(delay, callback) timers[#timers + 1] = { delay, callback } end }
 module.minimapButtonsEvents.OnEvent(nil, 'PLAYER_ENTERING_WORLD')
@@ -1272,7 +1312,7 @@ end
 
 -- Manners (Skins/AddOns/Manners.lua): sólo cambia lo que sigue por defecto, una vez por perfil, y le pide redibujarse.
 do
- local defaults = { style = 'glass', font = 'Friz', bgColor = { 0.04, 0.04, 0.06, 0.88 }, accentColor = { 0.45, 0.4, 0.9, 1 },
+ local defaults = { style = 'glass', classicArt = false, font = 'Friz', bgColor = { 0.04, 0.04, 0.06, 0.88 }, accentColor = { 0.45, 0.4, 0.9, 1 },
   point = 'BOTTOM', relPoint = 'BOTTOM', x = 0, y = 300 }
  local function Copy(t) local c = {} for k, v in pairs(t) do c[k] = type(v) == 'table' and { unpack(v) } or v end return c end
  local refreshed, profile = 0, 'Yaestoy'
@@ -1281,11 +1321,24 @@ do
  local oldStub = LibStub
  LibStub = function(name) if name == 'AceAddon-3.0' then return { GetAddon = function(_, n) return n == 'Manners' and manners or nil end } end end
  E.global.KnuUIManners = nil
+ local button, art = Widget(), Widget()
+ art.outro = {}
+ button.children = { Widget(), art }
+ _G.MannersPrompt = button
  -- Todo por defecto: estilo, fuente, colores y lugar de KnuUI.
  manners.db.profile = { prompt = Copy(defaults) }
  assert(module:ApplyManners() == true and refreshed == 1)
  local p = manners.db.profile.prompt
  assert(p.style == 'minimal' and p.font == 'Expressway' and p.x == 330 and p.y == 340 and p.point == 'BOTTOM')
+ assert(p.classicArt == true and p.minimalLine == false and E.global.KnuUIManners.Yaestoy == 3, 'manners: sin arte pintado ni línea blanca')
+ local back = button.KnuBack
+ assert(back and back.art == art and back.shown and back.fill.shown ~= false, 'manners: panel de KnuUI dentro de art')
+ assert(art.textures and #art.textures == 5 and back.accent == nil, 'manners: fondo y 4 bordes, sin línea encimada')
+ -- Manners redibuja (SetSize) con otra apariencia elegida en sus opciones: el panel se oculta solo.
+ p.style = 'glass'; button:SetSize(220, 44)
+ assert(back.shown == false and back.fill.shown == false, 'manners: oculto al cambiar de apariencia')
+ p.style = 'minimal'; button:SetSize(220, 44)
+ assert(back.shown and back.fill.shown, 'manners: vuelve con Mínima')
  local accent = module:GetTheme().accent
  assert(p.accentColor[1] == accent.r and p.accentColor[4] == 1 and p.bgColor[4] == 0.9)
  -- Una vez por perfil.
@@ -1298,11 +1351,109 @@ do
  p.style, p.y, p.accentColor = 'leather', 500, { 1, 0, 0, 1 }
  assert(module:ApplyManners() == true)
  assert(p.style == 'leather' and p.y == 500 and p.x == 0 and p.accentColor[1] == 1 and p.font == 'Expressway')
+ -- Con otra apariencia elegida por el jugador, el panel de KnuUI no se muestra.
+ assert(button.KnuBack.shown == false, 'manners: panel oculto con otra apariencia')
+ assert(#art.textures == 5, 'manners: el panel se crea una sola vez')
+ -- Perfil integrado por 3.6.9 (true): sólo suma lo nuevo (sin arte pintado) y respeta lo demás.
+ profile = 'Viejo'
+ manners.db.profile = { prompt = Copy(defaults) }
+ p = manners.db.profile.prompt
+ p.style, p.y = 'minimal', 340
+ E.global.KnuUIManners.Viejo = true
+ assert(module:ApplyManners() == true and p.classicArt == true and p.minimalLine == false and E.global.KnuUIManners.Viejo == 3)
+ assert(button.KnuBack.shown)
  -- Sin Manners o con otra estructura: nada.
  profile = 'Tercero'
  manners.db.defaults = nil
  assert(module:ApplyManners() == false and E.global.KnuUIManners.Tercero == nil)
- LibStub, E.global.KnuUIManners = oldStub, nil
+ LibStub, E.global.KnuUIManners, _G.MannersPrompt = oldStub, nil, nil
+end
+
+-- Guía de WoW-Pro con tope (Skins/WoWPro.lua K:LimitWoWPro): no baja del grupo, se ve el final y la rueda la mueve.
+do
+ local function Box(top, height, left, right)
+  local b = { top = top, height = height, left = left or 8, right = right or 308, shown = true }
+  function b:GetTop() return self.top end
+  function b:GetHeight() return self.height end
+  function b:SetHeight(h) self.height = h end
+  function b:GetLeft() return self.left end
+  function b:GetRight() return self.right end
+  function b:GetEffectiveScale() return 1 end
+  function b:IsShown() return self.shown end
+  function b:EnableMouseWheel() self.wheelOn = true end
+  function b:GetScript() return self.wowproWheel end
+  function b:SetScript(_, fn) self.onWheel = fn end
+  function b:GetBottom() return self.top - self.height end
+  function b:SetAlpha(a) self.alpha = a end
+  function b:EnableMouse(on) self.mouse = on end
+  function b:ClearAllPoints() self.points = {} end
+  function b:SetPoint(...) self.points = self.points or {}; self.points[#self.points + 1] = { ... } end
+  return b
+ end
+ local savedUI = UIParent.GetEffectiveScale
+ UIParent.GetEffectiveScale = function() return 1 end
+ -- Ventana arriba a la izquierda (top 1072), filas desde 1030 con 700 de contenido y 10 de margen abajo: 752 de alto.
+ local MF, GF, row = Box(1072, 752), Box(1030, 700), Box(1030, 100)
+ -- Rueda propia de WoW-Pro (guidescroll, de a un paso): con tope no tiene que correr.
+ local wowproWheel = 0
+ MF.wowproWheel = function() wowproWheel = wowproWheel + 1 end
+ -- Botón de la fila (usar objeto): fuera de la vista, sin alfa ni mouse. La fila sigue a su desplazamiento.
+ row.step = Box(0, 20); row.itembutton = Box(0, 20)
+ function row:GetTop() local p = self.points and self.points[1]; return 1030 + (p and p[5] or 0) end
+ local clips = 0
+ _G.WoWPro = { MainFrame = MF, GuideFrame = GF, rows = { row }, UpdateFlyoutClip = function() clips = clips + 1 end }
+ _G.WoWProDB = { profile = { autoresize = true } }
+ _G.ElvUF_PartyMover = Box(494, 224, 4, 204)
+ combat = false
+ assert(module:LimitWoWPro() == true, 'guía: corta')
+ -- Piso: 494 + 6 = 500 -> alto 572; filas visibles 572 - 42 - 10 = 520; recorrido 700 - 520 = 180, empieza abajo.
+ assert(MF.height == 572 and GF.height == 520, 'guía: alto hasta el grupo')
+ local function Y() return row.points[1][5] end
+ assert(Y() == 180 and MF.wheelOn and MF.onWheel, 'guía: muestra el final (paso actual)')
+ -- Abajo la fila 1 quedó 180 arriba del borde superior: su botón no se ve ni se puede tocar.
+ assert(row.itembutton.alpha == 0 and row.itembutton.mouse == false, 'guía: botón de fila fuera de la vista')
+ MF.onWheel(MF, 1) -- rueda para arriba
+ assert(Y() == 140 and wowproWheel == 0, 'guía: la rueda sube, sin la rueda de WoW-Pro')
+ MF.onWheel(MF, 10)
+ assert(Y() == 0, 'guía: tope arriba')
+ assert(row.itembutton.alpha == 1 and row.itembutton.mouse == true, 'guía: botón de fila a la vista')
+ -- Si WoW-Pro recalcula sus botones con su regla, después corre la de KnuUI.
+ row.itembutton.alpha = 0; _G.WoWPro.UpdateFlyoutClip()
+ assert(row.itembutton.alpha == 1 and clips == 1, 'guía: recorte de KnuUI después del de WoW-Pro')
+ -- En combate, con la fila arriba fuera de la vista: alfa 0 igual; el mouse no se toca en un botón seguro.
+ MF.onWheel(MF, -1); MF.onWheel(MF, 1) -- fila corrida 40 arriba (fuera de la vista)
+ MF.onWheel(MF, -1)
+ local secured = row.itembutton
+ function secured:IsProtected() return true end
+ combat = true; secured.alpha, secured.mouse = 1, true
+ _G.WoWPro.UpdateFlyoutClip()
+ assert(secured.alpha == 0 and secured.mouse == true, 'guía: en combate sólo alfa en botones seguros')
+ combat = false; secured.IsProtected = nil
+ MF.onWheel(MF, 10)
+ -- WoW-Pro vuelve a armarse (paso nuevo): respeta lo que subiste.
+ MF.height, GF.height = 752, 700
+ module:LimitWoWPro()
+ assert(Y() == 0, 'guía: conserva la posición elegida')
+ MF.onWheel(MF, -10) -- abajo del todo: vuelve a seguir el final
+ MF.height, GF.height = 800, 748
+ module:LimitWoWPro()
+ assert(Y() == 228, 'guía: abajo sigue al paso actual')
+ -- En combate no se toca nada.
+ combat = true; MF.height = 752
+ assert(module:LimitWoWPro() == false and MF.height == 752)
+ combat = false
+ -- Entra sin cortar: filas en su lugar.
+ MF.height, GF.height = 300, 248
+ assert(module:LimitWoWPro() == false and Y() == 0, 'guía: sin tope si entra')
+ MF.onWheel(MF, 1)
+ assert(wowproWheel == 1, 'guía: sin tope, la rueda es la de WoW-Pro')
+ -- Guía movida lejos del grupo, o sin autoresize (centro de comando): no se corta.
+ MF.height, GF.height, MF.left, MF.right = 752, 700, 900, 1200
+ assert(module:LimitWoWPro() == false and MF.height == 752, 'guía: lejos del grupo')
+ MF.left, MF.right = 8, 308
+ _G.WoWProDB.profile.autoresize = false
+ assert(module:LimitWoWPro() == false and MF.height == 752, 'guía: sin autoresize')
+ _G.WoWPro, _G.WoWProDB, _G.ElvUF_PartyMover, UIParent.GetEffectiveScale = nil, nil, nil, savedUI
 end
 
 -- Cruces de cierre: estilo de ElvUI y, en las chicas, zona de clic de 22 px (ElvUI recorta 6/7 px por lado).

@@ -153,6 +153,11 @@ local function Attach()
     hooked[method] = true
    end
   end
+  -- Tope de altura: después de cada armado de la ventana (MainFrameLayout llama a GuideWindowLayout, Frames.lua:884).
+  if not hooked.MainFrameLayout and type(WoWPro.MainFrameLayout) == 'function' then
+   hooksecurefunc(WoWPro, 'MainFrameLayout', function() pcall(K.LimitWoWPro, K) end)
+   hooked.MainFrameLayout = true
+  end
  end)
  Schedule()
 end
@@ -168,4 +173,120 @@ function K:SetupWoWProSkin()
   if event ~= 'ADDON_LOADED' or name == 'WoWPro' then Attach() end
  end)
  Attach()
+end
+
+-- Tope de altura de la guía con desplazamiento (pedido del user 2026-11-22: «tiene que limitarse pero permitir scroll»).
+-- Con autoresize, WoW-Pro agranda la ventana hasta el borde de la pantalla (GetMainFrameMaxSize, WoWPro_Frames.lua:55-85),
+-- y los pasos «As you go» no cuentan para numsteps (WoWPro_Config.lua:381): con varios, la guía tapaba el grupo.
+-- Su propia barra se mueve de a un paso (GuideOffset, WoWPro_Frames.lua:1752-1760) y deja fijos los «As you go», así que
+-- no sirve. KnuUI corta la ventana arriba del grupo y mueve las filas por píxeles dentro de GuideFrame, que WoW-Pro ya
+-- recorta (SetClipsChildren, :1724): la fila 1 cuelga de GuideFrame y las demás de la anterior (CreateRow, :1773-1779).
+-- Por defecto se ve el final (el paso actual va después de los «As you go»); la rueda del mouse sube y baja. En combate
+-- no se toca nada (la ventana tiene botones seguros). Sólo con autoresize: el centro de comando lo apaga (Workspace.lua).
+local GUIDE_GAP = 6
+local limit = { scroll = 0, range = 0, user = false }
+
+-- Borde superior del grupo y la banda de KnuUI (Layout.lua K.guideColumnPoints) que quedan debajo de la guía, en
+-- coordenadas de UIParent: hasta ahí puede bajar. nil si ninguno comparte columna con la guía (guía movida a otro lado).
+local function GuideFloor(MF)
+	local ui = UIParent:GetEffectiveScale() or 1
+	local ms = (MF:GetEffectiveScale() or 1) / ui
+	local left, right = (MF:GetLeft() or 0) * ms, (MF:GetRight() or 0) * ms
+	local floor
+	for _, name in ipairs({ 'ElvUF_PartyMover', 'ElvUF_Raid1Mover' }) do
+		local mover = _G[name]
+		local top = mover and mover.GetTop and mover:GetTop()
+		if top then
+			local s = (mover:GetEffectiveScale() or 1) / ui
+			local mLeft, mRight = (mover:GetLeft() or 0) * s, (mover:GetRight() or 0) * s
+			if mLeft < right and mRight > left then floor = math.max(floor or 0, top * s) end
+		end
+	end
+	return floor and floor + GUIDE_GAP
+end
+
+-- Botones de cada fila (usar objeto, objetivo, etc.): cuelgan de MainFrame y UIParent, así que el recorte de
+-- GuideFrame no los alcanza. WoW-Pro los apaga con alfa y mouse (no con Hide: hay seguros) sólo por el borde de abajo
+-- (UpdateFlyoutClip, WoWPro_Frames.lua:313-336); con las filas corridas también hay que mirar el de arriba (revisión de
+-- Codex 2026-11-22). Mismas claves que WoW-Pro (FLYOUT_KEYS, :315).
+local FLYOUT_KEYS = { 'itembutton', 'targetbutton', 'jumpbutton', 'eabutton', 'itembuttonSecured', 'targetbuttonSecured', 'eabuttonSecured' }
+local function ClipFlyouts()
+	local GF = WoWPro and WoWPro.GuideFrame
+	if limit.range <= 0 or not GF or not WoWPro.rows then return end
+	-- En combate WoW-Pro puede volver a mostrarlos (su regla sólo mira abajo): el alfa se puede cambiar igual; el mouse,
+	-- sólo en los que no son seguros (revisión de Codex 2026-11-22).
+	local combat = InCombatLockdown()
+	local top, bottom = GF:GetTop(), GF:GetBottom()
+	if not (top and bottom) then return end
+	for _, row in ipairs(WoWPro.rows) do
+		local rowTop = row:GetTop()
+		local titleHeight = row.step and row.step:GetHeight()
+		local titleBottom = rowTop and titleHeight and rowTop - titleHeight
+		local inView = row:IsShown() and titleBottom ~= nil and titleBottom >= bottom and rowTop <= top + 1
+		for _, key in ipairs(FLYOUT_KEYS) do
+			local b = row[key]
+			if b then
+				b:SetAlpha(inView and 1 or 0)
+				if not (combat and b.IsProtected and b:IsProtected()) then b:EnableMouse(inView) end
+			end
+		end
+	end
+end
+
+local function PlaceRows(scroll)
+	local first = WoWPro and WoWPro.rows and WoWPro.rows[1]
+	local GF = WoWPro and WoWPro.GuideFrame
+	if not (first and GF) then return end
+	first:ClearAllPoints()
+	first:SetPoint('TOPLEFT', GF, 'TOPLEFT', 0, scroll)
+	first:SetPoint('TOPRIGHT', GF, 'TOPRIGHT', 0, scroll)
+	ClipFlyouts()
+end
+
+function K:LimitWoWPro()
+	local MF = WoWPro and WoWPro.MainFrame
+	local GF = WoWPro and WoWPro.GuideFrame
+	local WP = WoWProDB and WoWProDB.profile
+	if not (MF and GF and WP) or InCombatLockdown() then return false end
+	local wanted = E.db.KnuUIWoWProLimit ~= false and WP.autoresize and MF:IsShown()
+	local s = (MF:GetEffectiveScale() or 1) / (UIParent:GetEffectiveScale() or 1)
+	local mfTop, gfTop = MF:GetTop(), GF:GetTop()
+	if not (mfTop and gfTop) then return false end
+	local floor = GuideFloor(MF)
+	local maxH = floor and (mfTop * s - floor) / s
+	local content = GF:GetHeight() or 0
+	if not wanted or not maxH or MF:GetHeight() <= maxH then
+		if limit.range > 0 then limit.range, limit.scroll, limit.user = 0, 0, false; PlaceRows(0) end
+		return false
+	end
+	local pad = MF:GetHeight() - (mfTop - gfTop) - content -- lo que WoW-Pro dejó debajo de las filas
+	local visible = math.max(maxH - (mfTop - gfTop) - math.max(pad, 0), 20)
+	MF:SetHeight(maxH)
+	GF:SetHeight(visible)
+	limit.range = math.max(content - visible, 0)
+	-- Sin rueda desde el último cambio: al final, donde está el paso actual.
+	if not limit.user then limit.scroll = limit.range end
+	limit.scroll = math.min(math.max(limit.scroll, 0), limit.range)
+	PlaceRows(limit.scroll)
+	if not limit.wheel then
+		limit.wheel = true
+		MF:EnableMouseWheel(true)
+		-- Con el tope activo, la rueda es sólo de KnuUI: la de WoW-Pro (guidescroll, de a un paso, :1762-1766) haría
+		-- un segundo desplazamiento. Sin tope, la de WoW-Pro sigue como siempre.
+		local original = MF:GetScript('OnMouseWheel')
+		MF:SetScript('OnMouseWheel', function(frame, delta)
+			if limit.range <= 0 then
+				if original then return original(frame, delta) end
+				return
+			end
+			if InCombatLockdown() then return end
+			limit.user = true
+			limit.scroll = math.min(math.max(limit.scroll - delta * 40, 0), limit.range)
+			if limit.scroll >= limit.range then limit.user = false end -- de vuelta abajo: sigue al paso actual
+			PlaceRows(limit.scroll)
+		end)
+		-- WoW-Pro vuelve a calcular sus botones con su regla (sólo el borde de abajo): después, la de KnuUI.
+		if type(WoWPro.UpdateFlyoutClip) == 'function' then hooksecurefunc(WoWPro, 'UpdateFlyoutClip', ClipFlyouts) end
+	end
+	return true
 end
