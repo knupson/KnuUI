@@ -86,3 +86,40 @@ function K:ApplyAddons()
 		if not entry.manual and self:IsLoaded(entry.id) then self:ApplyAddon(entry) end
 	end
 end
+
+-- Pawn y la hoja de personaje de ElvUI. En Forever, Pawn cuelga su botón de PaperDollItemsFrame al iniciar sesión
+-- (Pawn/PawnUI.lua:71-73, llamado desde Pawn.lua:254 en PLAYER_LOGIN), y ElvUI trata a todo botón de ese marco como
+-- casilla de equipo y le hace S:HandleIcon(Slot.icon) (ElvUI/Game/Shared/Skins/Character.lua:859-865); el botón de
+-- Pawn no tiene .icon (PawnUI.xml:128, UIPanelButtonTemplate) y ElvUI corta con «attempt to index local 'icon'» sin
+-- terminar la hoja. Mientras ElvUI no la haya estilado, el botón queda en su padre del XML (PaperDollFrame,
+-- PawnUI.xml:276); después de cada S:LoadSkin se mira si ya lo hizo (CharacterHeadSlot con plantilla, Toolkit.lua:297)
+-- y entonces Pawn lo vuelve a poner donde quiere. Con el estilo de personaje de ElvUI apagado no se toca nada.
+function K:SetupPawnPaperDoll()
+	if self.pawnPaperDoll or not E.Forever or type(_G.PawnUI_InventoryPawnButton_Move) ~= 'function' then return end
+	local S = E:GetModule('Skins', true)
+	if not (S and S.LoadSkin and _G.PawnUI_InventoryPawnButton and _G.PaperDollFrame) then return end
+	self.pawnPaperDoll = true
+	local pending = true
+	local function Skinned()
+		local slot = _G.CharacterHeadSlot
+		return slot and slot.template ~= nil
+	end
+	local function SkinOn()
+		local blizzard = E.private and E.private.skins and E.private.skins.blizzard
+		return blizzard and blizzard.enable and blizzard.character
+	end
+	local function Hold()
+		if pending and SkinOn() and not Skinned() then
+			_G.PawnUI_InventoryPawnButton:SetParent(_G.PaperDollFrame)
+		end
+	end
+	hooksecurefunc('PawnUI_InventoryPawnButton_Move', Hold)
+	hooksecurefunc(S, 'LoadSkin', function()
+		if pending and Skinned() then
+			pending = false
+			if _G.PawnCommon then pcall(_G.PawnUI_InventoryPawnButton_Move) end
+		end
+	end)
+	Hold()
+end
+K:SetupPawnPaperDoll()

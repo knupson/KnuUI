@@ -13,6 +13,7 @@ local K = E:GetModule('KnuUI')
 
 -- Presets incluidos en DynamicCam (Presets.lua:12-27). Por defecto el más marcado.
 local DEFAULT_PRESET, PROFILE = "Shushudaa's preset", 'KnuUI'
+local FARTHER, FARTHER_V = 1.5, 1 -- situaciones un 50 % más lejos (FartherCamSituations)
 
 function K:ApplyCamera(force, preset)
 	local PRESET = preset or E.global.KnuUICameraPreset or DEFAULT_PRESET
@@ -43,6 +44,8 @@ function K:ApplyCamera(force, preset)
 	self:DisableBrokenCamSituations()
 	self:SoftenCamSituations()
 	self:FixHearthCamSituation()
+	self:FartherCamSituations()
+	E.global.KnuUICamFarther = FARTHER_V -- el preset recién cargado ya quedó alejado
 	self:ApplyCombatZoom()
 	E:Print(format(L['KnuUI: camera "%s" applied to DynamicCam profile "%s".'], PRESET, PROFILE))
 	return true
@@ -114,6 +117,29 @@ function K:SoftenCamSituations()
 	end
 	for _, id in ipairs(SITUATION_IDS) do Soften(situations[id]) end
 	for _, s in pairs(situations) do Soften(s) end -- situaciones propias del jugador
+	return count
+end
+
+-- Todas las distancias de las situaciones un 50 % más lejos (pedido del user 2026-11-22: «quiero todas mis cámaras
+-- más lejos»). Vienen del preset (DynamicCam/Presets.lua); en el perfil «KnuUI» iban de 3,5 m (ciudad, interiores)
+-- a 28 m (banda). viewZoom: zoomValue para "set", "out" e "in" ("in" es min(actual, zoomValue): subirlo deja la
+-- cámara más lejos, SituationManager.lua:925-929) y zoomMin/zoomMax para "range". Tope: 39 m (MAX_ZOOM). DynamicCam
+-- lee los valores al entrar en cada situación (SituationManager.lua:1118-1120): la activa cambia en la siguiente
+-- entrada o al recargar; no se la fuerza a reentrar porque eso vuelve a correr sus scripts de salida y entrada.
+function K:FartherCamSituations()
+	local dc = self:IsLoaded('DynamicCam') and _G.DynamicCam
+	local situations = dc and dc.db and dc.db.profile and dc.db.profile.situations
+	if type(situations) ~= 'table' then return 0 end
+	local count = 0
+	for _, s in pairs(situations) do
+		local z = type(s) == 'table' and s.viewZoom
+		if type(z) == 'table' then
+			for _, key in ipairs({ 'zoomValue', 'zoomMin', 'zoomMax' }) do
+				local v = tonumber(z[key])
+				if v then z[key] = math.min(v * FARTHER, 39); count = count + 1 end
+			end
+		end
+	end
 	return count
 end
 
@@ -220,6 +246,13 @@ function K:SetupCombatZoom()
 			pcall(K.DisableBrokenCamSituations, K) -- también en perfiles ya aplicados
 			pcall(K.SoftenCamSituations, K)
 			pcall(K.FixHearthCamSituation, K) -- después de suavizar, que apaga los giros
+			if E.global.KnuUICamFarther ~= FARTHER_V then
+				-- Si el inicio cae en combate, al salir (cola de KnuLib, Core.lua K:AfterCombat).
+				K:AfterCombat(function()
+					if E.global.KnuUICamFarther == FARTHER_V or not OwnsCamProfile() then return end
+					if pcall(K.FartherCamSituations, K) then E.global.KnuUICamFarther = FARTHER_V end
+				end, 'KnuUI:CamFarther')
+			end
 		end
 		pcall(K.FastHearthFade, K)
 		pcall(K.ApplyCombatZoom, K)

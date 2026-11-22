@@ -1236,6 +1236,75 @@ do
  issecretvalue = nil
 end
 
+-- Pawn y la hoja de personaje (Compat.lua): el botón de Pawn no cuelga de PaperDollItemsFrame hasta que ElvUI estila la
+-- hoja (si no, ElvUI corta en HandleIcon por falta de .icon); después Pawn lo vuelve a poner. Con el estilo apagado, nada.
+do
+ local button, items, frame = { }, { name = 'items' }, { name = 'frame' }
+ function button:SetParent(p) self.parent = p end
+ local moves = 0
+ local function Setup()
+  PawnUI_InventoryPawnButton, PaperDollFrame, PaperDollItemsFrame, CharacterHeadSlot, PawnCommon = button, frame, items, {}, {}
+  PawnUI_InventoryPawnButton_Move = function() moves = moves + 1; button:SetParent(items) end
+  skins.LoadSkin = function() end
+  module.pawnPaperDoll = nil
+  module:SetupPawnPaperDoll()
+ end
+ Setup()
+ PawnUI_InventoryPawnButton_Move() -- PLAYER_LOGIN de Pawn, antes del estilo de ElvUI
+ assert(button.parent == frame)
+ skins:LoadSkin({}) -- otro estilo: la hoja todavía no
+ assert(button.parent == frame)
+ CharacterHeadSlot.template = 'Default'
+ local before = moves
+ skins:LoadSkin({})
+ assert(button.parent == items and moves == before + 1)
+ skins:LoadSkin({}) -- una sola vez
+ assert(moves == before + 1)
+ -- Estilo de personaje de ElvUI apagado: el botón queda donde lo pone Pawn.
+ E.private.skins.blizzard.character = false
+ Setup()
+ PawnUI_InventoryPawnButton_Move()
+ assert(button.parent == items)
+ E.private.skins.blizzard.character = true
+ PawnUI_InventoryPawnButton, PaperDollFrame, PaperDollItemsFrame, CharacterHeadSlot, PawnCommon, PawnUI_InventoryPawnButton_Move = nil, nil, nil, nil, nil, nil
+ skins.LoadSkin, module.pawnPaperDoll = nil, nil
+end
+
+-- Manners (Skins/AddOns/Manners.lua): sólo cambia lo que sigue por defecto, una vez por perfil, y le pide redibujarse.
+do
+ local defaults = { style = 'glass', font = 'Friz', bgColor = { 0.04, 0.04, 0.06, 0.88 }, accentColor = { 0.45, 0.4, 0.9, 1 },
+  point = 'BOTTOM', relPoint = 'BOTTOM', x = 0, y = 300 }
+ local function Copy(t) local c = {} for k, v in pairs(t) do c[k] = type(v) == 'table' and { unpack(v) } or v end return c end
+ local refreshed, profile = 0, 'Yaestoy'
+ local manners = { db = { defaults = { profile = { prompt = defaults } }, GetCurrentProfile = function() return profile end } }
+ function manners:RefreshConfig() refreshed = refreshed + 1 end
+ local oldStub = LibStub
+ LibStub = function(name) if name == 'AceAddon-3.0' then return { GetAddon = function(_, n) return n == 'Manners' and manners or nil end } end end
+ E.global.KnuUIManners = nil
+ -- Todo por defecto: estilo, fuente, colores y lugar de KnuUI.
+ manners.db.profile = { prompt = Copy(defaults) }
+ assert(module:ApplyManners() == true and refreshed == 1)
+ local p = manners.db.profile.prompt
+ assert(p.style == 'minimal' and p.font == 'Expressway' and p.x == 330 and p.y == 340 and p.point == 'BOTTOM')
+ local accent = module:GetTheme().accent
+ assert(p.accentColor[1] == accent.r and p.accentColor[4] == 1 and p.bgColor[4] == 0.9)
+ -- Una vez por perfil.
+ p.style = 'glass'
+ assert(module:ApplyManners() == false and p.style == 'glass' and refreshed == 1)
+ -- Otro perfil con cosas elegidas por el jugador: se respetan.
+ profile = 'Otro'
+ manners.db.profile = { prompt = Copy(defaults) }
+ p = manners.db.profile.prompt
+ p.style, p.y, p.accentColor = 'leather', 500, { 1, 0, 0, 1 }
+ assert(module:ApplyManners() == true)
+ assert(p.style == 'leather' and p.y == 500 and p.x == 0 and p.accentColor[1] == 1 and p.font == 'Expressway')
+ -- Sin Manners o con otra estructura: nada.
+ profile = 'Tercero'
+ manners.db.defaults = nil
+ assert(module:ApplyManners() == false and E.global.KnuUIManners.Tercero == nil)
+ LibStub, E.global.KnuUIManners = oldStub, nil
+end
+
 -- Cruces de cierre: estilo de ElvUI y, en las chicas, zona de clic de 22 px (ElvUI recorta 6/7 px por lado).
 do
  local small, big = Widget(), Widget()
@@ -2060,6 +2129,30 @@ do
  assert(mine.rotation.enabled == true and mine.transitionTime.timeToEnter == 1, 'cámara: perfil ajeno intacto')
  local knu = Cam('KnuUI')
  assert(knu.rotation.enabled == false and knu.transitionTime.timeToEnter == 2.5, 'cámara: perfil KnuUI suavizado')
+ -- Cámaras un 50 % más lejos (pedido del user 2026-11-22): una vez, sólo en el perfil «KnuUI», tope 39, todos los tipos.
+ local function CamZ(profile)
+  local s = { a = { viewZoom = { zoomValue = 8, zoomMin = 10 } }, b = { viewZoom = { zoomValue = 28 } },
+   c = { viewZoom = { zoomType = 'in', zoomValue = 5 } }, d = { viewZoom = { zoomType = 'range', zoomMin = 10, zoomMax = 14 } } }
+  _G.DynamicCam = { db = { profile = { standardSettings = { cvars = {} }, situations = s },
+   GetCurrentProfile = function() return profile end } }
+  E.global.KnuUICameraApplied, E.global.KnuUICombatZoomV, E.global.KnuUICamFarther = true, 2, nil
+  module:SetupCombatZoom()
+  return s
+ end
+ local z = CamZ('Mi perfil')
+ assert(z.a.viewZoom.zoomValue == 8 and z.b.viewZoom.zoomValue == 28 and E.global.KnuUICamFarther == nil, 'cámara lejos: perfil ajeno')
+ z = CamZ('KnuUI')
+ assert(z.a.viewZoom.zoomValue == 12 and z.a.viewZoom.zoomMin == 15 and z.b.viewZoom.zoomValue == 39, 'cámara lejos: 50 % y tope')
+ assert(z.c.viewZoom.zoomValue == 7.5 and z.d.viewZoom.zoomMin == 15 and z.d.viewZoom.zoomMax == 21, 'cámara lejos: in y rango')
+ module:SetupCombatZoom()
+ assert(z.a.viewZoom.zoomValue == 12 and E.global.KnuUICamFarther == 1, 'cámara lejos: una sola vez')
+ -- Si el inicio cae en combate, se aplica al salir.
+ combat = true
+ local zc = CamZ('KnuUI')
+ assert(zc.a.viewZoom.zoomValue == 8 and E.global.KnuUICamFarther == nil and PendingAfterCombat('KnuUI:CamFarther'), 'cámara lejos: espera fin de combate')
+ combat = false; RunAfterCombat()
+ assert(zc.a.viewZoom.zoomValue == 12 and E.global.KnuUICamFarther == 1, 'cámara lejos: aplicada al salir de combate')
+ E.global.KnuUICamFarther = nil
  _G.DynamicCam, E.global.KnuUICameraApplied, E.global.KnuUICombatZoomV = nil, nil, nil
  module.IsLoaded = savedLoaded
 

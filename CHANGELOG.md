@@ -1,5 +1,15 @@
 # KnuUI changelog
 
+## 3.6.9 (2026-11-22)
+
+- Character sheet: with Pawn installed, ElvUI's character skin stopped halfway with an "attempt to index local 'icon'"
+  error on every login, leaving some equipment slots unstyled. Pawn's button now joins the sheet after ElvUI has
+  styled it.
+- Manners: its prompt uses its own "Minimal" look with KnuUI's colours and font, and sits to the right of the target
+  column instead of over the target's auras. Only settings still at Manners' defaults are changed, once per Manners
+  profile.
+- DynamicCam: every camera situation on the "KnuUI" profile is 50% farther, up to the 39 m maximum.
+
 ## 3.6.8 (2026-11-21)
 
 - New KnuUI logo and addon icon: an interface panel instead of the K, matching the other Knu addons.
