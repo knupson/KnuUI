@@ -11,7 +11,7 @@ P.KnuUIAddonSkinsOff = {}
 
 -- Cruz de cierre con el estilo de ElvUI y una zona de clic usable. HandleCloseButton recorta 6 px por costado y 7 arriba
 -- y abajo (ElvUI/Game/Shared/Modules/Skins/Skins.lua, HandleCloseButton), pensado para las cruces de 32 px: en una de
--- 16 (RareScanner.lua:182) quedaban 4x2 px clickeables (reportado en el juego 2026-11-21). En las chicas se agranda a 22.
+-- 16 (RareScanner.lua:182) quedaban 4x2 px clickeables. En las chicas se agranda a 22.
 function K:SkinClose(button)
 	if not button then return end
 	S:HandleCloseButton(button)

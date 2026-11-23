@@ -5,8 +5,8 @@ local K = E:GetModule('KnuUI')
 
 -- Offhand (ventana estirada sobre dos monitores, Companion la deja en 1920x2160).
 -- Offhand baja la escala de UIParent para que entre toda la ventana (Core/Viewport.lua:724, 0,35 con
--- hudScale 0,7). ElvUI arma su contenedor y sus bordes con medidas de la ventana entera. Medido con
--- /knudiag el 2026-11-12 (WTF\...\SavedVariables\KnuUI.lua):
+-- hudScale 0,7). ElvUI arma su contenedor y sus bordes con medidas de la ventana entera. Medido con /knudiag
+-- (WTF\...\SavedVariables\KnuUI.lua):
 --   * E:UIScale dentro de E:Initialize (ElvUI Core.lua:2037) deja ElvUIParent en 960x1080 y los
 --     módulos se arman con ese tamaño;
 --   * E.mult = 0,5 (bordes de medio píxel) porque E.perfect usa el alto de la ventana (2160);
@@ -94,7 +94,7 @@ end
 
 -- Movers de ElvUI: cuelgan de UIParent (Movers.lua:281), no de ElvUIParent. Con Offhand UIParent queda en
 -- 0,35 y ElvUIParent en 0,356, así que sus desplazamientos y tamaños salen 1,6 % chicos. Medido con
--- /knudiag el 2026-11-12: ElvAB_5 en 'BOTTOM,ElvUIParent,BOTTOM,-422,28' quedaba en x 418,6 px en vez
+-- /knudiag: ElvAB_5 en 'BOTTOM,ElvUIParent,BOTTOM,-422,28' quedaba en x 418,6 px en vez
 -- de 410 (barras separadas del chat). Se les da la escala que los iguala a ElvUIParent.
 local function ScaleMovers()
 	if not E.CreatedMovers or not E.UIParent then return end
@@ -138,7 +138,7 @@ function K:OffhandFit()
 	parent:SetScale(target / _G.UIParent:GetEffectiveScale())
 	parent:ClearAllPoints()
 	-- Centro de comando con la barra de datos arriba (Workspace.lua, K.CCBottomShift): ElvUIParent baja y
-	-- crece lo mismo, así lo anclado abajo baja (barras a 4 px del borde, pedido del user 2026-11-13) y lo
+	-- crece lo mismo, así lo anclado abajo baja (barras a 4 px del borde) y lo
 	-- anclado arriba (minimapa, K) queda donde está.
 	local shift = tonumber(K.CCBottomShift) or 0
 	parent:SetPoint('BOTTOMLEFT', _G.UIParent, 'BOTTOMLEFT', (g.x or 0) / unit, (g.y or 0) / unit - shift)

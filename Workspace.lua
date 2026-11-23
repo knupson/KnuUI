@@ -3,20 +3,17 @@ local _, ns = ...
 local L = ns.L
 local K = E:GetModule('KnuUI')
 
--- Centro de comando con Offhand (pedido del user 2026-11-12): cuando Offhand estira la ventana sobre
--- dos monitores, el monitor de trabajo junta lo que no es combate (guía + PallyPower, chat, Details,
--- datos, mapa, bolsas) y el de juego queda con barras, marcos, minimapa y la flecha de TomTom.
--- Regla de diseño del user: "lo que veo más seguido tiene que estar lo más cerca posible del monitor
--- contiguo". Las zonas se calculan desde el borde que el monitor de trabajo comparte con el de juego
--- (arriba, abajo, izquierda o derecha) y para cualquier resolución u orientación.
+-- Centro de comando con Offhand: cuando Offhand estira la ventana sobre dos monitores, el monitor de trabajo junta lo que no es
+-- combate (guía + PallyPower, chat, Details, datos, mapa, bolsas) y el de juego queda con barras, marcos, minimapa y la flecha de TomTom.
+-- Regla de diseño: lo que se mira más seguido tiene que estar lo más cerca posible del monitor contiguo. Las zonas se calculan
+-- desde el borde que el monitor de trabajo comparte con el de juego (arriba, abajo, izquierda o derecha) y para cualquier resolución u orientación.
 -- Datos de Offhand: Offhand.Viewport:GetMetrics() (Offhand/Core/Viewport.lua:459-500) da los
 -- rectángulos en píxeles físicos (workspacePixel*, gamePixel*, origen abajo a la izquierda) y
--- isSpanned. Revisiones de diseño (Codex, Gemini, NVIDIA; docs/knuui-final/PLAN.md): no se escribe en
--- el perfil de Offhand (Routing:SetRule lo haría, WorkspaceRouting.lua:32-34), todo se mueve fuera de
--- combate y la detección se rehace con una firma de los rectángulos.
+-- isSpanned. No se escribe en el perfil de Offhand (Routing:SetRule lo haría, WorkspaceRouting.lua:32-34), todo se mueve fuera de
+-- combate y la detección se rehace con una firma de los rectángulos (docs/knuui-final/PLAN.md).
 -- Los movers de ElvUI aceptan cualquier marco global como ancla (ElvUI General/Movers.lua:63-70): acá
 -- se anclan a marcos de zona propios en tiempo de ejecución, sin escribir E.db.movers, así el diseño de
--- una sola pantalla queda intacto. Lo que el user arrastre en modo centro de comando se guarda aparte
+-- una sola pantalla queda intacto. Lo que el jugador arrastre en modo centro de comando se guarda aparte
 -- (E.db.KnuUICC.custom) relativo a su zona.
 
 local CC = {}
@@ -24,7 +21,7 @@ K.CC = CC
 
 -- El panel de datos de ElvUI no se llama KnuUI_Data: DT:FetchFrame lo crea como ElvUI_DTPanelN y lo guarda en
 -- DT.PanelPool.InUse[nombre] (ElvUI DataTexts.lua:139-158). Antes se buscaba _G.KnuUI_Data, que no existe,
--- y por eso DynamicCam escondía la barra al volar (visto en el juego 2026-11-13).
+-- y por eso DynamicCam escondía la barra al volar.
 local function DataPanel()
 	local DT = E:GetModule('DataTexts', true)
 	return DT and DT.PanelPool and DT.PanelPool.InUse and DT.PanelPool.InUse.KnuUI_Data
@@ -149,7 +146,7 @@ function CC:Layout(W, H, edge, overlap)
 	local dw, dh = BlockSize('details')
 	local tw, th = BlockSize('data')
 	if horizontal then
-		-- Pedido del user (2026-11-13, segunda vuelta): barra de datos arriba de todo del monitor de trabajo;
+		-- Barra de datos arriba de todo del monitor de trabajo;
 		-- guía, chat y Details con la misma altura llenando la franja pegada al juego; PallyPower adentro del
 		-- bloque de Details, abajo, sobre la segunda ventana (Tiny Threat). Distancias: margen M (borde de
 		-- Offhand + 4) y 6 px entre bloques.
@@ -402,7 +399,7 @@ function CC:ApplySizes(rects)
 	end
 end
 
--- Monitor de juego con el centro de comando (pedido del user 2026-11-13):
+-- Monitor de juego con el centro de comando:
 -- * con la barra de datos arriba, todo el bloque de abajo baja 24 px (lo que ocupaba la barra: y 2-24,
 --   Layout.lua DTPanelKnuUI_DataMover) y queda a 4 px del borde, como el resto;
 -- * con Details arriba, el bloque derecho vuelve a 6x4 (el compacto 3x4 le daba 129 px a Details,
@@ -461,7 +458,7 @@ function CC:ApplyGame(on)
 	return changedBars
 end
 
--- Pedidos del user (2026-11-13) para el monitor de trabajo:
+-- Monitor de trabajo:
 -- * margen: nada pegado al borde ni encima del marco que dibuja Offhand alrededor del lienzo
 --   (OffhandCanvasFrame, tema con insets de 11-12 px: Offhand/UI/Themes.lua:21-27,240-256): margen =
 --   inset del marco + 4;
@@ -537,8 +534,8 @@ function CC:ApplyFonts(on)
 end
 
 -- Chat de Offhand (dockChat): Offhand reubica ChatFrame1 con HUD:AlignChatFrame (Offhand/Core/SeamRedirect.lua:121)
--- porque no reconoce a ElvUI como dueño del chat; al subir de nivel lo sacó del panel de arriba (visto en el
--- juego 2026-11-13). Con el chat en el monitor de trabajo se apaga; al restaurar vuelve tu valor.
+-- porque no reconoce a ElvUI como dueño del chat; al subir de nivel lo sacó del panel de arriba.
+-- Con el chat en el monitor de trabajo se apaga; al restaurar vuelve tu valor.
 function CC:ApplyOffhandChat(on)
 	local off = _G.Offhand
 	local odb = off and off.db
@@ -758,8 +755,8 @@ end
 
 -- Devuelve lo que el centro de comando cambió en tus perfiles (tamaños, letra, datos, mapa, tooltip, bloque
 -- derecho) aunque no esté activo. Se usa al entrar sin Offhand o sin el estirado: si el juego se cerró con el
--- centro activo, esos valores quedaron guardados (visto en el juego 2026-11-13: sin Offhand, chat y Details
--- quedaron con el tamaño del monitor de arriba y la guía con la letra grande).
+-- centro activo, esos valores quedaron guardados (sin Offhand, chat y Details quedaban con el tamaño del
+-- monitor de arriba y la guía con la letra grande).
 function CC:RestoreSaved()
 	local d = DB()
 	if d.mapOrig then pcall(self.ApplyMap, self, nil) end
@@ -815,7 +812,7 @@ end
 -- Mapa (OpenMap). OpenMap guarda dónde va la ventana del mapa en su propia configuración
 -- (OpenMap/Map/Window.lua:14-17: window = { point, relPoint, x, y } relativo a UIParent, windowSize,
 -- windowScale) y la vuelve a poner cada vez que algo la mueve (Window.lua:54-73, 269-275). Offhand
--- abandona el mapa cuando lo maneja OpenMap (revisión de Codex: CanvasCompatibility.lua:113). Acá se
+-- abandona el mapa cuando lo maneja OpenMap (CanvasCompatibility.lua:113). Acá se
 -- escribe la zona del mapa en esos valores mientras dura el centro de comando; los tuyos se guardan en
 -- E.db.KnuUICC.mapOrig y vuelven al salir.
 function CC:ApplyMap(zone)
@@ -864,8 +861,7 @@ end
 
 -- OpenMap reaplica su lugar guardado cuando algo llama a SetPoint/SetSize del mapa (Window.lua:269-275),
 -- no con ClearAllPoints: se ubica directo con los valores ya escritos y OpenMap los confirma.
--- Mapa "sólo mapa" en el monitor de trabajo (pedido del user 2026-11-13: "que sea solo mapa, sin los
--- demás extras"). El registro de misiones al costado lo abre o cierra Blizzard según el CVar
+-- Mapa "sólo mapa" en el monitor de trabajo, sin los demás extras. El registro de misiones al costado lo abre o cierra Blizzard según el CVar
 -- questLogOpen, que OpenMap sólo acompaña (OpenMap/Map/Window.lua:324-331): mientras dure el centro de
 -- comando queda en 0 y el tuyo vuelve al salir (E.db.KnuUICC.questLogOpen). Los adornos de la ventana
 -- (título y botones, BorderFrame; desplegables, NavBar; flecha del panel; agarre de OpenMap; botones y
@@ -881,7 +877,7 @@ local function StripMap()
 	if not map or InCombatLockdown() or not MapOnlyWanted() or (map.IsMaximized and map:IsMaximized()) then return end
 	local keep = map.ScrollContainer
 	-- El registro de misiones (map.QuestLog) no se oculta: con L el juego abre este mismo mapa con el
-	-- registro al costado y quedaba invisible (visto en el juego 2026-11-13). Con M no aparece porque
+	-- registro al costado y quedaba invisible. Con M no aparece porque
 	-- questLogOpen queda en 0.
 	for _, child in ipairs({ map:GetChildren() }) do
 		if child ~= keep and child ~= map.QuestLog and not stripped[child] and not (child.IsProtected and child:IsProtected()) then
@@ -945,7 +941,7 @@ function CC:MapOnly(on)
 end
 
 -- Que el mapa (y el registro de misiones, si está abierto) no pise el borde de Offhand ni la barra de datos
--- (vistos en el juego 2026-11-13: sin registro el lienzo se estiraba más allá de la ventana; con registro,
+-- (sin registro el lienzo se estiraba más allá de la ventana; con registro,
 -- el registro pasaba el borde derecho y su búsqueda subía hasta la barra). Se vuelve al tamaño de la zona,
 -- se mide lo que sobresale del lienzo y del registro y se achica/corre la ventana lo justo.
 function CC.FitMapToZone()
@@ -959,8 +955,8 @@ function CC.FitMapToZone()
 		if not map:IsShown() or InCombatLockdown() then return end
 		local ql, sc = map.QuestLog, map.ScrollContainer
 		if ql and sc and ql:IsShown() and ql:GetLeft() and sc:GetTop() then
-			-- Registro de misiones alineado arriba y abajo con el lienzo (pedido del user 2026-11-13: quedaba
-			-- más alto arriba y más bajo abajo que el mapa). Se ancla al mapa con desplazamientos medidos, no al
+			-- Registro de misiones alineado arriba y abajo con el lienzo (quedaba más alto arriba y más bajo abajo que el mapa).
+			-- Se ancla al mapa con desplazamientos medidos, no al
 			-- lienzo, para no crear una dependencia circular si el lienzo cuelga del registro.
 			local qs, ss, mps = ql:GetEffectiveScale(), sc:GetEffectiveScale(), map:GetEffectiveScale()
 			local mR, mT, mB = map:GetRight() * mps, map:GetTop() * mps, map:GetBottom() * mps
@@ -1078,7 +1074,7 @@ function CC:ShowZones(show)
 	end
 end
 
--- Vuelo con el centro de comando (pedido del user 2026-11-12: "arriba visible, abajo oculto").
+-- Vuelo con el centro de comando: arriba visible, abajo oculto.
 -- DynamicCam oculta la interfaz con hideUI de la situación (perfil KnuUI: Taxi 160 con
 -- hideEntireUI = true, lo que esconde también el monitor de trabajo, que cuelga de UIParent). En
 -- DynamicCam:FadeOutUI(fadeOutTime, settings) (DynamicCam/Core.lua:476-546) la rama sin hideEntireUI
@@ -1123,7 +1119,7 @@ local function HookDynamicCam()
 			copy.customFramesToKeep = keep
 			-- Los retratos 3D de ElvUI (frame.Portrait3D, UnitFrames/Elements/Portrait.lua:13) no respetan la
 			-- transparencia de UIParent: con la interfaz atenuada (no oculta) quedaba el retrato del objetivo
-			-- sobre el personaje (visto en el juego 2026-11-13). Se esconden hasta que vuelve la interfaz.
+			-- sobre el personaje. Se esconden hasta que vuelve la interfaz.
 			if not InCombatLockdown() then
 				for _, name in ipairs({ 'ElvUF_Player', 'ElvUF_Target', 'ElvUF_TargetTarget', 'ElvUF_Focus', 'ElvUF_Pet' }) do
 					local uf = _G[name]
@@ -1159,7 +1155,7 @@ local function HookDynamicCamIn()
 	hooksecurefunc(dc, 'FadeInUI', function(_, fadeInTime)
 		-- Con la interfaz atenuada (no oculta) LibHideUI devuelve la opacidad de cada marco al terminar;
 		-- el rastreador de misiones, que KnuUI deja transparente con WoW-Pro (Skins/Objectives.lua:51-57),
-		-- volvía a verse (visto en el juego 2026-11-13). Se reaplica después del fundido.
+		-- volvía a verse. Se reaplica después del fundido.
 		if K.SkinTracker then C_Timer.After((tonumber(fadeInTime) or 0.5) + 0.3, function() K:SkinTracker() end) end
 		for _, name in ipairs({ 'ElvUF_Player', 'ElvUF_Target', 'ElvUF_TargetTarget', 'ElvUF_Focus', 'ElvUF_Pet' }) do
 			local uf = _G[name]

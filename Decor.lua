@@ -151,7 +151,7 @@ function K:RefreshDecor()
  applying = true
  local ok, err = pcall(Style)
  applying = false
- if not ok then E:Print(format(L["KnuUI: could not refresh the decoration: %s"], tostring(err))) end
+ if not ok then E:Print(format(L["Could not refresh the decoration: %s"], tostring(err))) end
  return ok
 end
 

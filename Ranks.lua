@@ -7,7 +7,7 @@ local K = E:GetModule('KnuUI')
 -- con el rango que se arrastró: al aprender uno nuevo no se actualiza solo (guía de macros de
 -- Kami Labs; foro de Blizzard us.forums.blizzard.com/en/wow/t/2402539).
 --
--- Qué rangos son del mismo hechizo: en Forever la API no los une. Probado en el juego 2026-11-17 con
+-- Qué rangos son del mismo hechizo: en Forever la API no los une. Probado en el juego con
 -- Martillo de justicia: 853 (Rango 1) y 5588 (Rango 2) dan GetBaseSpell = FindBaseSpellByID = sí mismos
 -- e IsSpellBookItemLowRank = false. Lo que comparten es el ícono original (135963) y el nombre, salvo
 -- la mayúscula: Blizzard escribe «Martillo de Justicia» el 1 y «Martillo de justicia» el 2 (por eso
@@ -18,7 +18,7 @@ local K = E:GetModule('KnuUI')
 -- La lista de hechizos sale del libro (C_SpellBook, banco del jugador): para cada cadena, el rango más
 -- alto conocido. Se revisan las 180 casillas de acción y cada hechizo con rango menor se reemplaza
 -- (C_Spell.PickupSpell + PlaceAction + ClearCursor, como Blizzard_ActionBar/Shared/ActionButton.lua; en
--- el juego ya reemplazó Bendición de protección, Bendición de sabiduría y Redención el 2026-11-17).
+-- el juego ya reemplazó Bendición de protección, Bendición de sabiduría y Redención).
 -- Las macros no se tocan. Fuera de combate y con el cursor libre; si no se puede, queda pendiente
 -- (PLAYER_REGEN_ENABLED, CURSOR_CHANGED). El subtexto («Rango N») puede venir vacío hasta que cargan los
 -- datos (SpellBookDocumentation.lua:1020): se vuelve a revisar con SPELL_TEXT_UPDATE y SPELLS_CHANGED.
@@ -121,7 +121,7 @@ local function Sweep(best, only)
 		end
 	end
 	for id, count in pairs(done) do
-		E:Print(format(L["KnuUI: %s rank %d placed on %d action buttons."], Name(id) or '?', Rank(id), count))
+		E:Print(format(L["%s rank %d placed on %d action buttons."], Name(id) or '?', Rank(id), count))
 	end
 	return total
 end

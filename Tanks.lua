@@ -11,8 +11,7 @@ local K = E:GetModule('KnuUI')
 
 local W, H = 66, 154 -- misma altura que los chats: y 28-182 (techo de chats en 184)
 local X = 258 -- centro de cada columna respecto del centro de pantalla
--- Distribución en modo tanques, 4 px entre bloques y 4 a los bordes (pedido del user 2026-11-13: "todo tiene
--- que tener la misma distancia"), chats de 401 para que cierre justo en 1920:
+-- Distribución en modo tanques, 4 px entre bloques y 4 a los bordes (misma distancia en todo), chats de 401 para que cierre justo en 1920:
 -- [chat: 4-405] [3+5: 409-665] [vida: 669-735] [barras 1-2: 739-1181] [maná: 1185-1251] [4+6: 1255-1511] [chat: 1515-1916]
 local GAP = 4
 local CHAT = 401 -- ancho de cada chat sin bloques compactos
@@ -114,7 +113,7 @@ end
 function K:SetupTanks()
 	-- El ancho de la barra de datos vive en lo global de ElvUI (customPanels, compartido entre perfiles) y
 	-- depende de los bloques compactos de ESTE perfil: al tocar "Chat y datos" en otro perfil quedaba en
-	-- 1100 y pisaba chat y Details en el tuyo (visto en el juego 2026-11-13). Se recalcula al cargar.
+	-- 1100 y pisaba chat y Details en el tuyo. Se recalcula al cargar.
 	local data = E.global.datatexts and E.global.datatexts.customPanels and E.global.datatexts.customPanels.KnuUI_Data
 	if data and E.db.datatexts and E.db.datatexts.panels and E.db.datatexts.panels.KnuUI_Data then
 		local left = E.db.KnuUITanks and E.db.KnuUICompactLeft and FREED or 0

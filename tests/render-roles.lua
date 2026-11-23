@@ -67,8 +67,7 @@ for _, role in ipairs({'tank', 'mdps', 'rdps', 'healer'}) do
     summary.canvas = geometry.canvas(res, ScaleFor(res))
     local rects, skipped = geometry.rectangles(nodes, aliases, summary.canvas)
     local problems = geometry.intersections(rects)
-    -- Separación pareja en modo columnas (pedido del user 2026-11-13: "todo tiene que tener la misma
-    -- distancia"): en la fila de abajo, 4 entre bloques vecinos y 4 a los bordes de la pantalla; la barra
+    -- Separación pareja en modo columnas: en la fila de abajo, 4 entre bloques vecinos y 4 a los bordes de la pantalla; la barra
     -- de datos, a 4 de cada chat.
     if tanks and res == '1920x1080' then
      local spans, data, chats = {}, nil, {}

@@ -68,7 +68,6 @@ function K:ScanMinimapButtons()
   -- Clic: el mismo menú que abre el botón original con clic izquierdo (MinimapIcon.lua:123-131,257-262:
   -- Menu:AnchorTo + Menu:ShowFor; WIM.Menu se crea en Modules/Menu.lua:1223-1301), anclado al
   -- lanzador de KnuUI. Con Mayús: opciones (WIM.ShowOptions, Sources/Options/Options.lua:42).
-  -- (Antes abría sólo los mensajes sin leer, WindowHandler.lua:2068: sin conversaciones no mostraba nada.)
   -- WIM usa setfenv(1, WIM), así que sus funciones globales viven en la tabla WIM.
   local wim = _G.WIM
   local button = _G.WIM3MinimapButton
@@ -147,11 +146,10 @@ function K:ScanMinimapButtons()
  self:RefreshLauncher()
 end
 
--- Botones propios de cualquier otro addon (pedido del user 2026-11-22: «tiene que ser universal, no addon por addon»):
--- todo Button con nombre colgado del minimapa (o de MinimapBackdrop) que no sea del juego, de ElvUI, de KnuUI ni de
--- LibDBIcon (esos van arriba). Caso que lo originó: CheapUpgradesMinimapButton, hijo de Minimap con su propio OnClick
--- (CheapUpgrades/Options.lua:1327-1360). Ícono: el campo icon/Icon del botón o su textura más grande que no sea borde ni
--- resaltado. Clic: el OnClick original con el botón del mouse que se usó en el menú. Sólo se oculta por esta sesión, y
+-- Botones propios de cualquier otro addon: todo Button con nombre colgado del minimapa (o de MinimapBackdrop) que no sea del
+-- juego, de ElvUI, de KnuUI ni de LibDBIcon (esos van arriba). Caso típico: CheapUpgradesMinimapButton, hijo de Minimap con su
+-- propio OnClick (CheapUpgrades/Options.lua:1327-1360). Ícono: el campo icon/Icon del botón o su textura más grande que no sea
+-- borde ni resaltado. Clic: el OnClick original con el botón del mouse que se usó en el menú. Sólo se oculta por esta sesión, y
 -- si el addon lo vuelve a mostrar se oculta otra vez. Los botones protegidos (seguros) no se tocan.
 local SKIP_NAME = { '^Minimap', '^MiniMap', '^GameTime', '^TimeManager', '^Elv', '^KnuUI', '^LibDBIcon', '^QueueStatus',
 	'^Garrison', '^ExpansionLandingPage', '^AddonCompartment', '^HybridMinimap', 'Pin', 'Arrow', 'Ping', 'Tracking' }
@@ -182,7 +180,7 @@ end
 
 -- Pines de mapa (TomTom crea TTMinimapButton%d con textura y OnClick, TomTom/modules/minimap_pins.lua:131-154, y
 -- HereBeDragons los cuelga del minimapa): no son lanzadores. Se reconocen por la tabla de pines de HereBeDragons
--- (pins.minimapPins, HereBeDragons-Pins-2.0.lua:16; revisión de Codex 2026-11-22).
+-- (pins.minimapPins, HereBeDragons-Pins-2.0.lua:16).
 local function IsMapPin(button)
 	if not LibStub then return false end
 	for _, major in ipairs({ 'HereBeDragons-Pins-2.0', 'HereBeDragons-Pins-1.0' }) do

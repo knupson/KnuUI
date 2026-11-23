@@ -21,16 +21,16 @@ L["Keep mine"] = "Seguir con el mío"
 L["Create style profiles"] = "Creá los perfiles de estilo (rehacer para recrearlos)"
 L["Try a style profile"] = "Probá un perfil de estilo por número o nombre completo"
 L["Return to the previous profile"] = "Volvé al perfil anterior"
-L["KnuUI: %d style profiles created; existing profiles were kept."] = "KnuUI: %d perfiles de estilo creados; los existentes se conservaron."
-L["KnuUI: choose an existing style profile by number or full name."] = "KnuUI: elegí un perfil de estilo existente por número o nombre completo."
-L["KnuUI: no previous profile is available."] = "KnuUI: no hay un perfil anterior disponible."
+L["%d style profiles created; existing profiles were kept."] = "%d perfiles de estilo creados; los existentes se conservaron."
+L["Choose an existing style profile by number or full name."] = "Elegí un perfil de estilo existente por número o nombre completo."
+L["No previous profile is available."] = "No hay un perfil anterior disponible."
 L["Cooldown Viewer skin"] = "Skin del administrador de tiempos de reutilización"
 L["Cooldown Viewer layout"] = "Posiciones del administrador de tiempos de reutilización"
 L["Place Blizzard cooldown viewers when applying KnuUI. Disable to keep your Edit Mode positions."] = "Ubica los paneles de reutilización de Blizzard al aplicar KnuUI. Desactivá esta opción para conservar tus posiciones de Modo edición."
 L["Style Blizzard cooldown icons and buff bars. Changes take effect after reloading the UI."] = "Aplica el estilo KnuUI a los iconos y las barras de beneficios de Blizzard. Los cambios se aplican después de recargar la interfaz."
 L["KnuUI requires World of Warcraft: Forever."] = "KnuUI requiere World of Warcraft: Forever."
 L["Leave combat before applying KnuUI."] = "Salí de combate antes de aplicar KnuUI."
-L["KnuUI: %s failed: %s"] = "KnuUI: falló %s: %s"
+L["%s failed: %s"] = "Falló %s: %s"
 
 -- Theme.lua
 L["Knunet amber"] = "Knunet ámbar"
@@ -38,11 +38,11 @@ L["Neon cyan and magenta"] = "Neón cian y magenta"
 L["Knunet intense orange"] = "Knunet naranja intenso"
 
 -- Camera.lua
-L["KnuUI: DynamicCam is not installed."] = "KnuUI: DynamicCam no está instalado."
-L["KnuUI: leave combat to apply the camera."] = "KnuUI: salí de combate para aplicar la cámara."
-L["KnuUI: the DynamicCam API was not found."] = "KnuUI: no se encontró la API de DynamicCam."
-L["KnuUI: could not apply the camera: %s"] = "KnuUI: no se pudo aplicar la cámara: %s"
-L['KnuUI: camera "%s" applied to DynamicCam profile "%s".'] = 'KnuUI: cámara "%s" aplicada en el perfil "%s" de DynamicCam.'
+L["DynamicCam is not installed."] = "DynamicCam no está instalado."
+L["Leave combat to apply the camera."] = "Salí de combate para aplicar la cámara."
+L["The DynamicCam API was not found."] = "No se encontró la API de DynamicCam."
+L["Could not apply the camera: %s"] = "No se pudo aplicar la cámara: %s"
+L['Camera "%s" applied to DynamicCam profile "%s".'] = 'Cámara "%s" aplicada en el perfil "%s" de DynamicCam.'
 
 -- Compat.lua
 L["not installed or not loaded"] = "no instalado o no cargado"
@@ -56,7 +56,7 @@ L["position saved to the left of WoW-Pro; reload to see it"] = "posición guarda
 
 -- Decor.lua
 L["World map"] = "Mapa del mundo"
-L["KnuUI: could not refresh the decoration: %s"] = "KnuUI: no se pudo actualizar la decoración: %s"
+L["Could not refresh the decoration: %s"] = "No se pudo actualizar la decoración: %s"
 
 -- Skins/Panels.lua
 L["KnuUI: could not update the panels: %s"] = "KnuUI: no se pudieron actualizar los paneles: %s"
@@ -73,7 +73,7 @@ L["Reload UI"] = "Recargar interfaz"
 L["KnuUI installer"] = "Asistente de KnuUI"
 L["‹ Previous"] = "‹ Anterior"
 L["%d/%d · Next ›"] = "%d/%d · Siguiente ›"
-L["KnuUI: could not open that action; check the corresponding addon."] = "KnuUI: no se pudo abrir esa acción; revisá el addon correspondiente."
+L["Could not open that action; check the corresponding addon."] = "No se pudo abrir esa acción; revisá el addon correspondiente."
 L["Shortest Path: open the AddOns tab and choose \"Shortest Path Forever\"."] = "Shortest Path: Esc > Opciones > pestaña AddOns > «Shortest Path Forever» (este cliente no deja que un addon abra esas opciones)."
 L["KnuUI launcher"] = "Lanzador KnuUI"
 
@@ -171,13 +171,13 @@ L["Frees 129 px for the left chat; the data bar shrinks the same."] = "Libera 12
 L["Frees 129 px for Details; the data bar shrinks the same."] = "Libera 129 px para Details; la barra de datos se achica lo mismo."
 
 -- Extras.lua
-L["KnuUI: alert skin turned on; reload to see it."] = "KnuUI: se prendió la skin de alertas; recargá para verla."
+L["Alert skin turned on; reload to see it."] = "Se prendió la skin de alertas; recargá para verla."
 L["%d min"] = "%d min"
 L["%d h %d min"] = "%d h %d min"
 L["KnuUI: estimate after a minute of gaining experience"] = "KnuUI: la estimación aparece tras un minuto ganando experiencia"
 L["Experience per hour"] = "Experiencia por hora"
 L["Next level in"] = "Próximo nivel en"
-L["KnuUI: this character's role is %s; reload to see it."] = "KnuUI: el rol de este personaje es %s; recargá para verlo."
+L["This character's role is %s; reload to see it."] = "El rol de este personaje es %s; recargá para verlo."
 L["Cinema mode (hide the interface and orbit the camera)"] = "Modo cine (oculta la interfaz y gira la cámara)"
 L["Combat glow on the screen edges"] = "Aviso de combate en los bordes de la pantalla"
 
@@ -226,8 +226,8 @@ L["Minimap: double size"] = "Minimapa: tamaño doble"
 L["Minimap: normal size"] = "Minimapa: tamaño normal"
 
 -- Installer.lua (aplicar en el momento)
-L["KnuUI: %s applied. Anything that does not change yet shows after a reload."] = "KnuUI: %s aplicado. Lo que todavía no cambie se ve al recargar."
-L["KnuUI: applied. Anything that does not change yet shows after a reload."] = "KnuUI: aplicado. Lo que todavía no cambie se ve al recargar."
+L["%s applied. Some changes appear after a reload."] = "%s aplicado. Algunos cambios se ven al recargar."
+L["Applied. Some changes appear after a reload."] = "Aplicado. Algunos cambios se ven al recargar."
 
 -- Share.lua
 L["Share"] = "Compartir"
@@ -244,10 +244,10 @@ L["Could not read the ElvUI profile."] = "No se pudo leer el perfil de ElvUI."
 L["Could not encode the text."] = "No se pudo codificar el texto."
 L["This is not a KnuUI text."] = "Esto no es un texto de KnuUI."
 L["The text is damaged or incomplete."] = "El texto está dañado o incompleto."
-L["KnuUI: imported into the profile \"%s\". Reloading is recommended."] = "KnuUI: importado en el perfil \"%s\". Conviene recargar."
+L["Imported into the profile \"%s\". Reloading is recommended."] = "Importado en el perfil \"%s\". Conviene recargar."
 
 -- Ranks.lua
-L["KnuUI: %s rank %d placed on %d action buttons."] = "KnuUI: %s rango %d puesto en %d botones."
+L["%s rank %d placed on %d action buttons."] = "%s rango %d puesto en %d botones."
 L["Replace old spell ranks on your bars when you learn a new one"] = "Reemplazar los rangos viejos de tus barras al aprender uno nuevo"
 
 -- Flight.lua
@@ -284,8 +284,8 @@ L["WoW-Pro and Questie: save their position below the minimap on reload."] = "Wo
 L["Each button only affects the addon shown."] = "Cada botón actúa sólo sobre el addon indicado."
 L["WoW-Pro skin"] = "Skin WoW-Pro"
 L["WoW-Pro skin: %s"] = "Skin WoW-Pro: %s"
-L["KnuUI: WoW-Pro skin enabled."] = "KnuUI: skin WoW-Pro activada."
-L["KnuUI: WoW-Pro skin disabled; reload to restore its appearance."] = "KnuUI: skin WoW-Pro desactivada; recargá para restaurar su apariencia."
+L["WoW-Pro skin enabled."] = "Skin WoW-Pro activada."
+L["WoW-Pro skin disabled; reload to restore its appearance."] = "Skin WoW-Pro desactivada; recargá para restaurar su apariencia."
 L[" · not installed"] = " · no instalado"
 
 -- Installer.lua: page 6
@@ -457,6 +457,10 @@ L["Diagnostic off from the next reload."] = "Diagnóstico apagado desde la próx
 L["Apply KnuUI to this profile"] = "Aplicar KnuUI a este perfil"
 L["Cinema mode"] = "Modo cine"
 L["Place the cooldown manager"] = "Ubicar el gestor de enfriamientos"
+L["Cooldown manager not placed: %s"] = "Gestor de enfriamientos sin ubicar: %s"
+L["Cooldown manager saved in layout %s. Type /reload to see it."] = "Gestor de enfriamientos guardado en la disposición %s. Escribí /reload para verlo."
+L["Cooldown manager not readjusted: %s"] = "Gestor de enfriamientos sin reajustar: %s"
+L["The number of cooldown manager icons changed; it is readjusted and shows after a reload (/reload)."] = "Cambió la cantidad de íconos del gestor de enfriamientos; ya está reajustado y se ve al recargar (/reload)."
 L["Report cooldown viewer sizes"] = "Informar tamaños de los visores de enfriamientos"
 L["Export the KnuUI profile"] = "Exportar el perfil de KnuUI"
 L["Import a KnuUI profile"] = "Importar un perfil de KnuUI"

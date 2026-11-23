@@ -175,7 +175,7 @@ end
 
 local function Later() C_Timer.After(0, function() pcall(Arrange) end) end
 
--- Todo por eventos, sin revisar por tiempo (pedido del user 2026-11-16):
+-- Todo por eventos, sin revisar por tiempo:
 -- 1. La guía aparece o se va (OnShow/OnHide de su ventana).
 -- 2. WoW-Pro crea su ventana después que PallyPower (carga en orden alfabético, y la crea recién al
 --    abrir una guía: WoWPro_Frames.lua:1033, :2461-2463): se engancha WoWPro:CreateMainFrame.
@@ -268,7 +268,7 @@ function Arrange()
 	frame:SetBackdropColor(t.backdropFade.r, t.backdropFade.g, t.backdropFade.b, t.backdropFade.a)
 	frame:SetBackdropBorderColor(t.border.r, t.border.g, t.border.b)
 
-	-- Centro de comando (pedido del user 2026-11-13): la tira va centrada abajo del bloque de Tiny Threat; si
+	-- Centro de comando: la tira va centrada abajo del bloque de Tiny Threat; si
 	-- no entra a lo ancho se parte en filas que crecen hacia arriba (nunca hacia el borde del monitor), y las
 	-- listas de jugadores se abren por encima de la tira completa.
 	local perRow = math.huge

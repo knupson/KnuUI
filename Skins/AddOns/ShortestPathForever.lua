@@ -149,8 +149,8 @@ end
 
 -- Aviso "Usar Piedra de hogar" (ns.PointCastPrompt, UI/Arrow.lua:666-700): cuando la ruta conviene con un
 -- teletransporte, Shortest Path muestra un ícono y "Usar %s" en el lugar de su flecha. KnuUI apaga esa flecha
--- y usa la de TomTom, así que el aviso quedaba suelto debajo del cartel de TomTom con letra grande amarilla
--- (visto en el juego 2026-11-13). Se vuelve una fila del tema pegada debajo del cartel: ícono y texto.
+-- y usa la de TomTom, así que el aviso quedaba suelto debajo del cartel de TomTom con letra grande amarilla.
+-- Se vuelve una fila del tema pegada debajo del cartel: ícono y texto.
 -- Es un marco sin nombre hijo de UIParent (Arrow.lua:681): se reconoce por sus campos Icon y Action.
 local function StylePrompt(p)
 	local arrow = _G.TomTomCrazyArrow

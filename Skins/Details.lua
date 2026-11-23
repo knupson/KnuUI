@@ -132,7 +132,7 @@ function K:SkinDetails(instance)
  return ok
 end
 
--- Tiny Threat: como máximo 10 jugadores listados (pedido del user 2026-11-13). El plugin calcula las filas
+-- Tiny Threat: como máximo 10 jugadores listados. El plugin calcula las filas
 -- según el alto de su ventana (ThreatMeter:SizeChanged, Details_TinyThreat.lua:188-215, CanShow); después de
 -- ese cálculo se recortan a 10 y se esconden las demás. No se cambia ninguna opción del plugin.
 local TT_MAX = 10

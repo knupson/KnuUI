@@ -3,7 +3,7 @@ local _, ns = ...
 local L = ns.L
 local K = E:GetModule('KnuUI')
 
--- Botón "+" arriba de la lupa de rastreo del minimapa (pedido del user 2026-11-13): duplica el tamaño del
+-- Botón "+" arriba de la lupa de rastreo del minimapa: duplica el tamaño del
 -- minimapa y corre lo que está al lado. ElvUI cambia el tamaño con E.db.general.minimap.size y
 -- M:UpdateSettings (Modules/Maps/Minimap.lua:564-614: minimapa y su contenedor juntos). Los buffos, la
 -- durabilidad, la cola, etc. están anclados a la esquina de arriba a la derecha con distancias fijas
@@ -38,7 +38,7 @@ end
 
 local function Holder() return M.MapHolder or _G.MMHolder or _G.Minimap end
 
--- Se mide el minimapa real antes y después de agrandarlo (revisión de Codex: puede no estar en la esquina).
+-- Se mide el minimapa real antes y después de agrandarlo (puede no estar en la esquina).
 -- Sólo se corren los movers que el minimapa grande tapa: los que estaban a su izquierda, lo que creció hacia
 -- la izquierda; los que estaban debajo, lo que creció hacia abajo. Así se conservan las separaciones.
 local function ShiftMovers(old, new)

@@ -91,7 +91,7 @@ function K:ApplyAll()
 	self:ApplyBase()
 	if E.db.KnuUITanks then self:ApplyTanks(true) else self:ApplyRoleOverlay() end -- ApplyTanks ya aplica el rol
 	local why = self:ApplyCooldownLayout()
-	if why then E:Print('KnuUI: gestor de enfriamientos sin ubicar: ' .. why) end
+	if why then E:Print(format(L["Cooldown manager not placed: %s"], why)) end
 	self:ApplyAddons()
 	E.db.KnuUILayoutVersion = self.version
 	ReloadUI()
@@ -121,7 +121,7 @@ function K:Initialize()
 	if E.Forever then
 		for _, setup in ipairs({ 'SetupAddonSkins', 'SetupButtons', 'SetupDock', 'SetupWoWProSkin', 'SetupTanks', 'SetupTracker', 'SetupDecor', 'SetupPanels', 'SetupWoWProES', 'SetupTomTomSkin', 'SetupBaganatorSkin', 'SetupExtras', 'SetupBNToast', 'SetupRaidMarkers', 'SetupFlightTimer', 'SetupCombatZoom', 'SetupPanelFade', 'SetupLootMonitor', 'SetupLootRollCounts', 'SetupRankUpgrade', 'SetupPawnSpec', 'SetupTomTomRoute', 'SetupOffhand', 'SetupWorkspace', 'SetupMinimapZoom', 'SetupUIPanels', 'SetupCooldownAutoFit' }) do
 			local ok, err = pcall(self[setup], self)
-			if not ok then E:Print(format(L["KnuUI: %s failed: %s"], setup, tostring(err))) end
+			if not ok then E:Print(format(L["%s failed: %s"], setup, tostring(err))) end
 		end
 	end
 	local parent = E:GetModule('ActionBars').fadeParent

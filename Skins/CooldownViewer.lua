@@ -22,7 +22,7 @@ local function Border(parent, anchor, background)
 	local t = K:GetTheme()
 	-- Cuatro líneas de 1 px ancladas al ícono, sin BackdropTemplate: su OnSizeChanged hace cuentas con el ancho y
 	-- el alto, que en el gestor pueden ser secretos en combate ("attempt to perform arithmetic on local 'width'
-	-- (a secret number value...)", Blizzard_SharedXML/Backdrop.lua:226, visto en el juego 2026-11-13). Las
+	-- (a secret number value...)", Blizzard_SharedXML/Backdrop.lua:226). Las
 	-- anclas no hacen aritmética en Lua. Sólo el marco decorativo propio recibe anclas; nunca el viewer.
 	local lines = {}
 	local function Line(p1, p2, horizontal)

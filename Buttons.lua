@@ -197,7 +197,7 @@ function K:SetupButtons()
    if not self.entry or not K:CanApply() then return end
    -- El renglón es el botón sustituto para OnClick de LDB; el botón del mouse va a los botones absorbidos.
    local ok = pcall(self.entry.click, self, mouse)
-   if not ok then E:Print(L["KnuUI: could not open that action; check the corresponding addon."]) end
+   if not ok then E:Print(L["Could not open that action; check the corresponding addon."]) end
   end)
   panel.rows[i] = row
  end

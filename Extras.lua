@@ -124,7 +124,7 @@ local function SyncRole()
 	local mine = E.private.KnuUIRole
 	if not mine or mine == (E.db.KnuUIRole or 'mdps') or InCombatLockdown() then return end
 	if K:ApplyRole(mine) then
-		E:Print(format(L["KnuUI: this character's role is %s; reload to see it."], K:RoleName()))
+		E:Print(format(L["This character's role is %s; reload to see it."], K:RoleName()))
 		E:StaticPopup_Show('CONFIG_RL')
 	end
 end
@@ -178,7 +178,7 @@ local function SetupAlerts()
 	local skins = E.private.skins and E.private.skins.blizzard
 	if skins and skins.alertframes == false then
 		skins.alertframes = true
-		E:Print(L["KnuUI: alert skin turned on; reload to see it."])
+		E:Print(L["Alert skin turned on; reload to see it."])
 	end
 end
 

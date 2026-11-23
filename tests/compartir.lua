@@ -1,6 +1,6 @@
 -- Ejecutar desde la raíz del repo con Lua 5.1 (LuaJIT). Sin WoW.
 -- Exportar/importar (Share.lua): el texto lleva las opciones KnuUI* del perfil aunque el exportador de ElvUI
--- las descarte (pasó en el juego 2026-11-13), no lleva el estado interno del centro de comando, y al importar
+-- las descarte, no lleva el estado interno del centro de comando, y al importar
 -- se crea un perfil nuevo sin pisar el existente.
 local K = {}
 local D = { blacklistedKeys = { profile = {} } }

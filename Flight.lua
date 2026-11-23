@@ -75,11 +75,10 @@ local function ScreenRect(f)
 	return l * s, b * s, (l + w) * s, (b + h) * s
 end
 
--- La flecha de TomTom y sus textos (título, distancia, tiempo, con el recuadro de Skins/TomTom.lua)
--- pueden quedar donde está la barra: el user la mueve o aprieta Esc y la interfaz vuelve en pleno
--- vuelo. Si se superponen, la barra baja hasta quedar 6 px debajo de lo más bajo que pisa. Sólo por
--- eventos (pedido del user 2026-11-16, nada por tiempo): al mostrarla, cuando la flecha aparece, se
--- va, se mueve o su recuadro cambia de alto, y cuando vuelve la interfaz (Esc con DynamicCam).
+-- La flecha de TomTom y sus textos (título, distancia, tiempo, con el recuadro de Skins/TomTom.lua) pueden quedar donde está la
+-- barra: el jugador la mueve o aprieta Esc y la interfaz vuelve en pleno vuelo. Si se superponen, la barra baja hasta quedar 6 px
+-- debajo de lo más bajo que pisa. Sólo por eventos, nada por tiempo: al mostrarla, cuando la flecha aparece, se va, se mueve o
+-- su recuadro cambia de alto, y cuando vuelve la interfaz (Esc con DynamicCam).
 local GAP = 6
 local function Avoid()
 	if not bar then return end

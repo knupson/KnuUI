@@ -11,7 +11,7 @@ local Set = K.Set
 -- Modules/UnitFrames/Elements/CastBar.lua:185; Modules/Auras/Auras.lua:795,827;
 -- Modules/DataBars/Experience.lua:314; Modules/DataTexts/DataTexts.lua:341.
 -- Coordenadas absolutas sobre ElvUIParent; origen abajo a la izquierda.
--- Elementos de Blizzard (boceto aprobado el 2026-11-09, 1920×1080). Nombres de mover tomados del
+-- Elementos de Blizzard (1920×1080). Nombres de mover tomados del
 -- código de ElvUI para Forever (E.Modern): Modules/Blizzard/WidgetsUI.lua:150-178, Blizzard.lua:157-158,
 -- AlertFrame.lua:105, Misc/Loot.lua, Misc/QueueStatus.lua:158, ActionBars/ExtraAB.lua, General/Core.lua.
 -- Fuera: durabilidad y diálogo de NPC (ElvUI sólo los crea en Legacy), errores, vehículo y cartel de
@@ -27,8 +27,8 @@ K.blizzardMovers = {
 	EventToastMover = 'TOP,ElvUIParent,TOP,0,-270',
 	PowerBarContainerMover = 'TOP,ElvUIParent,TOP,0,-350', -- poder alternativo
 	LossControlMover = 'CENTER,ElvUIParent,CENTER,0,60', -- pérdida de control
-	-- Tiradas de botín y alertas al centro, justo arriba del marco de objetivo (pedido del user 2026-11-16: a la
-	-- vista, no pegadas a la guía). Contenedor de 180x20 en y 780-800 (1920x1080 desde arriba): su centro está en la
+	-- Tiradas de botín y alertas al centro, justo arriba del marco de objetivo, a la vista y no pegadas a la guía.
+	-- Contenedor de 180x20 en y 780-800 (1920x1080 desde arriba): su centro está en la
 	-- mitad de abajo, así que ElvUI las hace crecer hacia arriba (ElvUI/Game/Shared/Modules/Blizzard/AlertFrame.lua:15-19;
 	-- Misc/LootRoll.lua:443-451). Con K.lootRoll y el máximo de 5 (Defaults/Profile.lua:280) van de y 775 a y 595:
 	-- arriba del objetivo (y 812) y debajo de la barra de clase (y 586) y la placa propia (y 577).

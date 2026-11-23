@@ -1,5 +1,13 @@
 # KnuUI changelog
 
+## 3.6.12 (2026-11-23)
+
+- Chat messages: the "KnuUI:" prefix no longer repeats ("ElvUI: KnuUI: ..." is now "ElvUI: ..."), and the Dock messages
+  all start with "KnuUI Dock:". The cooldown manager messages were always in Spanish; they now follow the client language.
+- Themes: the muted text color is lighter in Dracula, Nord, Gruvbox, Solarized, One Dark and Kanagawa, so secondary
+  text is easier to read on the dark background.
+- README: wording cleaned up, and the minimap launcher description now lists what it collects.
+
 ## 3.6.11 (2026-11-22)
 
 - Bags: the empty reagent bag slot (the fifth slot in Baganator's bag row) showed no tooltip, so there was no way to
@@ -367,7 +375,7 @@
 - Action buttons no longer stay grey after their cooldown: "Desaturate Cooldowns" is turned off
   (ElvUI evaluates it once with secret values on Forever; the cooldown numbers remain).
 
-## 3.3.0 — extras (2026-11-08)
+## 3.3.0 (2026-11-08): extras
 
 - Combat glow: thin amber gradient on the screen edges while in combat (150 ms in, 300 ms out).
   Toggle in ElvUI > KnuUI.
@@ -378,7 +386,7 @@
   Key binding (Key Bindings > AddOns > KnuUI), `/knu cine` or the ElvUI option.
 - Test suite updated (7 installer pages, opt-in DBM, roles and extras).
 
-## 3.2.0 — role profiles (2026-11-08)
+## 3.2.0 (2026-11-08): role profiles
 
 - New installer page and ElvUI option: **Tank, MDPS, RDPS and Healer**, applied on top of the
   base layout and the column mode (switching roles does not touch the rest of the profile).
@@ -389,7 +397,7 @@
   incoming heals and HoT indicators on, small debuffs on party frames.
 - The old "Tanks on/off" buttons are now "Columns on/off" (vertical health/mana columns).
 
-## 3.1.0 — skins de addons (2026-11-08)
+## 3.1.0 (2026-11-08): skins de addons
 
 - Motor de skins con registro por addon, carga tardía, pcall y cola fuera de combate.
 - Auctionator, BugSack, opciones de Leatrix Plus, Pawn, WhatsTraining, ThreatClassic2,
@@ -403,7 +411,7 @@
 - GatherMate2 y Syndicator omitidos: configuración AceConfig y panel local sin acceso
   al frame verificado, respectivamente.
 
-## 3.0.0 — first public build (2026-11-08)
+## 3.0.0 (2026-11-08): first public build
 
 - Compact bottom-centred ElvUI layout for WoW Forever with a guided installer (`/knu`).
 - Amber "knunet" theme and an optional neon theme; custom logo, icons and AFK screen.

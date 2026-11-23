@@ -13,7 +13,7 @@ local done = {}
 
 -- Margen libre a cada lado: se miden los botones de la barra de arriba (los que están a menos de 32 de
 -- su borde superior) cada vez que se abre. Con 104/78 fijos el título quedaba debajo del 4.º botón de la
--- izquierda (visto en el juego 2026-11-13: "olsas de ...").
+-- izquierda ("olsas de ...").
 local function Gaps(frame)
 	local fl, fr, ft = frame:GetLeft(), frame:GetRight(), frame:GetTop()
 	if not (fl and fr and ft) then return 104, 78 end

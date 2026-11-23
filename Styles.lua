@@ -64,7 +64,7 @@ function K:CreateStyleProfiles(recreate, quiet)
 		end
 	end
 	if not quiet then
-		E:Print(format(L['KnuUI: %d style profiles created; existing profiles were kept.'], count))
+		E:Print(format(L['%d style profiles created; existing profiles were kept.'], count))
 		self:PrintStyleProfiles()
 	end
 	return true
@@ -88,7 +88,7 @@ function K:TryStyleProfile(value)
 	if index then selected = list[index] end
 	for _, profile in ipairs(list) do if profile.name == value then selected = profile end end
 	if not selected or not ElvDB.profiles[selected.name] or not ElvDB.profiles[selected.name].KnuUIStyle then
-		E:Print(L['KnuUI: choose an existing style profile by number or full name.'])
+		E:Print(L['Choose an existing style profile by number or full name.'])
 		self:PrintStyleProfiles()
 		return false
 	end
@@ -109,7 +109,7 @@ function K:ReturnStyleProfile()
 	if not self:CanApply() then return false end
 	local previous = E.global.KnuUIPreviousProfile
 	if not previous or not ElvDB.profiles[previous] then
-		E:Print(L['KnuUI: no previous profile is available.'])
+		E:Print(L['No previous profile is available.'])
 		return false
 	end
 	E.data:SetProfile(previous)

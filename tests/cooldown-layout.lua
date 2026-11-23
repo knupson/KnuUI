@@ -54,7 +54,7 @@ local function Run(custom, reuse, healer, disabled, combat, columns, resized)
 			GetWidth = function() return real[1] end, GetHeight = function() return real[2] end }
 		setmetatable(env[name], { __index = function(_, method) error('No se permite tocar el viewer: '..method) end })
 	end
-	local chunk = assert(loadfile('addons/KnuUI/CooldownLayout.lua')); setfenv(chunk, env); chunk()
+	local chunk = assert(loadfile('addons/KnuUI/CooldownLayout.lua')); setfenv(chunk, env); chunk('KnuUI', { L = setmetatable({}, { __index = function(_, key) return key end }) })
 	K:ApplyCooldownLayout()
 	assert(Equal(saved, original))
 	if disabled == false or combat then assert(calls == 0); return end

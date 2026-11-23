@@ -3,13 +3,9 @@ local _, ns = ...
 local L = ns.L
 local K = E:GetModule('KnuUI')
 
--- Cámara: preset "Immersive" (LudiusMaximus, autor de DynamicCam), que viene dentro del addon.
--- API real (Interface/AddOns/DynamicCam/):
---   Core.lua:15        DynamicCam es global (AceAddon)
---   Core.lua:827       self.db = AceDB "DynamicCamDB"
---   Presets.lua:12-16  preset "Immersive"; Presets.lua:32 DynamicCam:LoadPreset(name)
---   Sharing.lua:368    ImportIntoCurrentProfile (resetea el perfil actual y reinicia el addon; sin /reload)
--- Se usa un perfil propio "KnuUI" para no pisar el perfil del jugador, y se aplica una sola vez.
+-- Cámara: preset "Immersive" de DynamicCam (viene dentro del addon), en un perfil propio "KnuUI" que se aplica una sola vez.
+-- DynamicCam: Core.lua:15 (global AceAddon), :827 (AceDB "DynamicCamDB"); Presets.lua:12-16,32 (LoadPreset);
+-- Sharing.lua:368 ImportIntoCurrentProfile (resetea el perfil actual y reinicia el addon; sin /reload).
 
 -- Presets incluidos en DynamicCam (Presets.lua:12-27). Por defecto el más marcado.
 local DEFAULT_PRESET, PROFILE = "Shushudaa's preset", 'KnuUI'
@@ -18,16 +14,16 @@ local FARTHER, FARTHER_V = 1.5, 1 -- situaciones un 50 % más lejos (FartherCamS
 function K:ApplyCamera(force, preset)
 	local PRESET = preset or E.global.KnuUICameraPreset or DEFAULT_PRESET
 	if not self:IsLoaded('DynamicCam') then
-		E:Print(L["KnuUI: DynamicCam is not installed."])
+		E:Print(L["DynamicCam is not installed."])
 		return false
 	end
 	if InCombatLockdown() then
-		E:Print(L["KnuUI: leave combat to apply the camera."])
+		E:Print(L["Leave combat to apply the camera."])
 		return false
 	end
 	local dc = _G.DynamicCam
 	if not (dc and dc.db and type(dc.db.SetProfile) == 'function' and type(dc.LoadPreset) == 'function') then
-		E:Print(L["KnuUI: the DynamicCam API was not found."])
+		E:Print(L["The DynamicCam API was not found."])
 		return false
 	end
 	if E.global.KnuUICameraApplied and not force then return true end
@@ -36,7 +32,7 @@ function K:ApplyCamera(force, preset)
 		dc:LoadPreset(PRESET)
 	end)
 	if not ok then
-		E:Print(format(L["KnuUI: could not apply the camera: %s"], tostring(err)))
+		E:Print(format(L["Could not apply the camera: %s"], tostring(err)))
 		return false
 	end
 	E.global.KnuUICameraApplied = true
@@ -47,7 +43,7 @@ function K:ApplyCamera(force, preset)
 	self:FartherCamSituations()
 	E.global.KnuUICamFarther = FARTHER_V -- el preset recién cargado ya quedó alejado
 	self:ApplyCombatZoom()
-	E:Print(format(L['KnuUI: camera "%s" applied to DynamicCam profile "%s".'], PRESET, PROFILE))
+	E:Print(format(L['Camera "%s" applied to DynamicCam profile "%s".'], PRESET, PROFILE))
 	return true
 end
 
@@ -63,11 +59,9 @@ function K:DisableBrokenCamSituations()
 	end
 end
 
--- 200 "Piedra de hogar/Teletransporte": el preset guarda un script de inicio viejo que llena
--- this.spells, pero la condición actual de DynamicCam lee this.teleportSpells
--- (DefaultSettings.lua:473-482), por eso fallaba ('teleportSpells' nil). Se reemplaza por el script
--- original de DynamicCam (DynamicCam.defaults, DefaultSettings.lua:106). Se prende con su giro
--- (el del preset: 360° a 20°/s) y se vuelve a correr su inicio con UpdateSituation, porque
+-- 200 "Piedra de hogar/Teletransporte": el preset trae un script de inicio viejo (this.spells) pero la condición actual de
+-- DynamicCam lee this.teleportSpells (DefaultSettings.lua:473-482; fallaba con 'teleportSpells' nil). Se usa el script original
+-- (DynamicCam.defaults, DefaultSettings.lua:106) con el giro del preset (360° a 20°/s) y se corre su inicio con UpdateSituation:
 -- DynamicCam sólo inicia al cargar las situaciones que ya estaban prendidas (Core.lua:1349-1358).
 function K:FixHearthCamSituation()
 	local dc = self:IsLoaded('DynamicCam') and _G.DynamicCam
@@ -87,7 +81,7 @@ function K:FixHearthCamSituation()
 	return true
 end
 
--- Todos los cambios de cámara sutiles (pedido del user: hablar con un jugador mareaba).
+-- Cambios de cámara sutiles, sin mareo:
 --   - Sin cambios de vista: SetView salta con la mezcla del juego, no con la de DynamicCam
 --     (SituationManager.lua:725-745). Las situaciones con viewZoomType "view" pierden ese cambio.
 --   - Sin giros de cámara (rotation).
@@ -120,12 +114,11 @@ function K:SoftenCamSituations()
 	return count
 end
 
--- Todas las distancias de las situaciones un 50 % más lejos (pedido del user 2026-11-22: «quiero todas mis cámaras
--- más lejos»). Vienen del preset (DynamicCam/Presets.lua); en el perfil «KnuUI» iban de 3,5 m (ciudad, interiores)
--- a 28 m (banda). viewZoom: zoomValue para "set", "out" e "in" ("in" es min(actual, zoomValue): subirlo deja la
--- cámara más lejos, SituationManager.lua:925-929) y zoomMin/zoomMax para "range". Tope: 39 m (MAX_ZOOM). DynamicCam
--- lee los valores al entrar en cada situación (SituationManager.lua:1118-1120): la activa cambia en la siguiente
--- entrada o al recargar; no se la fuerza a reentrar porque eso vuelve a correr sus scripts de salida y entrada.
+-- Distancias de todas las situaciones un 50 % más lejos que el preset (DynamicCam/Presets.lua; iban de 3,5 m a 28 m).
+-- viewZoom: zoomValue para "set", "out" e "in" ("in" es min(actual, zoomValue): subirlo aleja la cámara, SituationManager.lua:925-929)
+-- y zoomMin/zoomMax para "range". Tope: 39 m (MAX_ZOOM). DynamicCam lee los valores al entrar en cada situación
+-- (SituationManager.lua:1118-1120): la activa cambia en la siguiente entrada o al recargar; no se la fuerza a reentrar porque
+-- eso vuelve a correr sus scripts de salida y entrada.
 function K:FartherCamSituations()
 	local dc = self:IsLoaded('DynamicCam') and _G.DynamicCam
 	local situations = dc and dc.db and dc.db.profile and dc.db.profile.situations
@@ -193,10 +186,9 @@ function K:CombatZoom(entering)
 	end
 end
 
--- Fundido de la interfaz con la piedra de hogar (situación 200 "Hearth/Teleport"): DynamicCam lo hace
--- durar lo mismo que la transición de cámara (SituationManager.lua:884 FadeOutUI(timeToEnter); al salir,
--- :854 FadeInUI(exitTransitionTime)), que KnuUI estira a 2,5 s para que la cámara no maree. El user pidió
--- un fundido más rápido (2026-11-13): sólo el de la interfaz baja a 0,5 s; la cámara sigue suave.
+-- Fundido de la interfaz con la piedra de hogar (situación 200 "Hearth/Teleport"): DynamicCam lo hace durar lo mismo que la
+-- transición de cámara (SituationManager.lua:884 FadeOutUI(timeToEnter); al salir, :854 FadeInUI(exitTransitionTime)), que KnuUI
+-- estira a 2,5 s para que la cámara no maree. Sólo el fundido de la interfaz baja a 0,5 s; la cámara sigue suave.
 local HEARTH_FADE = 0.5
 local hearthFaded
 function K:FastHearthFade()
@@ -221,8 +213,8 @@ function K:FastHearthFade()
 end
 
 -- Al entrar, después de que DynamicCam cargue su perfil (Core.lua:653 demora su arranque).
--- La versión anterior (3.4 beta sin publicar) prendía las situaciones de combate de DynamicCam:
--- una vez se recarga el preset de cámara de KnuUI para deshacerlo (ApplyCamera -> LoadPreset).
+-- Migración de una versión que prendía las situaciones de combate de DynamicCam: una vez se recarga el preset de cámara de KnuUI
+-- para deshacerlo (ApplyCamera -> LoadPreset).
 -- ¿El perfil activo de DynamicCam es el que armó KnuUI? (AceDB: GetCurrentProfile, AceDB-3.0.lua:559)
 local function OwnsCamProfile()
 	if not (E.global.KnuUICameraApplied and K:IsLoaded('DynamicCam')) then return false end

@@ -1,13 +1,12 @@
 local E = unpack(ElvUI)
 local K = E:GetModule('KnuUI')
 
--- Paneles de Blizzard y la guía de WoW-Pro (arriba a la izquierda, alto variable según los pasos). Pedido del user
--- 2026-11-13: «que se abran por debajo de la guía». La versión anterior bajaba TODO panel de UIPanelWindows a 4 px
--- de la guía sin mirar si se cruzaban ni si entraba en pantalla: talentos (1218x708, centrado por Blizzard en
--- x 352, Blizzard_PlayerSpells/Camelot/Blizzard_PlayerSpellsFrame.xml:9-10) no tocaba la guía (x 8-308) y
--- terminaba con la mitad de abajo fuera de la pantalla (visto en el juego 2026-11-16).
+-- Paneles de Blizzard y la guía de WoW-Pro (arriba a la izquierda, alto variable según los pasos): se abren por debajo de la guía.
+-- Bajar todo panel de UIPanelWindows a 4 px de la guía, sin mirar si se cruzan ni si entra en pantalla, dejaba los talentos (1218x708,
+-- centrados por Blizzard en x 352, Blizzard_PlayerSpells/Camelot/Blizzard_PlayerSpellsFrame.xml:9-10) con la mitad de abajo fuera
+-- de la pantalla, aunque no tocaban la guía (x 8-308).
 --
--- Ahora se trabaja con los paneles que Blizzard tiene abiertos en sus casillas (GetUIPanel, UIParentPanelManager.lua:
+-- Se trabaja con los paneles que Blizzard tiene abiertos en sus casillas (GetUIPanel, UIParentPanelManager.lua:
 -- 946; casillas left/center/right/doublewide, :229-233), todos juntos para no romper el empuje del segundo panel:
 --   1. Si ninguno se cruza con la guía, no se toca nada.
 --   2. Si alguno se cruza: debajo de la guía (y alineados a su borde izquierdo si estaban a menos de 40) sólo si el
@@ -90,8 +89,8 @@ end
 
 -- La guía es el ancla del resto del diseño. WoW-Pro la crea en TOPLEFT/UIParent/RIGHT -210,175
 -- (WoWPro_Frames.lua:1037) y restaura la posición guardada UNA vez por sesión (:868-872); si esa vez AnchorSync no
--- hace nada (en combate o con InhibitAnchorSync, :705-707), queda en ese punto toda la sesión (visto en el juego
--- 2026-11-17: debajo del minimapa). Ese punto sólo lo pone la creación: AnchorStore siempre ancla la esquina
+-- hace nada (en combate o con InhibitAnchorSync, :705-707), queda en ese punto toda la sesión (debajo del minimapa).
+-- Ese punto sólo lo pone la creación: AnchorStore siempre ancla la esquina
 -- elegida a la misma esquina (:648-649) y el centro de comando usa sus zonas. Si la guía está ahí, se le pide a
 -- WoW-Pro que restaure lo guardado. El centro de comando, al devolverla (Workspace.lua RestoreGuide), pasa por
 -- SetPoint: lo engancha HookGuide y se revisa en la pasada siguiente.
@@ -203,7 +202,7 @@ end
 
 -- Mapa de OpenMap: no lo ubica Blizzard sino OpenMap, con su posición guardada (OpenMapDB.worldmap.window =
 -- { punto, punto relativo, x, y } respecto de UIParent, OpenMap/Map/Window.lua:14-17; la vuelve a poner cuando
--- algo mueve el mapa). Si se abre encima de la guía (visto en el juego 2026-11-13), se baja esa posición lo
+-- algo mueve el mapa). Si se abre encima de la guía, se baja esa posición lo
 -- justo para quedar a 4 de la guía, y se guarda: la próxima vez ya abre ahí.
 local function AdjustMap()
 	local map = _G.WorldMapFrame

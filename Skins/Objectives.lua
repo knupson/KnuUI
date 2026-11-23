@@ -42,15 +42,15 @@ local function Style()
 	if not frame then return end
 	local t = K:GetTheme()
 
-	-- Con WoW-Pro cargado se oculta por defecto (pedido del user): en Forever Blizzard lo estira hasta
+	-- Con WoW-Pro cargado se oculta por defecto: en Forever Blizzard lo estira hasta
 	-- abajo de la pantalla en su posición por defecto (Blizzard_ObjectiveTrackerContainer.lua:189-210)
 	-- y tapaba a Details. Queda transparente y sin mouse. NUNCA se llama a SetCollapsed ni al botón
 	-- desde acá: SetCollapsed escribe self.isCollapsed y corre Update() (Blizzard_ObjectiveTrackerContainer.lua:177-183);
 	-- hecho desde un addon contamina el rastreador y ShouldShowMawBuffs falla al leer auras secretas
 	-- (Blizzard_MawBuffs.lua:4), también dentro del Modo edición.
 	if E.db.KnuUIHideTracker == nil then E.db.KnuUIHideTracker = true end
-	-- Pedido del user (2026-11-13): "Todos los objetivos" no tiene que existir en ningún modo, con o sin
-	-- WoW-Pro u Offhand. Se sostiene en 0: DynamicCam (LibHideUI) le devolvía la opacidad al terminar un
+	-- "Todos los objetivos" no tiene que existir en ningún modo, con o sin WoW-Pro u Offhand.
+	-- Se sostiene en 0: DynamicCam (LibHideUI) le devolvía la opacidad al terminar un
 	-- fundido de la interfaz (visto en el juego). Sólo SetAlpha/EnableMouse, nunca Hide ni SetCollapsed.
 	if E.db.KnuUIHideTracker then
 		if not frame.KnuAlphaHooked then

@@ -6,8 +6,8 @@ local K = E:GetModule('KnuUI')
 -- (db.profile.prompt, Core.lua:717-886) a través de AceAddon y se le pide que se redibuje con su método público
 -- RefreshConfig (Core.lua:6604-6633, que llama a ns.Prompt:ApplyStyle). Sólo se cambia lo que sigue con el valor por
 -- defecto de Manners (lo que el jugador eligió queda), una vez por perfil de Manners.
--- Lugar: el de Manners (BOTTOM, 0, 300, Core.lua:725-728) cae sobre las auras del objetivo de KnuUI (render de la
--- disposición, 2026-11-22). Va a la derecha de la columna del objetivo, entre el objetivo del objetivo y el monitor
+-- Lugar: el de Manners (BOTTOM, 0, 300, Core.lua:725-728) cae sobre las auras del objetivo de KnuUI (render de la disposición).
+-- Va a la derecha de la columna del objetivo, entre el objetivo del objetivo y el monitor
 -- de botín: x 1180-1400, y 340-384 desde abajo, libre en el render; sus botones laterales crecen hacia la derecha
 -- (Prompt/BreakFree.lua:373-374) y no tocan las tiradas del centro.
 local POSITION = { point = 'BOTTOM', relPoint = 'BOTTOM', x = 330, y = 340 }
@@ -16,7 +16,7 @@ local POSITION = { point = 'BOTTOM', relPoint = 'BOTTOM', x = 330, y = 340 }
 local MANNERS_V = 3
 -- 3: sin la línea blanca con puntas de Mínima (Looks/MinimalDress.lua:9-11, `minimalLine = false` la saca, :26,410) ni
 -- la línea de acento de KnuUI: con las dos líneas de luz de Manners (Prompt/Panel.lua:364-372,805-826) y el borde
--- quedaban líneas encimadas (visto por el user 2026-11-22).
+-- quedaban líneas encimadas.
 
 local function Same(a, b)
 	if type(a) ~= 'table' or type(b) ~= 'table' then return a == b end
@@ -69,7 +69,7 @@ end
 
 -- Panel de KnuUI detrás del aviso: fondo del tema y borde de 1 px. Se dibuja con
 -- texturas dentro del propio `art` de Manners (Prompt/Panel.lua:165), en la capa más baja (BACKGROUND -8): así sigue
--- solo sus fundidos y la atenuación en combate (Prompt/Effects.lua:638-654, 685-696; revisión de Codex 2026-11-22) y
+-- solo sus fundidos y la atenuación en combate (Prompt/Effects.lua:638-654, 685-696) y
 -- queda debajo de las letras y el ícono, que son regiones de `art` en capas más altas. `art` se reconoce por los
 -- grupos de animación que Manners le cuelga (outro, comeback: Effects.lua:645,654). Sólo con la apariencia Mínima,
 -- que no tiene panel propio (Prompt/Panel.lua:557-561): Manners llama a SetSize del botón en cada redibujo

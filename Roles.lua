@@ -5,7 +5,7 @@ local K = E:GetModule('KnuUI')
 
 -- Perfiles por rol: Tank, MDPS, RDPS y Healer. Se aplican encima del diseño base (boceto v4)
 -- y del modo columnas, así que cambiar de rol no pisa el resto del perfil.
--- Referencias consultadas (2026-11-08):
+-- Referencias consultadas:
 --   Eltruism (eltreum0/eltruism, Layouts/LayoutHealer.lua:296-349): en Healer el grupo y la banda
 --   van abajo al centro (party 150×60 RIGHT_UP, healPrediction y buffIndicator activos); en DPS/Tank
 --   quedan arriba a la izquierda.

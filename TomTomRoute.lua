@@ -1,8 +1,8 @@
 local E = unpack(ElvUI)
 local K = E:GetModule('KnuUI')
 
--- La flecha de TomTom por el camino más corto de Shortest Path Forever (pedido del user: ver sólo la
--- flecha de TomTom, sin la flecha, brújula ni secciones propias de Shortest Path).
+-- La flecha de TomTom por el camino más corto de Shortest Path Forever: se ve sólo la flecha de TomTom, sin la flecha, brújula
+-- ni secciones propias de Shortest Path.
 -- 1) Cuando algo (WoW-Pro, Questie, /way) apunta la flecha de TomTom a un destino, KnuUI se lo pasa a
 --    Shortest Path con su API pública: ShortestPathForever.API.Navigate(owner, uiMapID, x, y, title)
 --    (ShortestPathForever/Core/API.lua:568; el punto es el mismo uiMapID y 0-1 que usa TomTom,

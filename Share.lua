@@ -4,7 +4,7 @@ local L = ns.L
 local K = E:GetModule('KnuUI')
 local D = E:GetModule('Distributor')
 
--- Exportar/importar toda la interfaz en un texto (pedido del user 2026-11-13, "todo en uno"): el perfil de
+-- Exportar/importar toda la interfaz en un texto: el perfil de
 -- ElvUI completo (incluye las opciones de KnuUI que viven en E.db), el rol del personaje (E.private) y las
 -- opciones globales de KnuUI (E.global). El perfil se arma igual que el exportador de ElvUI
 -- (Distributor.lua:442-458: sólo lo distinto de los valores por defecto, sin las claves de su lista negra) y
@@ -22,7 +22,7 @@ function K:ExportString()
 	local key, profile = D:GetProfileData('profile')
 	if not key or type(profile) ~= 'table' then return nil, L["Could not read the ElvUI profile."] end
 	-- ElvUI sólo exporta claves que existen en sus valores por defecto (Core.lua:859-860: RemoveTableDuplicates):
-	-- todas las opciones KnuUI* del perfil quedaban afuera (visto en el juego 2026-11-13: al importar se abría el
+	-- todas las opciones KnuUI* del perfil quedaban afuera (al importar se abría el
 	-- instalador). Se agregan tal cual, menos el estado interno del centro de comando (lo que guarda para
 	-- devolver al salir: *Orig y questLogOpen), que es de esta PC.
 	local raw = ElvDB.profiles[key] or {}
@@ -160,9 +160,9 @@ local function Window()
 			box:SetFocus(); box:HighlightText()
 		else
 			local name, err = K:ImportString(box:GetText())
-			if not name then E:Print('KnuUI: ' .. err) return end
+			if not name then E:Print(err) return end
 			f:Hide()
-			E:Print(format(L["KnuUI: imported into the profile \"%s\". Reloading is recommended."], name))
+			E:Print(format(L["Imported into the profile \"%s\". Reloading is recommended."], name))
 			E:StaticPopup_Show('CONFIG_RL')
 		end
 	end)
@@ -177,7 +177,7 @@ function K:OpenShare(mode)
 	f.mode = mode
 	if mode == 'export' then
 		local text, err = K:ExportString()
-		if not text then E:Print('KnuUI: ' .. err) return end
+		if not text then E:Print(err) return end
 		f.title:SetText(L["Export KnuUI"])
 		f.hint:SetText(L["ElvUI profile, role and KnuUI settings in one text. Ctrl+C to copy."])
 		f.action:SetText(L["Select all"])

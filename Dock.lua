@@ -931,7 +931,7 @@ function K:SetupDock()
  _G.SLASH_KNUUIDOCK1 = '/knudock'
  _G.SlashCmdList.KNUUIDOCK = function(msg)
   local ok, err = pcall(Command, msg)
-  if not ok then E:Print('KnuUI dock: '..tostring(err)) end
+  if not ok then PrintMsg(tostring(err)) end
  end
  local eventFrame = CreateFrame('Frame')
  eventFrame:RegisterEvent('PLAYER_ENTERING_WORLD')

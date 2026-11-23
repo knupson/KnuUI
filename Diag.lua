@@ -3,7 +3,7 @@ local _, ns = ...
 local L = ns.L
 local K = E:GetModule('KnuUI')
 
--- Registro de diagnóstico de la interfaz (pedido del user 2026-11-12: no depender de capturas).
+-- Registro de diagnóstico de la interfaz (evita depender de capturas).
 -- Guarda en WTF\Account\<cuenta>\SavedVariables\KnuUI.lua (variable KnuUIDiag) la escala, tamaño,
 -- rectángulo y anclaje de los bloques de KnuUI/ElvUI en varios momentos de la carga, y cada llamada
 -- que cambia la escala, el tamaño o el anclaje de UIParent / ElvUIParent con quién la hizo.

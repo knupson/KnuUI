@@ -22,8 +22,8 @@ end
 -- el contenedor de pestañas dinámicas, que ElvUI ancla a la derecha de Registro (Modules/Chat/Chat.lua:3104-3109);
 -- según el FrameXML público de Blizzard (FloatingChatFrame.lua:1895-1914) la primera dinámica se ubica en
 -- Y=-1, así que la pestaña entera queda más abajo y centrar el texto dentro de ella no alcanza.
--- Se mide la diferencia de altura con la pestaña principal y se compensa en el texto. Propuesta de Codex,
--- revisada; sin verificar en el juego. Se reaplica después de StyleChat (Chat.lua:981) y del dock.
+-- Se mide la diferencia de altura con la pestaña principal y se compensa en el texto. Sin verificar en el juego.
+-- Se reaplica después de StyleChat (Chat.lua:981) y del dock.
 local tabsHooked
 local function FixChatTabs()
  if InCombatLockdown() then return end
@@ -58,7 +58,7 @@ local function FixChatTabs()
  if not tabsHooked then
   tabsHooked = true
   hooksecurefunc(ch, 'StyleChat', function() FixChatTabs() end)
-  -- Medido en el juego (2026-11-09, /run con GetCenter): la pestaña 4 quedaba 0,711 px más abajo y
+  -- Medido en el juego (/run con GetCenter): la pestaña 4 quedaba 0,711 px más abajo y
   -- el texto seguía igual, porque al entrar las pestañas todavía estaban parejas. El contenedor de
   -- pestañas dinámicas se ubica después (FCFDock_ScrollToSelectedTab; ElvUI Chat.lua:3103-3109):
   -- se recalcula ahí y también 1 y 3 s después de entrar.

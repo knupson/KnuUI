@@ -3,13 +3,13 @@ local K = E:GetModule('KnuUI')
 
 -- Cuántos votaron qué en las tiradas de ElvUI. ElvUI escribe esos números sólo con LOOT_HISTORY_ROLL_CHANGED, y lo
 -- registra sólo `if not E.Modern` (ElvUI/Game/Shared/Modules/Misc/LootRoll.lua:581-585); en Forever E.Modern es
--- verdadero (General/Initialize.lua:114) y ese evento no existe (probado en el juego 2026-11-20). Forever trae el
+-- verdadero (General/Initialize.lua:114) y ese evento no existe (probado en el juego). Forever trae el
 -- sistema de Retail: LOOT_HISTORY_UPDATE_DROP(encounterID, lootListKey) y C_LootHistory.GetSortedInfoForDrop
 -- (rama forever, LootHistoryDocumentation.lua:59-174); el botín de bichos comunes llega como encuentro 0
 -- «Miscelánea» (probado en el juego). Cada objeto del historial se ata a una sola barra por su rollID. Si alguna vez
 -- hay dos candidatos del mismo ítem (dos barras para un objeto, o dos objetos para una barra), ese ítem queda bloqueado:
--- nada suyo se ata hasta que terminen todos los objetos y se cierren todas las barras involucradas (pedido del user
--- 2026-11-20: mejor sin número que con el número de otra tirada).
+-- nada suyo se ata hasta que terminen todos los objetos y se cierren todas las barras involucradas (mejor sin número
+-- que con el número de otra tirada).
 local drops = {}   -- 'encuentro:clave' -> { encounterID, lootListKey, link, bar, rollID, lost }
 local blocked = {} -- ítem -> { drops = { id = true }, rolls = { rollID = true } }
 

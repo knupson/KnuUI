@@ -28,14 +28,13 @@ local function Button(index, text, callback)
 	return button
 end
 
--- Pedido del user (2026-11-13): "que cada botón te pida reload es malísimo, no tenés forma de saber qué está
--- cambiando". Se aplica en el momento con el refresco completo de ElvUI (E:UpdateAll, Core.lua:1751: diseño,
--- barras, datos, auras, placas, bolsas, chat, tooltip, minimapa y unidades) y se dice qué se aplicó.
+-- Se aplica en el momento con el refresco completo de ElvUI (E:UpdateAll, Core.lua:1751: diseño, barras, datos, auras, placas,
+-- bolsas, chat, tooltip, minimapa y unidades) y se dice qué se aplicó: pedir reload en cada botón no deja ver qué cambia.
 local function Saved(label, callback)
 	return function()
 		if not callback() then return end
 		pcall(E.UpdateAll, E)
-		E:Print(format(L["KnuUI: %s applied. Anything that does not change yet shows after a reload."], label))
+		E:Print(format(L["%s applied. Some changes appear after a reload."], label))
 	end
 end
 
@@ -186,7 +185,7 @@ local installer = {
 				if not K:CanApply() then return end
 				E.db.KnuUISkinWoWPro = E.db.KnuUISkinWoWPro == false
 				K:SkinWoWPro()
-				E:Print(E.db.KnuUISkinWoWPro and L["KnuUI: WoW-Pro skin enabled."] or L["KnuUI: WoW-Pro skin disabled; reload to restore its appearance."])
+				E:Print(E.db.KnuUISkinWoWPro and L["WoW-Pro skin enabled."] or L["WoW-Pro skin disabled; reload to restore its appearance."])
 				skinButton:SetText(format(L["WoW-Pro skin: %s"], E.db.KnuUISkinWoWPro and L["yes"] or L["no"]))
 			end)
 			skinButton:SetText(format(L["WoW-Pro skin: %s"], E.db.KnuUISkinWoWPro ~= false and L["yes"] or L["no"]))
@@ -259,7 +258,7 @@ local function Options()
 	-- ocupan el ancho completo para que ningún texto se corte y las dependientes se apagan solas.
 	local function Reload()
 		pcall(E.UpdateAll, E)
-		E:Print(L["KnuUI: applied. Anything that does not change yet shows after a reload."])
+		E:Print(L["Applied. Some changes appear after a reload."])
 	end
 	local function Desc(order, text) return { order = order, type = 'description', fontSize = 'medium', name = text } end
 	local function Head(order, text) return { order = order, type = 'header', name = text } end
@@ -302,7 +301,7 @@ local function Options()
 				local object = OffhandMethod(owner, method)
 				if object and K:CanApply() then
 					local ok, err = pcall(object[method], object)
-					if not ok then E:Print(format(L["KnuUI: %s failed: %s"], name, tostring(err))) end
+					if not ok then E:Print(format(L["%s failed: %s"], name, tostring(err))) end
 				end
 			end }
 	end

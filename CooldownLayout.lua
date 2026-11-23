@@ -1,3 +1,5 @@
+local _, ns = ...
+local L = ns.L
 local E = unpack(ElvUI)
 local K = E:GetModule('KnuUI')
 
@@ -5,8 +7,8 @@ local NAMES = { 'EssentialCooldownViewer', 'UtilityCooldownViewer', 'BuffIconCoo
 
 -- Cantidad de íconos contando los marcos activos del visor, sin llamar a viewer:GetItemCount().
 -- GetItemCount pasa por GetCooldownIDs → CheckBuildDisplayData del gestor (CooldownViewer.lua:1992-2000, 2078-2081;
--- CooldownViewerSettingsDataProvider.lua:100-171, 237-251): llamado desde KnuUI reconstruía esos datos en código de
--- addon y, al subir de nivel, SetHiddenGroupBuffs quedaba bloqueado (ADDON_ACTION_BLOCKED, visto en el juego 2026-11-14).
+-- CooldownViewerSettingsDataProvider.lua:100-171, 237-251): desde KnuUI reconstruía esos datos en código de addon y, al subir
+-- de nivel, SetHiddenGroupBuffs quedaba bloqueado (ADDON_ACTION_BLOCKED).
 -- RefreshLayout adquiere exactamente GetItemCount marcos (CooldownViewer.lua:2037-2043), así que el conteo coincide.
 local function ItemCount(viewer)
 	local pool, n = viewer and viewer.itemFramePool, 0
@@ -95,10 +97,9 @@ function K:ApplyCooldownLayout()
 		if not systems[index] then return 'la disposición no tiene el visor ' .. NAMES[i] end
 		if not viewer then return 'no existe ' .. NAMES[i] end
 		if i <= 3 then
-			-- Tamaño real que el juego ya le dio al visor (con su escala). El cálculo desde los ajustes guardados daba
-			-- alto 2 en el juego (/knu visores, 2026-11-13: Utility y BuffIcon quedaron en y 338 sobre los 50 de alto de
-			-- Essential); el valor guardado de IconSize no es un porcentaje directo. Sin tamaño medible (visor vacío),
-			-- se reserva una fila con el lado de ícono de Blizzard (CooldownViewer.xml:21,90,159: 50, 30, 40).
+			-- Tamaño real que el juego ya le dio al visor (con su escala). Calcularlo desde los ajustes guardados daba alto 2 (Utility y
+			-- BuffIcon quedaban en y 338 sobre los 50 de alto de Essential): el IconSize guardado no es un porcentaje directo. Sin tamaño
+			-- medible (visor vacío), se reserva una fila con el lado de ícono de Blizzard (CooldownViewer.xml:21,90,159: 50, 30, 40).
 			local fs = viewer.GetScale and viewer:GetScale() or 1
 			local w = viewer.GetWidth and viewer:GetWidth() or 0
 			local h = viewer.GetHeight and viewer:GetHeight() or 0
@@ -113,11 +114,9 @@ function K:ApplyCooldownLayout()
 		end
 	end
 
-	-- Diseño A (elegido por el user 2026-11-14 entre dos bocetos, después de revisar cómo lo hacen otras interfaces
-	-- y una auditoría de Codex): tamaños fijos de mayor a menor, como BetterCooldownManager, EllesmereUI y
-	-- SkironCooldownManager (42/36/32, 47/41/40), sin achicar nunca; con más íconos, otra fila hacia arriba.
-	-- Principales del mismo ancho que las casillas del bloque izquierdo (41, Tanks.lua BARS) con su separación de
-	-- 2: cada ícono cae sobre una casilla, 6 por fila (x 409-665). Utilidad 35 y buffs 32, 7 por fila.
+	-- Tamaños fijos de mayor a menor, como BetterCooldownManager, EllesmereUI y SkironCooldownManager (42/36/32, 47/41/40), sin
+	-- achicar nunca; con más íconos, otra fila hacia arriba. Principales del mismo ancho que las casillas del bloque izquierdo (41,
+	-- Tanks.lua BARS) con su separación de 2: cada ícono cae sobre una casilla, 6 por fila (x 409-665). Utilidad 35 y buffs 32, 7 por fila.
 	-- Cuentas de Blizzard: lado = base · tamaño / 100 (CooldownViewer.lua:2008); entre íconos, relleno - 4
 	-- (:2015-2017, :2061); el skin dibuja el ícono 2 adentro por lado (visible = lado - 4, separación visible =
 	-- relleno). Guardado (EditModeSettingDisplayInfo.lua): tamaño como (porcentaje - 50) / 10 (:928-935, :8-13;
@@ -179,10 +178,10 @@ end
 function K:CooldownLayoutCommand()
 	local why, name = self:ApplyCooldownLayout()
 	if why then
-		E:Print('KnuUI: gestor de enfriamientos sin ubicar: ' .. why)
+		E:Print(format(L["Cooldown manager not placed: %s"], why))
 	else
 		-- ReloadUI es protegida: sólo desde un clic o una tecla (bloqueada desde un temporizador, visto 2026-11-13).
-		E:Print('KnuUI: gestor de enfriamientos guardado en la disposición ' .. tostring(name) .. '. Escribí /reload para verlo.')
+		E:Print(format(L["Cooldown manager saved in layout %s. Type /reload to see it."], tostring(name)))
 	end
 end
 
@@ -205,12 +204,11 @@ function K:CooldownViewersReport()
 	if layouts then E:Print('Disposición activa: ' .. tostring(layouts.activeLayout)) end
 end
 
--- Reajuste solo (pedido del user 2026-11-14): al cambiar la cantidad de íconos de los principales o de
--- utilidad (aprender una habilidad, cambiar de talentos), la fila dejaba de ocupar las casillas 2 a 5. Blizzard
--- rearma los íconos en RefreshLayout cuando cambia la cantidad (CooldownViewer.lua:2018-2030): ahí, fuera de
--- combate y con la ubicación automática prendida, se recalcula y se guarda. No se sabe si el Modo edición lo
--- aplica sin recargar (EditModeManager.lua:193-197 lo hace con EDIT_MODE_LAYOUTS_UPDATED, no verificado que
--- SaveLayouts lo dispare), así que se avisa una vez que se ve al recargar.
+-- Reajuste solo: al cambiar la cantidad de íconos de los principales o de utilidad (aprender una habilidad, cambiar de talentos),
+-- la fila dejaba de ocupar las casillas 2 a 5. Blizzard rearma los íconos en RefreshLayout (CooldownViewer.lua:2018-2030): ahí,
+-- fuera de combate y con la ubicación automática prendida, se recalcula y se guarda. No está verificado que el Modo edición lo
+-- aplique sin recargar (EditModeManager.lua:193-197 usa EDIT_MODE_LAYOUTS_UPDATED; no se sabe si SaveLayouts lo dispara), así
+-- que se avisa que se ve al recargar.
 local pending
 local function CheckCounts()
 	pending = nil
@@ -226,9 +224,9 @@ local function CheckCounts()
 	if not changed then return end
 	local why = K:ApplyCooldownLayout()
 	if why then
-		E:Print('KnuUI: gestor de enfriamientos sin reajustar: ' .. why)
+		E:Print(format(L["Cooldown manager not readjusted: %s"], why))
 	else
-		E:Print('KnuUI: cambió la cantidad de íconos del gestor de enfriamientos; ya está reajustado y se ve al recargar (/reload).')
+		E:Print(L["The number of cooldown manager icons changed; it is readjusted and shows after a reload (/reload)."])
 	end
 end
 

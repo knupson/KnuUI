@@ -175,7 +175,7 @@ function K:SetupWoWProSkin()
  Attach()
 end
 
--- Tope de altura de la guía con desplazamiento (pedido del user 2026-11-22: «tiene que limitarse pero permitir scroll»).
+-- Tope de altura de la guía con desplazamiento.
 -- Con autoresize, WoW-Pro agranda la ventana hasta el borde de la pantalla (GetMainFrameMaxSize, WoWPro_Frames.lua:55-85),
 -- y los pasos «As you go» no cuentan para numsteps (WoWPro_Config.lua:381): con varios, la guía tapaba el grupo.
 -- Su propia barra se mueve de a un paso (GuideOffset, WoWPro_Frames.lua:1752-1760) y deja fijos los «As you go», así que
@@ -207,8 +207,8 @@ end
 
 -- Botones de cada fila (usar objeto, objetivo, etc.): cuelgan de MainFrame y UIParent, así que el recorte de
 -- GuideFrame no los alcanza. WoW-Pro los apaga con alfa y mouse (no con Hide: hay seguros) sólo por el borde de abajo
--- (UpdateFlyoutClip, WoWPro_Frames.lua:313-336); con las filas corridas también hay que mirar el de arriba (revisión de
--- Codex 2026-11-22). Mismas claves que WoW-Pro (FLYOUT_KEYS, :315).
+-- (UpdateFlyoutClip, WoWPro_Frames.lua:313-336); con las filas corridas también hay que mirar el de arriba.
+-- Mismas claves que WoW-Pro (FLYOUT_KEYS, :315).
 local FLYOUT_KEYS = { 'itembutton', 'targetbutton', 'jumpbutton', 'eabutton', 'itembuttonSecured', 'targetbuttonSecured', 'eabuttonSecured' }
 local function ClipFlyouts()
 	local GF = WoWPro and WoWPro.GuideFrame

@@ -1,5 +1,4 @@
--- Genera addons/KnuUI/Base.lua: la configuración del autor como base de KnuUI (pedido del user 2026-11-13:
--- "tomá mi configuración como la base global; después salen las modificaciones por clase o rol").
+-- Genera addons/KnuUI/Base.lua: la configuración del autor como base global de KnuUI; después salen las modificaciones por clase o rol.
 -- Desde la raíz del repo, con LuaJIT o Lua 5.1:
 --   luajit addons/KnuUI/tools/base/generar.lua '<WoW>/_forever_/WTF/Account/<cuenta>/SavedVariables/ElvUI.lua' '<Personaje>'
 -- Toma sólo lo que difiere de lo que arma "Aplicar todo" en el mismo modo (melé, columnas, bloque derecho
