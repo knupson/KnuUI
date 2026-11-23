@@ -1,4 +1,4 @@
-﻿local MAJOR, MINOR = 'KnuLib-1.0', 6
+﻿local MAJOR, MINOR = 'KnuLib-1.0', 7
 local lib = LibStub:NewLibrary(MAJOR, MINOR); if not lib then return end
 
 function lib:ApplyDefaults(db, defaults)
@@ -173,6 +173,7 @@ local L = lib:NewLocale({
     ['Neon cyan and magenta'] = 'Neón cian y magenta',
     ['Knunet intense orange'] = 'Knunet naranja intenso',
     ['Class colour'] = 'Color de clase',
+    ['No commands registered.'] = 'No hay comandos registrados.',
 })
 
 local function C(hex, a)
@@ -184,9 +185,7 @@ local function C(hex, a)
 	}
 end
 
--- Temas. 'knunet' sale de las variables CSS de :root de https://knunet.com
--- (--bg #110c08, --bg-2 #18110b, --panel #1f160e, --line #33251a, --amber #ffa82e,
--- --amber-hi #ffc06a, --amber-dim #b07428, --text #ecd9bd), leídas el 2026-11-08.
+-- 'knunet' sale de las variables CSS de :root de https://knunet.com (leídas el 2026-11-08).
 lib.themes = lib.themes or {}
 lib.themes.knunet = {
 		label = L["Knunet amber"],
@@ -204,12 +203,10 @@ lib.themes.neon = {
 		cast = C('ff2e88'), castNoInterrupt = C('ffc440'), health = C('00e5ff'),
 		healthBackdrop = C('0e1018'),
 	}
-	-- Más naranja que knunet.com (pedido del user): estos tres acentos los eligió KnuUI, no salen
-	-- de la web; el fondo y los textos son los de knunet.
+-- Acentos elegidos por KnuUI; el fondo y los textos son los de knunet.
 lib.themes.knunetIntense = {
 		label = L["Knunet intense orange"],
-		-- v2: el primer naranja (#ff8c1a) casi no se distinguía del ámbar (#ffa82e). Este es naranja puro
-		-- (#ff6a00, matiz 25° contra 35° del ámbar, saturación 100 %) y los bordes también van en naranja, no en marrón.
+		-- Naranja puro (#ff6a00) para distinguirlo del ámbar; los bordes también en naranja.
 		accent = C('ff6a00'), accentHi = C('ff8c33'), accentDim = C('d95500'),
 		text = C('f2e0c8'), muted = C('b08a68'),
 		backdrop = C('1f140b'), backdropFade = C('120b06', 0.85), border = C('7a3a08'),
@@ -221,7 +218,7 @@ lib.themes.knunetIntense = {
 lib.themes.dracula = {
 		label = L["Dracula"],
 		accent = C('bd93f9'), accentHi = C('ff79c6'), accentDim = C('6272a4'),
-		text = C('f8f8f2'), muted = C('6272a4'),
+		text = C('f8f8f2'), muted = C('8390b7'),
 		backdrop = C('282a36'), backdropFade = C('282a36', 0.9), border = C('44475a'),
 		cast = C('bd93f9'), castNoInterrupt = C('ff5555'), health = C('50fa7b'),
 		healthBackdrop = C('282a36'),
@@ -230,7 +227,7 @@ lib.themes.dracula = {
 lib.themes.nord = {
 		label = L["Nord"],
 		accent = C('88c0d0'), accentHi = C('8fbcbb'), accentDim = C('5e81ac'),
-		text = C('eceff4'), muted = C('81a1c1'),
+		text = C('eceff4'), muted = C('96b1cb'),
 		backdrop = C('3b4252'), backdropFade = C('2e3440', 0.9), border = C('434c5e'),
 		cast = C('88c0d0'), castNoInterrupt = C('bf616a'), health = C('a3be8c'),
 		healthBackdrop = C('2e3440'),
@@ -248,7 +245,7 @@ lib.themes.catppuccin = {
 lib.themes.gruvbox = {
 		label = L["Gruvbox"],
 		accent = C('fe8019'), accentHi = C('fabd2f'), accentDim = C('d65d0e'),
-		text = C('ebdbb2'), muted = C('928374'),
+		text = C('ebdbb2'), muted = C('9a8c7e'),
 		backdrop = C('282828'), backdropFade = C('1d2021', 0.9), border = C('3c3836'),
 		cast = C('fe8019'), castNoInterrupt = C('fb4934'), health = C('b8bb26'),
 		healthBackdrop = C('1d2021'),
@@ -274,11 +271,10 @@ lib.Palette = Palette
 -- Valores oficiales consultados el 2026-11-12; fuentes y tokens originales:
 -- https://github.com/altercation/solarized/blob/master/README.md#the-values
 -- blue, cyan, base01, base0, base00, base03, base03, base02, red, green.
-lib.themes.solarized = Palette(L["Solarized Dark"], '268bd2', '2aa198', '586e75', '839496', '657b83', '002b36', '002b36', '073642', 'dc322f', '859900')
+lib.themes.solarized = Palette(L["Solarized Dark"], '268bd2', '2aa198', '586e75', '839496', '7a9199', '002b36', '002b36', '073642', 'dc322f', '859900')
 -- https://github.com/atom/one-dark-syntax/blob/master/styles/colors.less
--- hue-2, hue-1, mono-3, mono-1, mono-2, syntax-bg (HSL oficiales convertidos a RGB).
--- Borde: mismo syntax-bg; fondo atenuado: mismo syntax-bg. hue-5 y hue-4 para peligro/vida.
-lib.themes.onedark = Palette(L["One Dark"], '61afef', '56b6c2', '5c6370', 'abb2bf', '828997', '282c34', '282c34', '282c34', 'e06c75', '98c379')
+-- hue-2, hue-1, mono-3, mono-1, mono-2, syntax-bg (HSL convertidos a RGB); hue-5 y hue-4 para peligro/vida.
+lib.themes.onedark = Palette(L["One Dark"], '61afef', '56b6c2', '5c6370', 'abb2bf', '8c939f', '282c34', '282c34', '282c34', 'e06c75', '98c379')
 -- https://github.com/rose-pine/neovim/blob/main/lua/rose-pine/palette.lua (main y moon).
 -- iris, foam, pine, text, subtle, base, surface, overlay, love, rose.
 lib.themes.rosepine = Palette(L["Rosé Pine"], 'c4a7e7', '9ccfd8', '31748f', 'e0def4', '908caa', '191724', '1f1d2e', '26233a', 'eb6f92', 'ebbcba')
@@ -289,7 +285,7 @@ lib.themes.macchiato = Palette(L["Catppuccin Macchiato"], 'c6a0f6', 'f5bde6', '8
 lib.themes.frappe = Palette(L["Catppuccin Frappé"], 'ca9ee6', 'f4b8e4', '838ba7', 'c6d0f5', 'a5adce', '303446', '292c3c', '414559', 'e78284', 'a6d189')
 -- https://github.com/rebelot/kanagawa.nvim/blob/master/lua/kanagawa/colors.lua
 -- Wave: crystalBlue, springBlue, waveBlue2, fujiWhite, fujiGray, sumiInk3/0/4, samuraiRed, springGreen.
-lib.themes.kanagawa = Palette(L["Kanagawa Wave"], '7e9cd8', '7fb4ca', '2d4f67', 'dcd7ba', '727169', '1f1f28', '16161d', '2a2a37', 'e82424', '98bb6c')
+lib.themes.kanagawa = Palette(L["Kanagawa Wave"], '7e9cd8', '7fb4ca', '2d4f67', 'dcd7ba', '88877d', '1f1f28', '16161d', '2a2a37', 'e82424', '98bb6c')
 -- Dragon: dragonViolet/Blue2/Gray3/White/Gray2/Black3/Black0/Black4/Red/Green2.
 lib.themes.kanagawadragon = Palette(L["Kanagawa Dragon"], '8992a7', '8ba4b0', '7a8382', 'c5c9c5', '9e9b93', '181616', '0d0c0c', '282727', 'c4746e', '8a9a7b')
 -- Base oscura propia de KnuUI; el acento se resuelve con la clase de Blizzard.
@@ -550,7 +546,7 @@ function lib:PrintCommands()
     local Print, names = self:NewPrinter(''), {}
     for name in pairs(self.commands) do names[#names + 1] = name end
     table.sort(names)
-    if #names == 0 then Print('No hay comandos registrados.') return end
+    if #names == 0 then Print(L['No commands registered.']) return end
     for _, name in ipairs(names) do
         local command, aliases, seen = self.commands[name], {}, {}
         for _, alias in ipairs(command.aliases) do

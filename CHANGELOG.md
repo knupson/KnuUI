@@ -1,5 +1,9 @@
 # KnuUI changelog
 
+## 3.6.13 (2026-11-23)
+
+- Bundled KnuLib updated to version 7: the "No commands registered" message is now translated on Spanish clients.
+
 ## 3.6.12 (2026-11-23)
 
 - Chat messages: the "KnuUI:" prefix no longer repeats ("ElvUI: KnuUI: ..." is now "ElvUI: ..."), and the Dock messages
