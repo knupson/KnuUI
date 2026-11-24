@@ -115,9 +115,16 @@ end
 
 K.feedbackURL = 'https://www.curseforge.com/wow/addons/knuui'
 K.issuesURL = 'https://github.com/knupson/KnuUI/issues'
+K.otherAddonsURL = 'https://www.curseforge.com/members/knupwns/projects'
+K.companionURL = 'https://companion.knunet.com'
 
 function K:PrintFeedback()
 	E:Print(format(L["Like KnuUI? Add it to your CurseForge favorites and leave a comment: %s. Found a bug or have an idea? Open an issue with the BugSack text: %s"], self.feedbackURL, self.issuesURL))
+end
+
+-- Sólo a pedido (/knu opinar): la convención del ecosistema KNU no permite avisos automáticos por esto.
+function K:PrintOtherAddons()
+	E:Print(format(L["Other KNU addons: KnuCompanion puts your bags, bank, map and quests on your other monitor: %s. All of them: %s"], self.companionURL, self.otherAddonsURL))
 end
 
 -- Una sola vez por cuenta (E.global), unos segundos después de entrar para que el resto del chat no la tape.

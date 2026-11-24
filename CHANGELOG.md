@@ -1,5 +1,11 @@
 # KnuUI changelog
 
+## 3.6.15 (2026-11-24)
+
+- `/knu help` and `/knu feedback` end with a line pointing to the other KNU addons, KnuCompanion first (https://companion.knunet.com).
+- README: new "Other KNU addons" section.
+- KnuLib updated to MINOR 8.
+
 ## 3.6.14 (2026-11-24)
 
 - Once per account, a chat line shows where to favorite and comment on KnuUI and where to report bugs. `/knu feedback` (`/knu opinar`) shows it again.

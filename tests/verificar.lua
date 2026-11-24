@@ -2464,12 +2464,17 @@ do
  module:SetupFeedback(); module:SetupFeedback()
  for _, q in ipairs(queued) do q[2]() end
  assert(#printed == 1, 'opinar: salió dos veces')
+ assert(not printed[1]:find(module.otherAddonsURL, 1, true), 'otros addons: no va en el aviso automático')
  module:PrintFeedback()
  assert(#printed == 2, 'opinar: el comando no la repite')
  SlashCmdList.KNUUI('opinar'); SlashCmdList.KNUUI('feedback')
- assert(#printed == 4, 'opinar: falta el subcomando')
+ assert(#printed == 6, 'opinar: falta el subcomando o la línea de otros addons')
  knuCommands.opinar.h('')
- assert(#printed == 5, 'opinar: /knu opinar no la muestra')
+ assert(#printed == 8, 'opinar: /knu opinar no la muestra')
+ assert(printed[7]:find(module.feedbackURL, 1, true) and printed[8]:find(module.otherAddonsURL, 1, true), 'otros addons: falta al pie de /knu opinar')
+ local companionAt = printed[8]:find(module.companionURL, 1, true)
+ assert(module.companionURL == 'https://companion.knunet.com' and companionAt and companionAt < printed[8]:find(module.otherAddonsURL, 1, true), 'otros addons: KnuCompanion no va primero')
+ assert(module.otherAddonsURL == 'https://www.curseforge.com/members/knupwns/projects', 'otros addons: link equivocado')
  E.Print, C_Timer.After, E.global.KnuUIFeedbackShown = savedPrint, savedAfter, savedFlag
 end
 

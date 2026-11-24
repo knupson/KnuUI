@@ -1,4 +1,4 @@
-﻿local MAJOR, MINOR = 'KnuLib-1.0', 7
+﻿local MAJOR, MINOR = 'KnuLib-1.0', 8
 local lib = LibStub:NewLibrary(MAJOR, MINOR); if not lib then return end
 
 function lib:ApplyDefaults(db, defaults)
@@ -174,6 +174,8 @@ local L = lib:NewLocale({
     ['Knunet intense orange'] = 'Knunet naranja intenso',
     ['Class colour'] = 'Color de clase',
     ['No commands registered.'] = 'No hay comandos registrados.',
+    ['Other KNU addons: KnuCompanion shows your bags, bank, map and quests on a second monitor (https://companion.knunet.com). The rest: curseforge.com/members/knupwns/projects']
+        = 'Otros addons de KNU: KnuCompanion muestra tus bolsas, banco, mapa y misiones en otro monitor (https://companion.knunet.com). El resto: curseforge.com/members/knupwns/projects',
 })
 
 local function C(hex, a)
@@ -559,6 +561,7 @@ function lib:PrintCommands()
         local help = type(command.help) == 'string' and command.help ~= '' and (' - ' .. command.help) or ''
         Print('/knu ' .. name .. suffix .. help)
     end
+    Print(L['Other KNU addons: KnuCompanion shows your bags, bank, map and quests on a second monitor (https://companion.knunet.com). The rest: curseforge.com/members/knupwns/projects'])
 end
 
 function lib:Dispatch(msg, editBox)

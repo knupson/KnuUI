@@ -105,6 +105,20 @@ KnuUI contains the code that can translate WoW-Pro guide notes on load, but **th
 themselves are not included**. WoW-Pro guides are licensed CC BY-NC-ND 3.0 (no derivatives), so
 translated guide text cannot be redistributed with this addon.
 
+## Other KNU addons
+
+Made by the same author for Forever:
+
+**[KnuCompanion](https://companion.knunet.com)**: a desktop app plus addon that puts your bags, bank, map and quests on your other monitor.
+
+| Addon | What it does |
+|---|---|
+| [KnuMail](https://www.curseforge.com/wow/addons/knumail) | Simple, safe mailbox |
+| [KnuJunk](https://www.curseforge.com/wow/addons/knujunk) | Marks and sells junk, repairs on its own |
+| [KnuCast](https://www.curseforge.com/wow/addons/knucast) | Marks on your bars which spells work on the target |
+
+All projects: https://www.curseforge.com/members/knupwns/projects. In game, `/knu feedback` shows this link too.
+
 ## Feedback and bug reports
 
 If you like KnuUI, add it to your favorites on CurseForge (the star) and leave a comment. That is how other Forever players find it.
@@ -133,6 +147,8 @@ Integraciones opcionales: Details!, Baganator, DBM, Questie, WoW-Pro, TomTom, Dy
 
 Las traducciones de las guías de WoW-Pro no vienen incluidas, porque las guías de WoW-Pro tienen licencia CC BY-NC-ND 3.0 (sin obras derivadas).
 
-Si te gusta KnuUI, marcalo como favorito en CurseForge (la estrella) y dejá un comentario: así lo encuentran otros jugadores de Forever. Si encontrás un error, abrí un issue en https://github.com/knupson/KnuUI/issues o dejá un comentario, con el texto del error (BugSack lo copia) y qué estabas haciendo. Las ideas y los pedidos también van en los comentarios o como issue. En el juego, `/knu opinar` muestra los dos links.
+Otros addons de KNU para Forever: **[KnuCompanion](https://companion.knunet.com)**, una app de escritorio con su addon que lleva tus bolsas, banco, mapa y misiones a tu otro monitor. También [KnuMail](https://www.curseforge.com/wow/addons/knumail) (buzón simple y seguro), [KnuJunk](https://www.curseforge.com/wow/addons/knujunk) (marca y vende lo que no sirve, repara solo) y [KnuCast](https://www.curseforge.com/wow/addons/knucast) (marca en las barras qué hechizos sirven contra el objetivo). Todos: https://www.curseforge.com/members/knupwns/projects.
+
+Si te gusta KnuUI, marcalo como favorito en CurseForge (la estrella) y dejá un comentario: así lo encuentran otros jugadores de Forever. Si encontrás un error, abrí un issue en https://github.com/knupson/KnuUI/issues o dejá un comentario, con el texto del error (BugSack lo copia) y qué estabas haciendo. Las ideas y los pedidos también van en los comentarios o como issue. En el juego, `/knu opinar` muestra los dos links y el de los otros addons.
 
 Los clientes esES y esMX ven el addon en castellano; el resto, en inglés. Licencia MIT.
