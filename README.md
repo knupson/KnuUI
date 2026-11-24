@@ -105,6 +105,12 @@ KnuUI contains the code that can translate WoW-Pro guide notes on load, but **th
 themselves are not included**. WoW-Pro guides are licensed CC BY-NC-ND 3.0 (no derivatives), so
 translated guide text cannot be redistributed with this addon.
 
+## Feedback and bug reports
+
+If you like KnuUI, add it to your favorites on CurseForge (the star) and leave a comment. That is how other Forever players find it.
+
+Found a bug? Open an issue at https://github.com/knupson/KnuUI/issues or leave a comment, with the error text (BugSack copies it) and what you were doing when it happened. Ideas and requests are welcome in the comments or as issues. In game, `/knu feedback` shows both links.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
@@ -126,5 +132,7 @@ Trae diseño compacto centrado, tema Knunet ámbar y Neón, modo tanques opciona
 Integraciones opcionales: Details!, Baganator, DBM, Questie, WoW-Pro, TomTom, DynamicCam, GearQuestForever, Pawn, PallyPower, OpenMap y Shortest Path Forever (la flecha de TomTom sigue su ruta más corta).
 
 Las traducciones de las guías de WoW-Pro no vienen incluidas, porque las guías de WoW-Pro tienen licencia CC BY-NC-ND 3.0 (sin obras derivadas).
+
+Si te gusta KnuUI, marcalo como favorito en CurseForge (la estrella) y dejá un comentario: así lo encuentran otros jugadores de Forever. Si encontrás un error, abrí un issue en https://github.com/knupson/KnuUI/issues o dejá un comentario, con el texto del error (BugSack lo copia) y qué estabas haciendo. Las ideas y los pedidos también van en los comentarios o como issue. En el juego, `/knu opinar` muestra los dos links.
 
 Los clientes esES y esMX ven el addon en castellano; el resto, en inglés. Licencia MIT.

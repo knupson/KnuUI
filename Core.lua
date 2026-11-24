@@ -113,13 +113,30 @@ local function KeepInjuredBarsVisible(parent)
 	end
 end
 
+K.feedbackURL = 'https://www.curseforge.com/wow/addons/knuui'
+K.issuesURL = 'https://github.com/knupson/KnuUI/issues'
+
+function K:PrintFeedback()
+	E:Print(format(L["Like KnuUI? Add it to your CurseForge favorites and leave a comment: %s. Found a bug or have an idea? Open an issue with the BugSack text: %s"], self.feedbackURL, self.issuesURL))
+end
+
+-- Una sola vez por cuenta (E.global), unos segundos después de entrar para que el resto del chat no la tape.
+function K:SetupFeedback()
+	if E.global.KnuUIFeedbackShown then return end
+	C_Timer.After(20, function()
+		if E.global.KnuUIFeedbackShown then return end
+		E.global.KnuUIFeedbackShown = true
+		self:PrintFeedback()
+	end)
+end
+
 function K:Initialize()
 	self:SetupKnuLib()
 	self:SetupInstaller()
 	if E.Forever and self:SetupStyles() then return end
 	self:SetupAFK()
 	if E.Forever then
-		for _, setup in ipairs({ 'SetupAddonSkins', 'SetupButtons', 'SetupDock', 'SetupWoWProSkin', 'SetupTanks', 'SetupTracker', 'SetupDecor', 'SetupPanels', 'SetupWoWProES', 'SetupTomTomSkin', 'SetupBaganatorSkin', 'SetupExtras', 'SetupBNToast', 'SetupRaidMarkers', 'SetupFlightTimer', 'SetupCombatZoom', 'SetupPanelFade', 'SetupLootMonitor', 'SetupLootRollCounts', 'SetupRankUpgrade', 'SetupPawnSpec', 'SetupTomTomRoute', 'SetupOffhand', 'SetupWorkspace', 'SetupMinimapZoom', 'SetupUIPanels', 'SetupCooldownAutoFit' }) do
+		for _, setup in ipairs({ 'SetupAddonSkins', 'SetupButtons', 'SetupDock', 'SetupWoWProSkin', 'SetupTanks', 'SetupTracker', 'SetupDecor', 'SetupPanels', 'SetupWoWProES', 'SetupTomTomSkin', 'SetupBaganatorSkin', 'SetupExtras', 'SetupBNToast', 'SetupRaidMarkers', 'SetupFlightTimer', 'SetupCombatZoom', 'SetupPanelFade', 'SetupLootMonitor', 'SetupLootRollCounts', 'SetupRankUpgrade', 'SetupPawnSpec', 'SetupTomTomRoute', 'SetupOffhand', 'SetupWorkspace', 'SetupMinimapZoom', 'SetupUIPanels', 'SetupCooldownAutoFit', 'SetupFeedback' }) do
 			local ok, err = pcall(self[setup], self)
 			if not ok then E:Print(format(L["%s failed: %s"], setup, tostring(err))) end
 		end

@@ -682,6 +682,7 @@ function K:SetupInstaller()
 		{ 'visores', function() K:CooldownViewersReport() end, L["Report cooldown viewer sizes"], { 'viewers' } },
 		{ 'exportar', function() K:OpenShare('export') end, L["Export the KnuUI profile"], { 'export' } },
 		{ 'importar', function() K:OpenShare('import') end, L["Import a KnuUI profile"], { 'import' } },
+		{ 'opinar', function() K:PrintFeedback() end, L["Rate KnuUI or report a bug"], { 'feedback' } },
 	}
 	local function Handle(message)
 		local command = (message or ''):match('^%s*(.-)%s*$'):lower()

@@ -1,5 +1,10 @@
 # KnuUI changelog
 
+## 3.6.14 (2026-11-24)
+
+- Once per account, a chat line shows where to favorite and comment on KnuUI and where to report bugs. `/knu feedback` (`/knu opinar`) shows it again.
+- README: new "Feedback and bug reports" section.
+
 ## 3.6.13 (2026-11-23)
 
 - Bundled KnuLib updated to version 7: the "No commands registered" message is now translated on Spanish clients.

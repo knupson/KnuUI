@@ -426,7 +426,7 @@ SlashCmdList.KNUUI(' aplicar ')
 assert(popup == 'KNUUI_APPLY' and reloads == 0)
 -- /fui es propio y ya no reclama /knu; /knu va por KnuLib con los mismos subcomandos y el instalador por defecto.
 assert(SLASH_KNUUI1 == '/fui' and SLASH_KNUUI2 == nil)
-for name, alias in pairs({ aplicar = 'apply', cine = 'cinema', enfriamientos = 'cooldowns', visores = 'viewers', exportar = 'export', importar = 'import' }) do
+for name, alias in pairs({ aplicar = 'apply', cine = 'cinema', enfriamientos = 'cooldowns', visores = 'viewers', exportar = 'export', importar = 'import', opinar = 'feedback' }) do
  assert(knuCommands[name] and knuCommands[name].aliases[1] == alias and knuCommands[name].help ~= name, name)
 end
 assert(knuCommands.aplicar.help == 'Aplicar KnuUI a este perfil')
@@ -507,7 +507,9 @@ local function Validate()
  local global = E:CopyTable({}, G)
  global.datatexts.customPanels.KnuUI_Data = G.datatexts.newPanelInfo
  global.KnuUIClock24 = true
+ global.KnuUIFeedbackShown = true -- la invitación a opinar ya salió en Initialize (C_Timer.After inmediato)
  Check(E.global, global, 'E.global'); Check(E.private, V, 'E.private')
+ assert(E.global.KnuUIFeedbackShown == true, 'opinar: Initialize no la mostró')
  for key in pairs(P.actionbar) do
   local id = tonumber(key:match('^bar(%d+)$'))
   if id then
@@ -2440,6 +2442,35 @@ do
  assert(not removed[dest] and arrow == dest, 'ruta: al terminar borró el punto original')
  _G.TomTom, _G.ShortestPathForever, module.IsLoaded, module.tomtomRouteHooked = savedTT, savedSPF, savedLoaded, savedHooked
  E.db.KnuUITomTomRoute, E.global.KnuUISPFQuiet = savedRoute, savedQuiet
+end
+
+-- Invitación a opinar: una sola vez por cuenta, con los dos links, demorada; /knu opinar la repite siempre.
+do
+ local savedPrint, savedAfter, savedFlag = E.Print, C_Timer.After, E.global.KnuUIFeedbackShown
+ local printed, queued = {}, {}
+ E.Print = function(_, msg) printed[#printed + 1] = msg end
+ C_Timer.After = function(delay, fn) queued[#queued + 1] = { delay, fn } end
+ E.global.KnuUIFeedbackShown = nil
+ module:SetupFeedback()
+ assert(#printed == 0 and #queued == 1 and queued[1][1] == 20, 'opinar: no quedó demorada 20 s')
+ queued[1][2]()
+ assert(#printed == 1 and E.global.KnuUIFeedbackShown == true, 'opinar: no salió o no marcó el flag')
+ assert(printed[1]:find(module.feedbackURL, 1, true) and printed[1]:find(module.issuesURL, 1, true), 'opinar: faltan los links')
+ assert(module.feedbackURL:find('curseforge.com/wow/addons/knuui', 1, true) and module.issuesURL:find('github.com/knupson/KnuUI/issues', 1, true), 'opinar: links equivocados')
+ module:SetupFeedback()
+ assert(#queued == 1 and #printed == 1, 'opinar: se repitió con el flag puesto')
+ -- Dos SetupFeedback antes de que venza la demora: sale una sola vez.
+ E.global.KnuUIFeedbackShown, queued, printed = nil, {}, {}
+ module:SetupFeedback(); module:SetupFeedback()
+ for _, q in ipairs(queued) do q[2]() end
+ assert(#printed == 1, 'opinar: salió dos veces')
+ module:PrintFeedback()
+ assert(#printed == 2, 'opinar: el comando no la repite')
+ SlashCmdList.KNUUI('opinar'); SlashCmdList.KNUUI('feedback')
+ assert(#printed == 4, 'opinar: falta el subcomando')
+ knuCommands.opinar.h('')
+ assert(#printed == 5, 'opinar: /knu opinar no la muestra')
+ E.Print, C_Timer.After, E.global.KnuUIFeedbackShown = savedPrint, savedAfter, savedFlag
 end
 
 assert(loadfile('addons/KnuUI/tests/cooldown-viewer.lua'))()

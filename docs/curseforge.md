@@ -48,11 +48,17 @@ KnuUI is an ElvUI plugin made for World of Warcraft: Forever. One installer give
 *   Nothing is applied during combat.
 *   KnuUI only changes other addons' settings when you ask for it; see "What KnuUI changes in other addons" in the README.
 
+## Feedback and bug reports
+
+*   If you like KnuUI, add it to your favorites (the star on this page) and leave a comment. That is how other Forever players find it.
+*   Found a bug? Open an issue on GitHub or leave a comment, with the error text (BugSack copies it) and what you were doing. Ideas and requests are welcome in the comments too.
+*   In game, `/knu feedback` shows both links.
+
 Source code, changelog and issues: [https://github.com/knupson/KnuUI](https://github.com/knupson/KnuUI) (MIT license). English and Spanish.
 
 ## Descripción (castellano)
 
-KnuUI es un plugin de ElvUI hecho para World of Warcraft: Forever. Un asistente (`/knu`) arma un diseño compacto ámbar, tu perfil de rol y skins para los addons de Forever, con reemplazos de addons que ya no andan (barra de lanzamiento estilo Quartz y texto de enfriamiento estilo OmniCC). Incluye 17 paletas, builds recomendadas por clase y rol, flecha de TomTom por la ruta más corta, centro de comando para dos monitores con Offhand, minimapa que se agranda con un botón y exportar o importar toda tu interfaz en un texto. Requiere sólo ElvUI.
+KnuUI es un plugin de ElvUI hecho para World of Warcraft: Forever. Un asistente (`/knu`) arma un diseño compacto ámbar, tu perfil de rol y skins para los addons de Forever, con reemplazos de addons que ya no andan (barra de lanzamiento estilo Quartz y texto de enfriamiento estilo OmniCC). Incluye 17 paletas, builds recomendadas por clase y rol, flecha de TomTom por la ruta más corta, centro de comando para dos monitores con Offhand, minimapa que se agranda con un botón y exportar o importar toda tu interfaz en un texto. Requiere sólo ElvUI. Si te gusta, marcalo como favorito (la estrella) y dejá un comentario. Si encontrás un error, contalo en los comentarios o en GitHub con el texto de BugSack y qué estabas haciendo.
 
 ---
 

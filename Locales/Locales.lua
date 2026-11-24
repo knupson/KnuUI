@@ -464,3 +464,5 @@ L["The number of cooldown manager icons changed; it is readjusted and shows afte
 L["Report cooldown viewer sizes"] = "Informar tamaños de los visores de enfriamientos"
 L["Export the KnuUI profile"] = "Exportar el perfil de KnuUI"
 L["Import a KnuUI profile"] = "Importar un perfil de KnuUI"
+L["Rate KnuUI or report a bug"] = "Opinar sobre KnuUI o reportar un error"
+L["Like KnuUI? Add it to your CurseForge favorites and leave a comment: %s. Found a bug or have an idea? Open an issue with the BugSack text: %s"] = "¿Te gusta KnuUI? Marcalo como favorito en CurseForge y dejá un comentario: %s. ¿Encontraste un error o tenés una idea? Abrí un issue con el texto de BugSack: %s"
